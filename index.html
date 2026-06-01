@@ -12,11 +12,6 @@
   <title>Mi Web App</title>
 </head>
 <body>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
-    }
-  </script>
   <div class="app-container">
     <header>APP AVPCEA</header>
     <div class="card">
@@ -24,5 +19,11 @@
     </div>
   </div>
 
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
+    }
+  </script>
 </body>
 </html>
