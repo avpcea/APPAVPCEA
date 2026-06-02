@@ -1,17 +1,20 @@
-const CACHE_NAME = "avpcea-cache-v1";
+const CACHE_NAME = "avpcea-cache-v2";
 const URLS_TO_CACHE = [
   "/APPAVPCEA/",
   "/APPAVPCEA/index.html",
   "/APPAVPCEA/manifest.json"
+  "/APPAVPCEA/styles.css"
 ];
 
 self.addEventListener("install", event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
   );
 });
 
 self.addEventListener("fetch", event => {
+  self.clients.claim();
   event.respondWith(
     caches.match(event.request).then(response => response || fetch(event.request))
   );
