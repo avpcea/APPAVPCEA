@@ -12,6 +12,26 @@
   <title>Mi Web App</title>
 </head>
 <body>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
+    }
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            alert("Nueva versión disponible. Recarga la app.");
+            }
+          };
+        };
+      });
+    }
+  </script>
+
   <div class="app-container">
     <header>APP AVPCEA</header>
     <div class="card">
@@ -20,10 +40,6 @@
   </div>
 
 
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
-    }
-  </script>
+  
 </body>
 </html>
