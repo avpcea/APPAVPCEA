@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8">
   <link rel="manifest" href="/APPAVPCEA/manifest.json">
   <link rel="stylesheet" href="/APPAVPCEA/styles.css">
   <link rel="apple-touch-icon" href="/APPAVPCEA/icons/icon-192.png">
@@ -33,10 +34,30 @@
   </script>
 
   <div class="app-container">
-    <header>APP AVPCEA</header>
-    <div class="card">
-      Bienvenido a la app oficial.
-    </div>
+    <header class="app-header">
+      </h1>APP AVPCEA</h1>
+    </header>
+
+    <main class="app-content">
+      <div class="card">
+        <h2>Bienvenido</h2>
+        <p>Esta es la aplicación oficial AVPCEA.</p>
+        <button class="btn-primary">Acceder</button>
+      </div>
+
+      <div class="card">
+        <h2>Noticias</h2>
+        <p>Consulta las últimas novedades.</p>
+        <button class="btn-secondary">Ver más</button>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active">Inicio</button>
+      <button class="nav-btn">Noticias</button>
+      <button class="nav-btn">Perfil</button>
+    </nav>
+
   </div>
 
 
