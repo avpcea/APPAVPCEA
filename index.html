@@ -10,12 +10,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#0d6efd">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mi Web App</title>
+  <title>APP AVPCEA</title>
 </head>
+
+
+
 <body>
 
 
 
+  <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
     const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
@@ -28,7 +32,7 @@
     } else {
       const codigo = prompt("Introduce el código de autorización:");
 
-      // Si pulsa cancelar → codigo === null
+      // Cancelar → null → acceso denegado
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
@@ -41,26 +45,15 @@
 
 
 
-
-  <!--
+  <!-- AVISO DE NUEVA VERSIÓN -->
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
-    }
-  </script>
-  //-->
-
-
-
-  <script>
-    // AVISO USUARIO NUEVA VERSION
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-      reg.onupdatefound = () => {
-        const newWorker = reg.installing;
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
           newWorker.onstatechange = () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            alert("Nueva versión disponible. Recarga la app.");
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              alert("Nueva versión disponible. Recarga la app.");
             }
           };
         };
@@ -70,21 +63,29 @@
 
 
 
-  <div class="app-container">
+  <!-- APP COMPLETA (OCULTA HASTA AUTORIZAR) -->
+  <div id="app-container" class="app-container" style="display:none;">
 
 
 
+    <!-- CABECERA DE BIENVENIDA -->
     <header id="welcome-header" class="welcome-header">
-      <img src="/APPAVPCEA/icons/icon-192.png" class="welcome-logo">
+      <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-logo">
     </header>
 
-    <header id="main-header" class="app-header">
+
+
+    <!-- CABECERA NORMAL -->
+    <header id="main-header" class="app-header" style="display:none;">
       <h1>APP AVPCEA</h1>
     </header>
 
 
 
     <main class="app-content">
+
+
+  
       <!-- PANTALLA DE BIENVENIDA -->
       <div id="welcome-screen" class="screen active">
         <div class="card">
@@ -93,9 +94,9 @@
           <button id="btn-acceder" class="btn-primary">Acceder</button>
         </div>
       </div>
-      
 
-      
+
+  
       <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
 
@@ -105,9 +106,7 @@
             <p>Pantalla principal.</p>
           </div>
         </div>
-        
 
-        
         <div id="screen-noticias" class="screen">
           <div class="card">
             <h2>Noticias</h2>
@@ -115,8 +114,6 @@
           </div>
         </div>
 
-
-        
         <div id="screen-perfil" class="screen">
           <div class="card">
             <h2>Perfil</h2>
@@ -124,74 +121,36 @@
           </div>
         </div>
 
-
-      
       </div>
+
     </main>
 
-
-    
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" style="display:none;">
       <button class="nav-btn active" data-screen="inicio">Inicio</button>
       <button class="nav-btn" data-screen="noticias">Noticias</button>
       <button class="nav-btn" data-screen="perfil">Perfil</button>
     </nav>
 
-
-  
   </div>
 
 
 
+  <!-- SCRIPT FINAL -->
   <script>
     function showScreen(name) {
-    // Ocultar cabecera bienvenida, mostrar cabecera normal
       document.getElementById("welcome-header").style.display = "none";
       document.getElementById("main-header").style.display = "block";
 
-    // Activar botón
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
-    // Ocultar pantallas de la app
       document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-
-    // Mostrar pantalla seleccionada
       document.getElementById("screen-" + name).classList.add("active");
     }
 
-    // Cuando el DOM ya existe
-      document.addEventListener("DOMContentLoaded", () => {
-    // Evento del botón ACCEDER
-      document.getElementById("btn-acceder").addEventListener("click", () => {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("welcome-header").style.display = "none";
-
-      document.getElementById("app-screens").style.display = "block";
-      document.getElementById("main-header").style.display = "block";
-
-      document.querySelector(".bottom-nav").style.display = "flex";
-
-      showScreen("inicio");
-    });
-
-    // Navegación inferior
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        showScreen(btn.dataset.screen);
-      });
-    });
-
-    // Al inicio: mostrar solo bienvenida, ocultar barra inferior
-      document.querySelector(".bottom-nav").style.display = "none";
-      document.getElementById("main-header").style.display = "none";
-    });
-  </script>
-
-
-
-  <script>
     document.addEventListener("DOMContentLoaded", () => {
+
+      // Mostrar app solo si está autorizado
       if (window.AVPCEA_AUTORIZADO) {
         document.getElementById("app-container").style.display = "block";
       } else {
@@ -201,11 +160,30 @@
             <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
           </div>
         `;
+        return;
       }
+
+      // BOTÓN ACCEDER
+      document.getElementById("btn-acceder").addEventListener("click", () => {
+        document.getElementById("welcome-screen").style.display = "none";
+        document.getElementById("welcome-header").style.display = "none";
+
+        document.getElementById("app-screens").style.display = "block";
+        document.getElementById("main-header").style.display = "block";
+        document.querySelector(".bottom-nav").style.display = "flex";
+
+        showScreen("inicio");
+      });
+
+      // BOTONES DE NAVEGACIÓN
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          showScreen(btn.dataset.screen);
+        });
+      });
+
     });
   </script>
-
-
 
 </body>
 </html>
