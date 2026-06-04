@@ -59,14 +59,13 @@ body {
 }
 
 /* Ocultar cabecera normal en bienvenida */
-.app-header {
+#main-header {
   display: none;
 }
 
 
 /* HEADER */
 .app-header {
-  display: block;
   background: #0d6efd;
   color: white;
   padding: 18px;
