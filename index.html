@@ -88,9 +88,13 @@
   </script>
 
   <script>
-    // BOTON DE BIENVENIDA Y NAVEGACION
     function showScreen(name) {
-      // Desactivar botones
+
+      // Mostrar cabecera normal y ocultar la de bienvenida
+      document.getElementById("welcome-header").style.display = "none";
+      document.getElementById("main-header").style.display = "block";
+
+      // Activar botón
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
@@ -103,30 +107,37 @@
 
       // Evento del botón ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
+
       // Ocultar bienvenida
       document.getElementById("welcome-screen").style.display = "none";
+      document.getElementById("welcome-header").style.display = "none";
 
       // Mostrar estructura de pantallas
       document.getElementById("app-screens").style.display = "block";
 
+      // Mostrar cabecera normal
+      document.getElementById("main-header").style.display = "block";
+
       // Mostrar barra inferior
       document.querySelector(".bottom-nav").style.display = "flex";
 
-      // Iniciar en la pantalla de inicio
+      // Ir a Inicio
       showScreen("inicio");
     });
 
       // Navegación inferior
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-        showScreen(btn.dataset.screen);
+          showScreen(btn.dataset.screen);
+      });
     });
-  });
-</script>
+  </script>
+
 
 
 
   <div class="app-container">
+
 
 
     <header id="welcome-header" class="welcome-header">
