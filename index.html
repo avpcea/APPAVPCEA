@@ -15,6 +15,7 @@
 <body>
 
 
+
   <script>
     // TOKEN QUE SOLO TÚ CONOCES
     const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
@@ -44,6 +45,7 @@
   </script>
 
 
+
   <!--
   <script>
     if ("serviceWorker" in navigator) {
@@ -51,6 +53,8 @@
     }
   </script>
   //-->
+
+
 
   <script>
     // AVISO USUARIO NUEVA VERSION
@@ -67,72 +71,6 @@
       });
     }
   </script>
-
-  <script>
-    // SCRIPT DE NAVEGACION
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-
-        // Quitar active de todos los botones
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        // Ocultar todas las pantallas
-        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-
-        // Mostrar la pantalla seleccionada
-        const screenId = "screen-" + btn.dataset.screen;
-        document.getElementById(screenId).classList.add("active");
-      });
-    });
-  </script>
-
-  <script>
-    function showScreen(name) {
-
-      // Mostrar cabecera normal y ocultar la de bienvenida
-      document.getElementById("welcome-header").style.display = "none";
-      document.getElementById("main-header").style.display = "block";
-
-      // Activar botón
-      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
-
-      // Ocultar pantallas
-      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-
-      // Mostrar pantalla seleccionada
-      document.getElementById("screen-" + name).classList.add("active");
-    }
-
-      // Evento del botón ACCEDER
-      document.getElementById("btn-acceder").addEventListener("click", () => {
-
-      // Ocultar bienvenida
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("welcome-header").style.display = "none";
-
-      // Mostrar estructura de pantallas
-      document.getElementById("app-screens").style.display = "block";
-
-      // Mostrar cabecera normal
-      document.getElementById("main-header").style.display = "block";
-
-      // Mostrar barra inferior
-      document.querySelector(".bottom-nav").style.display = "flex";
-
-      // Ir a Inicio
-      showScreen("inicio");
-    });
-
-      // Navegación inferior
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          showScreen(btn.dataset.screen);
-      });
-    });
-  </script>
-
 
 
 
@@ -160,6 +98,8 @@
         </div>
       </div>
       
+
+      
       <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
 
@@ -170,6 +110,8 @@
           </div>
         </div>
         
+
+        
         <div id="screen-noticias" class="screen">
           <div class="card">
             <h2>Noticias</h2>
@@ -177,6 +119,8 @@
           </div>
         </div>
 
+
+        
         <div id="screen-perfil" class="screen">
           <div class="card">
             <h2>Perfil</h2>
@@ -184,18 +128,71 @@
           </div>
         </div>
 
+
+      
       </div>
-    
     </main>
 
+
+    
     <nav class="bottom-nav">
       <button class="nav-btn active" data-screen="inicio">Inicio</button>
       <button class="nav-btn" data-screen="noticias">Noticias</button>
       <button class="nav-btn" data-screen="perfil">Perfil</button>
     </nav>
 
-  </div>
 
   
+  </div>
+
+
+
+<script>
+function showScreen(name) {
+  // Ocultar cabecera bienvenida, mostrar cabecera normal
+  document.getElementById("welcome-header").style.display = "none";
+  document.getElementById("main-header").style.display = "block";
+
+  // Activar botón
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
+
+  // Ocultar pantallas de la app
+  document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+
+  // Mostrar pantalla seleccionada
+  document.getElementById("screen-" + name).classList.add("active");
+}
+
+// Cuando el DOM ya existe
+document.addEventListener("DOMContentLoaded", () => {
+  // Evento del botón ACCEDER
+  document.getElementById("btn-acceder").addEventListener("click", () => {
+    document.getElementById("welcome-screen").style.display = "none";
+    document.getElementById("welcome-header").style.display = "none";
+
+    document.getElementById("app-screens").style.display = "block";
+    document.getElementById("main-header").style.display = "block";
+
+    document.querySelector(".bottom-nav").style.display = "flex";
+
+    showScreen("inicio");
+  });
+
+  // Navegación inferior
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showScreen(btn.dataset.screen);
+    });
+  });
+
+  // Al inicio: mostrar solo bienvenida, ocultar barra inferior
+  document.querySelector(".bottom-nav").style.display = "none";
+  document.getElementById("main-header").style.display = "none";
+});
+</script>
+
+
+
 </body>
 </html>
