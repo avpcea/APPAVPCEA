@@ -59,7 +59,7 @@ body {
 }
 
 /* Ocultar cabecera normal en bienvenida */
-#main-header {
+.app-header {
   display: none;
 }
 
