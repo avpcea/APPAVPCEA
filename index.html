@@ -20,7 +20,7 @@
     const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
-    // Variable global para saber si está autorizado
+    // Variable global
     window.AVPCEA_AUTORIZADO = false;
 
     if (tokenGuardado === TOKEN_SECRETO) {
@@ -28,6 +28,7 @@
     } else {
       const codigo = prompt("Introduce el código de autorización:");
 
+      // Si pulsa cancelar → codigo === null
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
