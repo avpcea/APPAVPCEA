@@ -14,6 +14,118 @@
 </head>
 <body>
 
+
+  <script>
+    // TOKEN QUE SOLO TÚ CONOCES
+    const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
+
+    // Comprobar si el dispositivo ya está autorizado
+    const tokenGuardado = localStorage.getItem("avpcea_token");
+
+    // Si NO está autorizado, pedir autorización
+    if (tokenGuardado !== TOKEN_SECRETO) {
+        const codigo = prompt("Introduce el código de autorización:");
+
+        if (codigo === TOKEN_SECRETO) {
+          // Guardar token en el dispositivo
+          localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+          alert("Dispositivo autorizado.");
+        } else {
+          // Bloquear acceso
+          document.body.innerHTML = `
+              <div style="padding:20px; text-align:center;">
+                  <h2>Acceso no autorizado</h2>
+                  <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+              </div>
+          `;
+          throw new Error("Acceso bloqueado");
+        }
+    }
+  </script>
+
+
+  <!--
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
+    }
+  </script>
+  //-->
+
+  <script>
+    // AVISO USUARIO NUEVA VERSION
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            alert("Nueva versión disponible. Recarga la app.");
+            }
+          };
+        };
+      });
+    }
+  </script>
+
+  <script>
+    // SCRIPT DE NAVEGACION
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+
+        // Quitar active de todos los botones
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        // Ocultar todas las pantallas
+        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+
+        // Mostrar la pantalla seleccionada
+        const screenId = "screen-" + btn.dataset.screen;
+        document.getElementById(screenId).classList.add("active");
+      });
+    });
+  </script>
+
+  <script>
+    // BOTON DE BIENVENIDA Y NAVEGACION
+    function showScreen(name) {
+      // Desactivar botones
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
+
+      // Ocultar pantallas
+      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+
+      // Mostrar pantalla seleccionada
+      document.getElementById("screen-" + name).classList.add("active");
+    }
+
+      // Evento del botón ACCEDER
+      document.getElementById("btn-acceder").addEventListener("click", () => {
+      // Ocultar bienvenida
+      document.getElementById("welcome-screen").style.display = "none";
+
+      // Mostrar estructura de pantallas
+      document.getElementById("app-screens").style.display = "block";
+
+      // Mostrar barra inferior
+      document.querySelector(".bottom-nav").style.display = "flex";
+
+      // Iniciar en la pantalla de inicio
+      showScreen("inicio");
+    });
+
+      // Navegación inferior
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+        showScreen(btn.dataset.screen);
+    });
+  });
+</script>
+
+
+
   <div class="app-container">
     <header class="app-header">
       </h1>APP AVPCEA</h1>
@@ -64,81 +176,6 @@
     </nav>
 
   </div>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
-    }
-  </script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-      reg.onupdatefound = () => {
-        const newWorker = reg.installing;
-          newWorker.onstatechange = () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            alert("Nueva versión disponible. Recarga la app.");
-            }
-          };
-        };
-      });
-    }
-  </script>
-
-  <script>
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-
-        // Quitar active de todos los botones
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        // Ocultar todas las pantallas
-        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-
-        // Mostrar la pantalla seleccionada
-        const screenId = "screen-" + btn.dataset.screen;
-        document.getElementById(screenId).classList.add("active");
-      });
-    });
-  </script>
-
-  <script>
-    function showScreen(name) {
-      // Desactivar botones
-      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
-
-      // Ocultar pantallas
-      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-
-      // Mostrar pantalla seleccionada
-      document.getElementById("screen-" + name).classList.add("active");
-    }
-
-      // Evento del botón ACCEDER
-      document.getElementById("btn-acceder").addEventListener("click", () => {
-      // Ocultar bienvenida
-      document.getElementById("welcome-screen").style.display = "none";
-
-      // Mostrar estructura de pantallas
-      document.getElementById("app-screens").style.display = "block";
-
-      // Mostrar barra inferior
-      document.querySelector(".bottom-nav").style.display = "flex";
-
-      // Iniciar en la pantalla de inicio
-      showScreen("inicio");
-    });
-
-      // Navegación inferior
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-        showScreen(btn.dataset.screen);
-    });
-  });
-</script>
 
   
 </body>
