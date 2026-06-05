@@ -46,18 +46,22 @@ body {
   border-right: 1px solid #ddd;
 }
 
-/* CABECERA DE BIENVENIDA */
+/* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO */
 .welcome-header {
+  width: 100%;
+  overflow: hidden;
   background: #0d6efd;
-  padding: 40px 0;
-  text-align: center;
+  padding: 0;
+  margin: 0;
 }
 
-.welcome-logo {
-  width: 140px;
-  height: 140px;
-  border-radius: 20px;
+.welcome-hero {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
 }
+
 
 /* Ocultar cabecera normal en bienvenida */
 #main-header {
