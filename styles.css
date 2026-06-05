@@ -49,22 +49,18 @@ body {
 
 
 /* CABECERA DE BIENVENIDA prueba */
-.welcome-hero-container {
+.welcome-banner {
   width: 100%;
-  overflow: hidden;
+  background: linear-gradient(#0d6efd, #003f9e);
+  padding: 0;
 }
 
-.welcome-hero {
+.welcome-banner-img {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
 }
 
-.welcome-card {
-  margin-top: 20px;
-  text-align: center;
-}
 
 
 
