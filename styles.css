@@ -55,12 +55,28 @@ body {
   margin: 0;
 }
 
-.welcome-hero {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
+
+.welcome-card {
+  text-align: center;
 }
+
+.welcome-title {
+  font-size: 26px;
+  margin-bottom: 10px;
+  color: #0d6efd;
+}
+
+.welcome-sub {
+  font-size: 18px;
+  margin: 4px 0;
+}
+
+.welcome-town {
+  font-size: 26px;
+  margin-top: 10px;
+  color: #0d6efd;
+}
+
 
 /* Ocultar cabecera normal en bienvenida */
 #main-header {
