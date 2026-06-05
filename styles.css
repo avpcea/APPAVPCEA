@@ -50,7 +50,7 @@ body {
 .welcome-header {
   width: 100%;
   overflow: hidden;
-  background: #0d6efd;
+  background: #f49404;
   padding: 0;
   margin: 0;
 }
@@ -63,7 +63,6 @@ body {
 .welcome-title {
   font-size: 26px;
   margin-bottom: 10px;
-  color: #0d6efd;
 }
 
 .welcome-sub {
@@ -74,8 +73,13 @@ body {
 .welcome-town {
   font-size: 26px;
   margin-top: 10px;
-  color: #0d6efd;
 }
+
+.welcome-title,
+.welcome-town {
+  color: #222; /* gris oscuro profesional */
+}
+
 
 
 /* Ocultar cabecera normal en bienvenida */
