@@ -46,7 +46,7 @@ body {
   border-right: 1px solid #ddd;
 }
 
-/* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO */
+/* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO 
 .welcome-header {
   width: 100%;
   overflow: hidden;
@@ -54,6 +54,29 @@ body {
   padding: 0;
   margin: 0;
 }
+*/
+
+/* CABECERA DE BIENVENIDA prueba */
+.welcome-hero-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.welcome-hero {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.welcome-card {
+  margin-top: 20px;
+  text-align: center;
+}
+
+
+
+
 
 .welcome-hero {
   width: 100%;
