@@ -113,8 +113,7 @@ body {
 /* CABECERA NORMAL */
 .app-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: center;        /* centra verticalmente el texto */
   background: #f49404;
   padding: 10px 15px;
   color: #000;
@@ -122,17 +121,20 @@ body {
   box-sizing: border-box;
 }
 
-/* Icono de la cabecera */
+/* Icono pegado al borde izquierdo */
 .header-logo {
-  width: 40px;
-  height: 40px;
+  width: 48px;                /* un poco más grande para equilibrar */
+  height: 48px;
   object-fit: contain;
+  margin: 0;                  /* sin separación */
+  padding: 0;
 }
 
-/* Texto de la cabecera */
+/* Texto grande y centrado verticalmente */
 .header-title {
-  font-size: 18px;
-  line-height: 1.2;
+  font-size: 32px;            /* el doble de grande que antes */
+  line-height: 1;
+  margin-left: 15px;          /* separación del icono */
   color: #000;
 }
 
