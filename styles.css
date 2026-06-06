@@ -4,7 +4,7 @@
 
 
 
-
+/* GLOBAL */
 html, body {
   height: 100%;
   margin: 0;
@@ -103,7 +103,7 @@ body {
 
 
 
-/* Ocultar cabecera normal en bienvenida */
+/* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
 #main-header {
   display: none;
 }
