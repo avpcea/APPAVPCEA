@@ -149,7 +149,7 @@
   <script>
     function showScreen(name) {
       document.getElementById("welcome-header").style.display = "none";
-      document.getElementById("main-header").style.display = "block";
+      document.getElementById("main-header").style.display = "flex";
 
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
