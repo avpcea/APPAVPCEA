@@ -16,7 +16,7 @@ html, body {
 header {
   background: #f49404;
   color: white;
-  /*padding: 15px;*/
+  padding: 5px;
   font-size: 20px;
   text-align: center;
 }
