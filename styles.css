@@ -113,29 +113,30 @@ body {
 /* CABECERA NORMAL */
 .app-header {
   display: flex;
-  align-items: center;        /* menos padding para móvil */
+  align-items: center;     /* centra verticalmente el texto */
   background: #f49404;
-  padding: 8px 10px;
-  color: #000;
-  font-weight: bold;
+  padding: 0;              /* SIN padding para que el icono quede pegado */
+  height: 56px;            /* altura fija para estabilidad */
   box-sizing: border-box;
 }
 
-/* Icono pegado al borde izquierdo */
+/* ICONO PEGADO AL BORDE */
 .header-logo {
-  width: 36px;                /* tamaño ideal para móvil */
-  height: 36px;
-  object-fit: contain;
-  margin: 0;                  /* sin separación */
-  padding: 0;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  margin-left: 8px;        /* separación mínima del borde real */
 }
 
-/* Texto grande y centrado verticalmente */
+/* TEXTO CENTRADO Y EQUILIBRADO */
 .header-title {
-  font-size: 20px;            /* tamaño perfecto para móvil */
-  line-height: 1.2;
-  margin-left: 10px;          /* separación del icono */
+  font-size: 22px;         /* tamaño ideal para móvil */
+  margin-left: 12px;       /* separación del icono */
   color: #000;
+  line-height: 1;
+  display: flex;
+  align-items: center;     /* centra verticalmente el texto dentro del span */
+  height: 100%;            /* asegura alineación vertical */
 }
 
 @media (min-width: 600px) {
