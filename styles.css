@@ -110,34 +110,40 @@ body {
 
 
 
-/* CABECERA NORMAL */
+/* CABECERA */
 .app-header {
-  display: flex;
-  align-items: center;     /* centra verticalmente el texto */
   background: #f49404;
-  padding: 0;              /* SIN padding para que el icono quede pegado */
-  height: 56px;            /* altura fija para estabilidad */
+  height: 56px;
+  display: flex;
+  align-items: center;
   box-sizing: border-box;
 }
 
-/* ICONO PEGADO AL BORDE */
-.header-logo {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  margin-left: 8px;        /* separación mínima del borde real */
+/* Contenedor interno para icono + texto */
+.header-inner {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  width: 100%;
 }
 
-/* TEXTO CENTRADO Y EQUILIBRADO */
-.header-title {
-  font-size: 22px;         /* tamaño ideal para móvil */
-  margin-left: 12px;       /* separación del icono */
-  color: #000;
-  line-height: 1;
-  display: flex;
-  align-items: center;     /* centra verticalmente el texto dentro del span */
-  height: 100%;            /* asegura alineación vertical */
+/* Icono */
+.header-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
+
+/* Texto */
+.header-title {
+  margin-left: 10px;
+  font-size: 20px;
+  line-height: 1.2;
+  color: #000;
+  white-space: nowrap;
+}
+
 
 @media (min-width: 600px) {
   .header-logo {
