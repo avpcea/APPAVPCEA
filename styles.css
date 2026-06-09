@@ -325,5 +325,5 @@ body {
 
 /* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
 #main-header {
-  display: none;
+  display: none; !important;
 }
