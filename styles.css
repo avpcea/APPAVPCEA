@@ -69,15 +69,6 @@ body {
 
 
 
-/* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
-#main-header {
-  display: none;
-}
-
-
-
-
-
 /* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO */
 .welcome-header {
   width: 100%;
@@ -326,4 +317,13 @@ body {
 @keyframes fade {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+
+
+
+
+/* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
+#main-header {
+  display: none;
 }
