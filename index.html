@@ -141,14 +141,17 @@
       }
 
       // BOTÓN ACCEDER
-      document.getElementById("btn-acceder").addEventListener("click", () => {
-        document.getElementById("welcome-screen").style.display = "none";
-        document.getElementById("app-screens").style.display = "block";
-        document.getElementById("main-header").style.display = "flex";
-        document.querySelector(".bottom-nav").style.display = "flex";
+document.getElementById("btn-acceder").addEventListener("click", () => {
+  document.getElementById("welcome-screen").style.display = "none";
+  document.getElementById("welcome-header").style.display = "none";
 
-        showScreen("inicio");
-      });
+  document.getElementById("app-screens").style.display = "block";
+  document.getElementById("main-header").style.display = "flex";
+  document.querySelector(".bottom-nav").style.display = "flex";
+
+  showScreen("inicio");
+});
+
 
       // BOTONES DE NAVEGACIÓN
       document.querySelectorAll(".nav-btn").forEach(btn => {
