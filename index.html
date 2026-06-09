@@ -13,26 +13,19 @@
   <title>APP AVPCEA</title>
 </head>
 
-
-
 <body>
-
-
 
   <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
     const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
-    // Variable global
     window.AVPCEA_AUTORIZADO = false;
 
     if (tokenGuardado === TOKEN_SECRETO) {
       window.AVPCEA_AUTORIZADO = true;
     } else {
       const codigo = prompt("Introduce el código de autorización:");
-
-      // Cancelar → null → acceso denegado
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
@@ -42,8 +35,6 @@
       }
     }
   </script>
-
-
 
   <!-- AVISO DE NUEVA VERSIÓN -->
   <script>
@@ -61,50 +52,30 @@
     }
   </script>
 
-
-
   <!-- APP COMPLETA (OCULTA HASTA AUTORIZAR) -->
   <div id="app-container" class="app-container" style="display:none;">
-
-
 
     <!-- CABECERA DE BIENVENIDA -->
     <header id="welcome-header" class="welcome-header">
       <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
     </header>
 
-
-
     <main class="app-content">
-
-
 
       <!-- PANTALLA DE BIENVENIDA -->
       <div id="welcome-screen" class="screen active">
         <div class="card welcome-card">
-          <!-- Texto oculto temporalmente
-          <h2 class="welcome-title">Bienvenido</h2>
-
-          <p class="welcome-sub">Agrupación de Voluntarios</p>
-          <p class="welcome-sub">Protección Civil</p>
-
-          <h2 class="welcome-town">El Arenal</h2>
-          -->
           <button id="btn-acceder" class="btn-primary">Acceder</button>
         </div>
       </div>
 
-
-
-      <!-- CABECERA NORMAL -->
+      <!-- CABECERA NORMAL (OCULTA AL INICIO) -->
       <header id="main-header" class="app-header">
         <div class="header-inner">
           <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo" alt="Protección Civil">
           <span class="header-title">Protección Civil El Arenal</span>
         </div>
       </header>
-
-
 
       <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
@@ -142,8 +113,6 @@
 
   </div>
 
-
-
   <!-- SCRIPT FINAL -->
   <script>
     function showScreen(name) {
@@ -159,7 +128,6 @@
 
     document.addEventListener("DOMContentLoaded", () => {
 
-      // Mostrar app solo si está autorizado
       if (window.AVPCEA_AUTORIZADO) {
         document.getElementById("app-container").style.display = "block";
       } else {
@@ -175,8 +143,6 @@
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
         document.getElementById("welcome-screen").style.display = "none";
-      //  document.getElementById("welcome-header").style.display = "none";
-
         document.getElementById("app-screens").style.display = "block";
         document.getElementById("main-header").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex";
