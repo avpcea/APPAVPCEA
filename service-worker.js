@@ -1,4 +1,4 @@
-const CACHE_NAME = "avpcea-cache-v7";
+const CACHE_NAME = "avpcea-cache-v8";
 const URLS_TO_CACHE = [
   "/APPAVPCEA/",
   "/APPAVPCEA/index.html",
