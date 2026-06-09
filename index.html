@@ -20,38 +20,40 @@
 
     <main class="app-content">
 
-      <div class="card">
-        <h2>Bienvenido</h2>
-        <p>Esta es la aplicación oficial AVPCEA.</p>
-        <button class="btn-primary">Acceder</button>
-      </div>
+      <!-- PANTALLA DE BIENVENIDA -->
+<div id="welcome-screen" class="screen active">
+  <div class="card">
+    <h2>Bienvenido</h2>
+    <p>Esta es la aplicación oficial AVPCEA.</p>
+    <button id="btn-acceder" class="btn-primary">Acceder</button>
+  </div>
+</div>
 
-      <div class="card">
-        <h2>Noticias</h2>
-        <p>Consulta las últimas novedades.</p>
-        <button class="btn-secondary">Ver más</button>
-      </div>
+<!-- PANTALLAS DE LA APP -->
+<div id="app-screens" style="display:none;">
 
-      <div id="screen-inicio" class="screen active">
-        <div class="card">
-          <h2>Bienvenido</h2>
-          <p>Esta es la pantalla de inicio.</p>
-      </div>
+  <div id="screen-inicio" class="screen">
+    <div class="card">
+      <h2>Inicio</h2>
+      <p>Pantalla principal.</p>
     </div>
+  </div>
 
-    <div id="screen-noticias" class="screen">
-      <div class="card">
-        <h2>Noticias</h2>
-        <p>Aquí aparecerán las novedades.</p>
-      </div>
+  <div id="screen-noticias" class="screen">
+    <div class="card">
+      <h2>Noticias</h2>
+      <p>Aquí aparecerán las novedades.</p>
     </div>
+  </div>
 
-    <div id="screen-perfil" class="screen">
-      <div class="card">
-        <h2>Perfil</h2>
-        <p>Información del usuario.</p>
-      </div>
+  <div id="screen-perfil" class="screen">
+    <div class="card">
+      <h2>Perfil</h2>
+      <p>Información del usuario.</p>
     </div>
+  </div>
+
+</div>
 
 
     </main>
