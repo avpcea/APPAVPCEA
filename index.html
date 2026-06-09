@@ -17,24 +17,25 @@
 
   <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
-    const TOKEN_SECRETO = "v21";
+    const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
-    if (tokenGuardado !== TOKEN_SECRETO) {
-        const codigo = prompt("Introduce el código de autorización:");
+    // Variable global
+    window.AVPCEA_AUTORIZADO = false;
 
-        if (codigo === TOKEN_SECRETO) {
-            localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-            alert("Dispositivo autorizado.");
-        } else {
-            document.body.innerHTML = `
-                <div style="padding:20px; text-align:center;">
-                    <h2>Acceso no autorizado</h2>
-                    <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-                </div>
-            `;
-            throw new Error("Acceso bloqueado");
-        }
+    if (tokenGuardado === TOKEN_SECRETO) {
+      window.AVPCEA_AUTORIZADO = true;
+    } else {
+      const codigo = prompt("Introduce el código de autorización:");
+
+      // Cancelar → null → acceso denegado
+      if (codigo === TOKEN_SECRETO) {
+        localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+        alert("Dispositivo autorizado.");
+        window.AVPCEA_AUTORIZADO = true;
+      } else {
+        window.AVPCEA_AUTORIZADO = false;
+      }
     }
   </script>
 
@@ -54,7 +55,8 @@
     }
   </script>
 
-  <div class="app-container">
+  <!-- APP COMPLETA (OCULTA HASTA AUTORIZAR) -->
+  <div id="app-container" class="app-container" style="display:none;">
 
     <!-- CABECERA DE BIENVENIDA -->
     <header id="welcome-header" class="welcome-header">
@@ -113,7 +115,7 @@
 
   </div>
 
-  <!-- SCRIPT FINAL (FUNCIONA PORQUE EL DOM YA EXISTE) -->
+  <!-- SCRIPT FINAL -->
   <script>
     function showScreen(name) {
       document.getElementById("welcome-header").style.display = "none";
@@ -127,6 +129,19 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+
+      // Mostrar app solo si está autorizado
+      if (window.AVPCEA_AUTORIZADO) {
+        document.getElementById("app-container").style.display = "block";
+      } else {
+        document.body.innerHTML = `
+          <div style="padding:20px; text-align:center;">
+            <h2>Acceso no autorizado</h2>
+            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+          </div>
+        `;
+        return;
+      }
 
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
