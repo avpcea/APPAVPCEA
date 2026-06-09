@@ -18,6 +18,25 @@ body {
   border-right: 1px solid #ddd;
 }
 
+/* CABECERA DE BIENVENIDA */
+.welcome-header {
+  background: #0d6efd;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.welcome-logo {
+  width: 140px;
+  height: 140px;
+  border-radius: 20px;
+}
+
+/* Ocultar cabecera normal en bienvenida */
+#main-header {
+  display: none;
+}
+
+
 /* HEADER */
 .app-header {
   background: #0d6efd;
