@@ -73,33 +73,42 @@
     }
   </script>
 
-  <script>
+<script>
 function showScreen(name) {
-  // Desactivar todos los botones
+  // Desactivar botones
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-
-  // Activar el botón correcto
   document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
-  // Ocultar todas las pantallas
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  // Ocultar pantallas
+  document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
 
-  // Mostrar la pantalla seleccionada
+  // Mostrar pantalla seleccionada
   document.getElementById("screen-" + name).classList.add("active");
 }
 
-// Navegación al pulsar botones
+// Evento del botón ACCEDER
+document.getElementById("btn-acceder").addEventListener("click", () => {
+  // Ocultar bienvenida
+  document.getElementById("welcome-screen").style.display = "none";
+
+  // Mostrar estructura de pantallas
+  document.getElementById("app-screens").style.display = "block";
+
+  // Mostrar barra inferior
+  document.querySelector(".bottom-nav").style.display = "flex";
+
+  // Iniciar en la pantalla de inicio
+  showScreen("inicio");
+});
+
+// Navegación inferior
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     showScreen(btn.dataset.screen);
   });
 });
-
-// 🚀 Iniciar la app mostrando la pantalla de inicio
-document.addEventListener("DOMContentLoaded", () => {
-  showScreen("inicio");
-});
 </script>
+
 
 </body>
 </html>
