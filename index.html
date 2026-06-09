@@ -11,6 +11,33 @@
 </head>
 
 <body>
+<script>
+// TOKEN QUE SOLO TÚ CONOCES
+const TOKEN_SECRETO = "AVPCEA-2026-ACCESS";
+
+// Comprobar si el dispositivo ya está autorizado
+const tokenGuardado = localStorage.getItem("avpcea_token");
+
+// Si NO está autorizado, pedir autorización
+if (tokenGuardado !== TOKEN_SECRETO) {
+    const codigo = prompt("Introduce el código de autorización:");
+
+    if (codigo === TOKEN_SECRETO) {
+        // Guardar token en el dispositivo
+        localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+        alert("Dispositivo autorizado.");
+    } else {
+        // Bloquear acceso
+        document.body.innerHTML = `
+            <div style="padding:20px; text-align:center;">
+                <h2>Acceso no autorizado</h2>
+                <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+            </div>
+        `;
+        throw new Error("Acceso bloqueado");
+    }
+}
+</script>
 
   <div class="app-container">
 
