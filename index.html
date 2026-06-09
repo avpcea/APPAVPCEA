@@ -2,157 +2,153 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>APP AVPCEA</title>
-
   <link rel="manifest" href="/APPAVPCEA/manifest.json">
   <link rel="stylesheet" href="/APPAVPCEA/styles.css">
+  <link rel="apple-touch-icon" href="/APPAVPCEA/icons/icon-192.png">
+  <link rel="apple-touch-startup-image" href="/APPAVPCEA/icons/icon-512.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#0d6efd">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>APP AVPCEA</title>
 </head>
 
 <body>
-<script>
-// TOKEN QUE SOLO TÚ CONOCES
-const TOKEN_SECRETO = "v21";
 
-// Comprobar si el dispositivo ya está autorizado
-const tokenGuardado = localStorage.getItem("avpcea_token");
+  <!-- TOKEN DE AUTORIZACIÓN -->
+  <script>
+    const TOKEN_SECRETO = "v21";
+    const tokenGuardado = localStorage.getItem("avpcea_token");
 
-// Si NO está autorizado, pedir autorización
-if (tokenGuardado !== TOKEN_SECRETO) {
-    const codigo = prompt("Introduce el código de autorización:");
+    if (tokenGuardado !== TOKEN_SECRETO) {
+        const codigo = prompt("Introduce el código de autorización:");
 
-    if (codigo === TOKEN_SECRETO) {
-        // Guardar token en el dispositivo
-        localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-        alert("Dispositivo autorizado.");
-    } else {
-        // Bloquear acceso
-        document.body.innerHTML = `
-            <div style="padding:20px; text-align:center;">
-                <h2>Acceso no autorizado</h2>
-                <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-            </div>
-        `;
-        throw new Error("Acceso bloqueado");
+        if (codigo === TOKEN_SECRETO) {
+            localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+            alert("Dispositivo autorizado.");
+        } else {
+            document.body.innerHTML = `
+                <div style="padding:20px; text-align:center;">
+                    <h2>Acceso no autorizado</h2>
+                    <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+                </div>
+            `;
+            throw new Error("Acceso bloqueado");
+        }
     }
-}
-</script>
+  </script>
+
+  <!-- AVISO DE NUEVA VERSIÓN -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              alert("Nueva versión disponible. Recarga la app.");
+            }
+          };
+        };
+      });
+    }
+  </script>
 
   <div class="app-container">
 
-
+    <!-- CABECERA DE BIENVENIDA -->
     <header id="welcome-header" class="welcome-header">
-  <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-logo">
-</header>
+      <img src="/APPAVPCEA/icons/icon-192.png" class="welcome-logo">
+    </header>
+
+    <!-- CABECERA NORMAL -->
+    <header id="main-header" class="app-header" style="display:none;">
+      <h1>APP AVPCEA</h1>
+    </header>
 
     <main class="app-content">
 
-<header id="main-header" class="app-header">
-  <h1>APP AVPCEA</h1>
-</header>
-
-
       <!-- PANTALLA DE BIENVENIDA -->
-<div id="welcome-screen" class="screen active">
-  <div class="card">
-    <h2>Bienvenido</h2>
-    <p>Esta es la aplicación oficial AVPCEA.</p>
-    <button id="btn-acceder" class="btn-primary">Acceder</button>
-  </div>
-</div>
+      <div id="welcome-screen" class="screen active">
+        <div class="card">
+          <h1>Bienvenido</h1>
+          <p>Esta es la aplicación oficial AVPCEA.</p>
+          <button id="btn-acceder" class="btn-primary">Acceder</button>
+        </div>
+      </div>
 
-<!-- PANTALLAS DE LA APP -->
-<div id="app-screens" style="display:none;">
+      <!-- PANTALLAS DE LA APP -->
+      <div id="app-screens" style="display:none;">
 
-  <div id="screen-inicio" class="screen">
-    <div class="card">
-      <h2>Inicio</h2>
-      <p>Pantalla principal.</p>
-    </div>
-  </div>
+        <div id="screen-inicio" class="screen">
+          <div class="card">
+            <h2>Inicio</h2>
+            <p>Pantalla principal.</p>
+          </div>
+        </div>
 
-  <div id="screen-noticias" class="screen">
-    <div class="card">
-      <h2>Noticias</h2>
-      <p>Aquí aparecerán las novedades.</p>
-    </div>
-  </div>
+        <div id="screen-noticias" class="screen">
+          <div class="card">
+            <h2>Noticias</h2>
+            <p>Aquí aparecerán las novedades.</p>
+          </div>
+        </div>
 
-  <div id="screen-perfil" class="screen">
-    <div class="card">
-      <h2>Perfil</h2>
-      <p>Información del usuario.</p>
-    </div>
-  </div>
+        <div id="screen-perfil" class="screen">
+          <div class="card">
+            <h2>Perfil</h2>
+            <p>Información del usuario.</p>
+          </div>
+        </div>
 
-</div>
-
+      </div>
 
     </main>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" style="display:none;">
       <button class="nav-btn active" data-screen="inicio">Inicio</button>
       <button class="nav-btn" data-screen="noticias">Noticias</button>
       <button class="nav-btn" data-screen="perfil">Perfil</button>
     </nav>
 
-
   </div>
 
+  <!-- SCRIPT FINAL (FUNCIONA PORQUE EL DOM YA EXISTE) -->
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js");
+    function showScreen(name) {
+      document.getElementById("welcome-header").style.display = "none";
+      document.getElementById("main-header").style.display = "block";
+
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
+
+      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+      document.getElementById("screen-" + name).classList.add("active");
     }
-  </script>
 
-<script>
-function showScreen(name) {
-  // Ocultar cabecera bienvenida, mostrar cabecera normal
-  document.getElementById("welcome-header").style.display = "none";
-  document.getElementById("main-header").style.display = "block";
+    document.addEventListener("DOMContentLoaded", () => {
 
-  // Activar botón
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
+      // BOTÓN ACCEDER
+      document.getElementById("btn-acceder").addEventListener("click", () => {
+        document.getElementById("welcome-screen").style.display = "none";
+        document.getElementById("welcome-header").style.display = "none";
 
-  // Ocultar pantallas de la app
-  document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+        document.getElementById("app-screens").style.display = "block";
+        document.getElementById("main-header").style.display = "block";
+        document.querySelector(".bottom-nav").style.display = "flex";
 
-  // Mostrar pantalla seleccionada
-  document.getElementById("screen-" + name).classList.add("active");
-}
+        showScreen("inicio");
+      });
 
-// Cuando el DOM ya existe
-document.addEventListener("DOMContentLoaded", () => {
-  // Evento del botón ACCEDER
-  document.getElementById("btn-acceder").addEventListener("click", () => {
-    document.getElementById("welcome-screen").style.display = "none";
-    document.getElementById("welcome-header").style.display = "none";
+      // BOTONES DE NAVEGACIÓN
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          showScreen(btn.dataset.screen);
+        });
+      });
 
-    document.getElementById("app-screens").style.display = "block";
-    document.getElementById("main-header").style.display = "block";
-
-    document.querySelector(".bottom-nav").style.display = "flex";
-
-    showScreen("inicio");
-  });
-
-  // Navegación inferior
-  document.querySelectorAll(".nav-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      showScreen(btn.dataset.screen);
     });
-  });
-
-  // Al inicio: mostrar solo bienvenida, ocultar barra inferior
-  document.querySelector(".bottom-nav").style.display = "none";
-  document.getElementById("main-header").style.display = "none";
-});
-</script>
-
-
-
+  </script>
 
 </body>
 </html>
