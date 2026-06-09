@@ -17,7 +17,7 @@
 
   <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
-    const TOKEN_SECRETO = "v21";  // "AVPCEA-1996-ACCESS"
+    const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
     window.AVPCEA_AUTORIZADO = false;
@@ -60,14 +60,15 @@
       <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
     </header>
 
-      <!-- CABECERA NORMAL (OCULTA AL INICIO) -->
-      <header id="main-header" class="app-header">
-        <div class="header-inner">
-          <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo" alt="Protección Civil">
-          <span class="header-title">Protección Civil El Arenal</span>
-        </div>
-      </header>
+    <!-- CABECERA NORMAL (OCULTA AL INICIO) -->
+    <header id="main-header" class="app-header">
+      <div class="header-inner">
+        <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo" alt="Protección Civil">
+        <span class="header-title">Protección Civil El Arenal</span>
+      </div>
+    </header>
 
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="app-content">
 
       <!-- PANTALLA DE BIENVENIDA -->
@@ -105,6 +106,7 @@
 
     </main>
 
+    <!-- BARRA INFERIOR -->
     <nav class="bottom-nav" style="display:none;">
       <button class="nav-btn active" data-screen="inicio">Inicio</button>
       <button class="nav-btn" data-screen="noticias">Noticias</button>
