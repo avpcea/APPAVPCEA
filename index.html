@@ -13,7 +13,7 @@
 <body>
 <script>
 // TOKEN QUE SOLO TÚ CONOCES
-const TOKEN_SECRETO = "V21";
+const TOKEN_SECRETO = "v21";
 
 // Comprobar si el dispositivo ya está autorizado
 const tokenGuardado = localStorage.getItem("avpcea_token");
@@ -143,7 +143,15 @@ document.getElementById("btn-acceder").addEventListener("click", () => {
   // Ir a Inicio
   showScreen("inicio");
 });
+
+// Navegación inferior
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    showScreen(btn.dataset.screen);
+  });
+});
 </script>
+
 
 
 
