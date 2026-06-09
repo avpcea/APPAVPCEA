@@ -72,23 +72,32 @@
   </script>
 
   <script>
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
+function showScreen(name) {
+  // Desactivar todos los botones
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
 
-        // Quitar active de todos los botones
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+  // Activar el botón correcto
+  document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
-        // Ocultar todas las pantallas
-        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  // Ocultar todas las pantallas
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
 
-        // Mostrar la pantalla seleccionada
-        const screenId = "screen-" + btn.dataset.screen;
-        document.getElementById(screenId).classList.add("active");
-    });
+  // Mostrar la pantalla seleccionada
+  document.getElementById("screen-" + name).classList.add("active");
+}
+
+// Navegación al pulsar botones
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    showScreen(btn.dataset.screen);
   });
-</script>
+});
 
+// 🚀 Iniciar la app mostrando la pantalla de inicio
+document.addEventListener("DOMContentLoaded", () => {
+  showScreen("inicio");
+});
+</script>
 
 </body>
 </html>
