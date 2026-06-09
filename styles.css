@@ -69,6 +69,15 @@ body {
 
 
 
+/* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
+#main-header {
+  display: none;
+}
+
+
+
+
+
 /* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO */
 .welcome-header {
   width: 100%;
@@ -158,15 +167,6 @@ body {
   height: 100% !important;
   white-space: nowrap !important;
 }
-
-
-
-
-/* OCULTAR CABECERA NORMAL DE BIENEVENIDA */
-#main-header {
-  display: none;
-}
-
 
 
 
