@@ -16,29 +16,33 @@ body {
 .app-container {
   max-width: 480px;
   min-height: 100%;
-  margin: auto;
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: #fff;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
+  margin: 0;
+  padding: 0;
 }
 
 /* CABECERA DE BIENVENIDA CON IMAGEN A ANCHO COMPLETO */
 .welcome-header {
   width: 100%;
   overflow: hidden;
-  /*background: #0d6efd; */
+  background: none;
   padding: 0;
   margin: 0;
 }
 
 .welcome-hero {
-  width: 100%;
+  width: 100vm;
+  max-width: 100%;
   height: auto;
   display: block;
   object-fit: cover;
+  margin: 0;
+  padding: 0;
 }
 
 /* Ocultar cabecera normal en bienvenida */
@@ -63,7 +67,7 @@ body {
 .app-content {
   flex: 1;
   overflow-y: auto;
-  padding: 15px;
+  padding: 0;
   padding-bottom: 70px; /* espacio para la barra inferior */
 }
 
