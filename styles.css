@@ -24,19 +24,16 @@ body {
 .welcome-header {
   width: 100%;
   overflow: hidden;
-  background: none;
+  background: #0d6efd;
   padding: 0;
   margin: 0;
 }
 
 .welcome-hero {
-  width: 100vm;
-  max-width: 100%;
+  width: 100%;
   height: auto;
   display: block;
   object-fit: cover;
-  margin: 0;
-  padding: 0;
 }
 
 /* Ocultar cabecera normal en bienvenida */
