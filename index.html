@@ -20,7 +20,7 @@
     const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
-    // Variable global para saber si está autorizado
+    // Variable global
     window.AVPCEA_AUTORIZADO = false;
 
     if (tokenGuardado === TOKEN_SECRETO) {
@@ -28,6 +28,7 @@
     } else {
       const codigo = prompt("Introduce el código de autorización:");
 
+      // Si pulsa cancelar → codigo === null
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
@@ -37,6 +38,7 @@
       }
     }
   </script>
+
 
 
   <!-- AVISO DE NUEVA VERSIÓN -->
@@ -55,7 +57,7 @@
     }
   </script>
 
-  <div class="app-container">
+  <div id="app-container" class="app-container" style="display:none;">
 
     <!-- CABECERA DE BIENVENIDA -->
     <header id="welcome-header" class="welcome-header">
@@ -150,6 +152,24 @@
 
     });
   </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.AVPCEA_AUTORIZADO) {
+        // Mostrar la app
+        document.getElementById("app-container").style.display = "block";
+      } else {
+        // Mostrar solo mensaje de acceso denegado
+        document.body.innerHTML = `
+          <div style="padding:20px; text-align:center;">
+            <h2>Acceso no autorizado</h2>
+            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+          </div>
+        `;
+      }
+    });
+  </script>
+
 
 </body>
 </html>
