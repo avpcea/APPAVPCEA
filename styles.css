@@ -18,7 +18,7 @@ body {
   border-right: 1px solid #ddd;
 }
 
-/* Cabecera de bienvenida */
+/* CABECERA DE BIENVENIDA */
 .welcome-header {
   background: #0d6efd;
   padding: 40px 0;
@@ -31,10 +31,11 @@ body {
   border-radius: 20px;
 }
 
-/* Cabecera normal oculta SOLO al inicio */
+/* Ocultar cabecera normal en bienvenida */
 #main-header {
   display: none;
 }
+
 
 
 
