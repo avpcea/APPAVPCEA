@@ -17,7 +17,7 @@
 
   <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
-    const TOKEN_SECRETO = "v2";
+    const TOKEN_SECRETO = "AVPCEA-1996-ACCESS";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
     // Variable global
@@ -28,7 +28,7 @@
     } else {
       const codigo = prompt("Introduce el código de autorización:");
 
-      // Si pulsa cancelar → codigo === null
+      // Cancelar → null → acceso denegado
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
@@ -38,8 +38,6 @@
       }
     }
   </script>
-
-
 
   <!-- AVISO DE NUEVA VERSIÓN -->
   <script>
@@ -57,6 +55,7 @@
     }
   </script>
 
+  <!-- APP COMPLETA (OCULTA HASTA AUTORIZAR) -->
   <div id="app-container" class="app-container" style="display:none;">
 
     <!-- CABECERA DE BIENVENIDA -->
@@ -116,7 +115,7 @@
 
   </div>
 
-  <!-- SCRIPT FINAL (FUNCIONA PORQUE EL DOM YA EXISTE) -->
+  <!-- SCRIPT FINAL -->
   <script>
     function showScreen(name) {
       document.getElementById("welcome-header").style.display = "none";
@@ -130,6 +129,19 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+
+      // Mostrar app solo si está autorizado
+      if (window.AVPCEA_AUTORIZADO) {
+        document.getElementById("app-container").style.display = "block";
+      } else {
+        document.body.innerHTML = `
+          <div style="padding:20px; text-align:center;">
+            <h2>Acceso no autorizado</h2>
+            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+          </div>
+        `;
+        return;
+      }
 
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
@@ -152,24 +164,6 @@
 
     });
   </script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.AVPCEA_AUTORIZADO) {
-        // Mostrar la app
-        document.getElementById("app-container").style.display = "block";
-      } else {
-        // Mostrar solo mensaje de acceso denegado
-        document.body.innerHTML = `
-          <div style="padding:20px; text-align:center;">
-            <h2>Acceso no autorizado</h2>
-            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-          </div>
-        `;
-      }
-    });
-  </script>
-
 
 </body>
 </html>
