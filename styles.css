@@ -34,14 +34,10 @@ body {
   object-fit: cover;
 }
 
-
 /* Ocultar cabecera normal en bienvenida */
 #main-header {
   display: none;
 }
-
-
-
 
 /* HEADER */
 .app-header {
@@ -74,6 +70,27 @@ body {
 
 .card h2 {
   margin-top: 0;
+}
+
+.welcome-card {
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: 26px;
+  margin-bottom: 10px;
+  color: #0d6efd;
+}
+
+.welcome-sub {
+  font-size: 18px;
+  margin: 4px 0;
+}
+
+.welcome-town {
+  font-size: 26px;
+  margin-top: 10px;
+  color: #0d6efd;
 }
 
 /* BOTONES */
