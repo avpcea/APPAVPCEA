@@ -95,6 +95,12 @@ html, body {
   margin-top: 10px;
 }
 
+.welcome-title,
+.welcome-sub,
+.welcome-town {
+  display: none;
+}
+
 
 /* BOTONES */
 .btn-primary {
