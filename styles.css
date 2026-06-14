@@ -42,9 +42,17 @@ html, body {
   display: none;
 }
 
-/* HEADER */
+/* CABECERA NORMAL */
 .app-header {
-  background: #0d6efd;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f49404;
+  padding: 10px 15px;
+  color: #000;
+  font-weight: bold;
+  box-sizing: border-box;
+  /*background: #0d6efd;
   color: white;
   padding: 18px;
   text-align: center;
@@ -52,7 +60,21 @@ html, body {
   font-weight: bold;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 10;*/
+}
+
+/* Icono de la cabecera */
+.header-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Texto de la cabecera */
+.header-title {
+  font-size: 18px;
+  line-height: 1.2;
+  color: #000;
 }
 
 /* CONTENIDO */
