@@ -62,6 +62,7 @@ html, body {
   font-size: 18px;
   line-height: 1.2;
   color: #000;
+  margin-left: 20px; /* antes 15px o 0px */
 }
 
 /* CONTENIDO */
