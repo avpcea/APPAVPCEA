@@ -20,15 +20,12 @@
     const TOKEN_SECRETO = "v3";
     const tokenGuardado = localStorage.getItem("avpcea_token");
 
-    // Variable global
     window.AVPCEA_AUTORIZADO = false;
 
     if (tokenGuardado === TOKEN_SECRETO) {
       window.AVPCEA_AUTORIZADO = true;
     } else {
       const codigo = prompt("Introduce el código de autorización:");
-
-      // Cancelar → null → acceso denegado
       if (codigo === TOKEN_SECRETO) {
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
@@ -55,39 +52,33 @@
     }
   </script>
 
-  <!-- APP COMPLETA (OCULTA HASTA AUTORIZAR) -->
+  <!-- APP COMPLETA -->
   <div id="app-container" class="app-container" style="display:none;">
 
-    <!-- CABECERA DE BIENVENIDA -->
-    <header id="welcome-header" class="welcome-header">
-      <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
-    </header>
+    <!-- PANTALLA DE BIENVENIDA -->
+    <div id="welcome-screen" class="screen active">
+      <header class="welcome-header">
+        <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
+      </header>
 
+      <div class="card welcome-card">
+        <h2 class="welcome-title">Bienvenido</h2>
+        <p class="welcome-sub">Agrupación de Voluntarios</p>
+        <p class="welcome-sub">Protección Civil</p>
+        <h2 class="welcome-town">El Arenal</h2>
 
-    <header id="main-header" class="app-header">
+        <button id="btn-acceder" class="btn-primary">Acceder</button>
+      </div>
+    </div>
+
+    <!-- CABECERA NORMAL -->
+    <header id="main-header" class="app-header" style="display:none;">
       <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
       <span class="header-title">Protección Civil El Arenal</span>
     </header>
 
-
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="app-content">
-
-      <!-- PANTALLA DE BIENVENIDA -->
-      <div id="welcome-screen" class="screen active">
-        <div class="card welcome-card">
-    
-          <h2 class="welcome-title">Bienvenido</h2>
-
-          <p class="welcome-sub">Agrupación de Voluntarios</p>
-          <p class="welcome-sub">Protección Civil</p>
-
-          <h2 class="welcome-town">El Arenal</h2>
-
-          <button id="btn-acceder" class="btn-primary">Acceder</button>
-        </div>
-      </div>
-
-
 
       <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
@@ -117,6 +108,7 @@
 
     </main>
 
+    <!-- BARRA INFERIOR -->
     <nav class="bottom-nav" style="display:none;">
       <button class="nav-btn active" data-screen="inicio">Inicio</button>
       <button class="nav-btn" data-screen="noticias">Noticias</button>
@@ -128,9 +120,6 @@
   <!-- SCRIPT FINAL -->
   <script>
     function showScreen(name) {
-      document.getElementById("welcome-header").style.display = "none";
-      document.getElementById("main-header").style.display = "block";
-
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
@@ -140,10 +129,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
 
-      // Mostrar app solo si está autorizado
-      if (window.AVPCEA_AUTORIZADO) {
-        document.getElementById("app-container").style.display = "block";
-      } else {
+      if (!window.AVPCEA_AUTORIZADO) {
         document.body.innerHTML = `
           <div style="padding:20px; text-align:center;">
             <h2>Acceso no autorizado</h2>
@@ -153,13 +139,14 @@
         return;
       }
 
+      document.getElementById("app-container").style.display = "block";
+
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
         document.getElementById("welcome-screen").style.display = "none";
-        document.getElementById("welcome-header").style.display = "none";
 
         document.getElementById("app-screens").style.display = "block";
-        document.getElementById("main-header").style.display = "block";
+        document.getElementById("main-header").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex";
 
         showScreen("inicio");
