@@ -227,6 +227,10 @@
         return;
       }
 
+      if (!localStorage.getItem("usuario_id")) {
+        localStorage.setItem("usuario_id", crypto.randomUUID());
+      }
+
       document.getElementById("app-container").style.display = "block";
 
       // BOTÓN ACCEDER
