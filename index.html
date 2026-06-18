@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -90,18 +90,14 @@
           <div id="lista-preventivos"></div>
         </div>
 
-        <div id="screen-noticias" class="screen">
-          <div class="card">
-            <h2>Noticias</h2>
-            <p>Aquí aparecerán las novedades.</p>
-          </div>
+        <div id="screen-operativos" class="screen">
+          <h2 class="section-title">Operativos</h2>
+          <div id="lista-operativos"></div>
         </div>
 
-        <div id="screen-perfil" class="screen">
-          <div class="card">
-            <h2>Perfil</h2>
-            <p>Información del usuario.</p>
-          </div>
+        <div id="screen-emergencias" class="screen">
+          <h2 class="section-title">Emergencias</h2>
+          <div id="lista-emergencias"></div>
         </div>
 
       </div>
@@ -111,8 +107,8 @@
     <!-- BARRA INFERIOR -->
     <nav class="bottom-nav" style="display:none;">
       <button class="nav-btn active" data-screen="preventivos">Preventivos</button>
-      <button class="nav-btn" data-screen="noticias">Noticias</button>
-      <button class="nav-btn" data-screen="perfil">Perfil</button>
+      <button class="nav-btn" data-screen="operativos">Operativos</button>
+      <button class="nav-btn" data-screen="emergencias">Emergencias</button>
     </nav>
 
   </div>
@@ -155,6 +151,60 @@
           </div>
         `;
       }
+    }
+  </script>
+
+  <script>
+    async function cargarOperativos() {
+      const cont = document.getElementById("lista-operativos");
+      cont.innerHTML = "<p>Cargando operativos...</p>";
+
+      const { data: operativos, error } = await supabase
+        .from("operativos")
+        .select("*")
+        .order("fecha", { ascending: true });
+
+      if (error) {
+        cont.innerHTML = "<p>Error al cargar operativos.</p>";
+        console.error(error);
+        return;
+      }
+
+      cont.innerHTML = "";
+
+      for (const op of operativos) {
+        const suscrito = await estaSuscrito("OPR", op.id);
+
+        cont.innerHTML += `
+          <div class="card">
+            <h3>${op.titulo}</h3>
+            <p><strong>Entidad:</strong> ${op.entidad || "—"}</p>
+            <p><strong>Fecha:</strong> ${op.fecha}</p>
+            <p>${op.descripcion || ""}</p>
+
+            <button 
+              class="btn-primary" 
+              onclick="toggleSuscripcion('OPR', ${op.id})"
+            >
+              ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
+            </button>
+          </div>
+        `;
+      }
+    }
+  </script>
+
+  <script>
+    async function cargarEmergencias() {
+      const cont = document.getElementById("lista-emergencias");
+
+      cont.innerHTML = `
+        <div class="card">
+          <h3>Sin emergencias activas</h3>
+          <p>Actualmente no hay emergencias registradas.</p>
+          <p>Cuando se active una emergencia, aparecerá aquí automáticamente.</p>
+        </div>
+      `;
     }
   </script>
 
@@ -204,8 +254,37 @@
   </script>
 
   <script>
+    async function toggleSuscripcion(tipo, evento_id) {
+      const usuario_id = localStorage.getItem("usuario_id");
+
+      const suscrito = await estaSuscrito(tipo, evento_id);
+
+      if (!suscrito) {
+        const { error } = await supabase
+          .from("suscripciones")
+          .insert([{ usuario_id, tipo, evento_id }]);
+
+        if (!error) alert("Suscripción realizada.");
+      } else {
+        const { error } = await supabase
+          .from("suscripciones")
+          .delete()
+          .eq("usuario_id", usuario_id)
+          .eq("tipo", tipo)
+          .eq("evento_id", evento_id);
+
+        if (!error) alert("Suscripción cancelada.");
+      }
+
+      cargarOperativos();
+    }
+  </script>
+
+  <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
+      if (name === "operativos") cargarOperativos();
+      if (name === "emergencias") cargarEmergencias();
 
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
