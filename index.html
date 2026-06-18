@@ -281,6 +281,43 @@
   </script>
 
   <script>
+    async function toggleSuscripcionEmergencia(evento_id) {
+      const usuario_id = localStorage.getItem("usuario_id");
+
+      // Comprobar si ya está suscrito
+      const { data: suscrito } = await supabase
+        .from("suscripciones")
+        .select("*")
+        .eq("usuario_id", usuario_id)
+        .eq("tipo", "EMG")
+        .eq("evento_id", evento_id)
+        .maybeSingle();
+
+      if (!suscrito) {
+        // SUSCRIBIR
+        const { error } = await supabase
+          .from("suscripciones")
+          .insert([{ usuario_id, tipo: "EMG", evento_id }]);
+
+        if (!error) alert("Suscripción a emergencia realizada.");
+      } else {
+        // CANCELAR
+        const { error } = await supabase
+          .from("suscripciones")
+          .delete()
+          .eq("usuario_id", usuario_id)
+          .eq("tipo", "EMG")
+          .eq("evento_id", evento_id);
+
+        if (!error) alert("Suscripción cancelada.");
+      }
+
+      cargarEmergencias();
+    }
+  </script>
+
+
+  <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
       if (name === "operativos") cargarOperativos();
