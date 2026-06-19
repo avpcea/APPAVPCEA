@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#0d6efd">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     const supabase = supabase.createClient(
@@ -113,7 +114,8 @@
 
   </div>
 
-  <!-- SCRIPT FINAL -->
+  <!-- SCRIPTS DE CARGA -->
+
   <script>
     async function cargarPreventivos() {
       const cont = document.getElementById("lista-preventivos");
@@ -126,7 +128,6 @@
 
       if (error) {
         cont.innerHTML = "<p>Error al cargar preventivos.</p>";
-        console.error(error);
         return;
       }
 
@@ -142,10 +143,7 @@
             <p><strong>Lugar:</strong> ${p.lugar}</p>
             <p>${p.descripcion || ""}</p>
 
-            <button 
-              class="btn-primary" 
-              onclick="toggleSuscripcion('NRP', ${p.id})"
-            >
+            <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
               ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
             </button>
           </div>
@@ -166,7 +164,6 @@
 
       if (error) {
         cont.innerHTML = "<p>Error al cargar operativos.</p>";
-        console.error(error);
         return;
       }
 
@@ -182,10 +179,7 @@
             <p><strong>Fecha:</strong> ${op.fecha}</p>
             <p>${op.descripcion || ""}</p>
 
-            <button 
-              class="btn-primary" 
-              onclick="toggleSuscripcion('OPR', ${op.id})"
-            >
+            <button class="btn-primary" onclick="toggleSuscripcion('OPR', ${op.id})">
               ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
             </button>
           </div>
@@ -203,19 +197,18 @@
           <h3>Sin emergencias activas</h3>
           <p>Actualmente no hay emergencias registradas.</p>
           <p>Cuando se active una emergencia, aparecerá aquí automáticamente.</p>
-          <button class="btn-primary" onclick="toggleSuscripcionEmergencia(${emergencia.id})">
-            Suscribirme
-          </button>
         </div>
       `;
     }
   </script>
 
+  <!-- SUSCRIPCIONES -->
+
   <script>
     async function estaSuscrito(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("suscripciones")
         .select("*")
         .eq("usuario_id", usuario_id)
@@ -230,56 +223,23 @@
   <script>
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
-
       const suscrito = await estaSuscrito(tipo, evento_id);
 
       if (!suscrito) {
-        // SUSCRIBIR
-        const { error } = await supabase
-          .from("suscripciones")
-          .insert([{ usuario_id, tipo, evento_id }]);
-
-        if (!error) alert("Suscripción realizada.");
+        await supabase.from("suscripciones").insert([{ usuario_id, tipo, evento_id }]);
+        alert("Suscripción realizada.");
       } else {
-        // CANCELAR
-        const { error } = await supabase
+        await supabase
           .from("suscripciones")
           .delete()
           .eq("usuario_id", usuario_id)
           .eq("tipo", tipo)
           .eq("evento_id", evento_id);
-
-        if (!error) alert("Suscripción cancelada.");
+        alert("Suscripción cancelada.");
       }
 
-      cargarPreventivos();
-    }
-  </script>
-
-  <script>
-    async function toggleSuscripcion(tipo, evento_id) {
-      const usuario_id = localStorage.getItem("usuario_id");
-
-      const suscrito = await estaSuscrito(tipo, evento_id);
-
-      if (!suscrito) {
-        const { error } = await supabase
-          .from("suscripciones")
-          .insert([{ usuario_id, tipo, evento_id }]);
-
-        if (!error) alert("Suscripción realizada.");
-      } else {
-        const { error } = await supabase
-          .from("suscripciones")
-          .delete()
-          .eq("usuario_id", usuario_id)
-          .eq("tipo", tipo)
-          .eq("evento_id", evento_id);
-
-        if (!error) alert("Suscripción cancelada.");
-      }
-
-      cargarOperativos();
+      if (tipo === "NRP") cargarPreventivos();
+      if (tipo === "OPR") cargarOperativos();
     }
   </script>
 
@@ -287,7 +247,6 @@
     async function toggleSuscripcionEmergencia(evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
 
-      // Comprobar si ya está suscrito
       const { data: suscrito } = await supabase
         .from("suscripciones")
         .select("*")
@@ -297,28 +256,23 @@
         .maybeSingle();
 
       if (!suscrito) {
-        // SUSCRIBIR
-        const { error } = await supabase
-          .from("suscripciones")
-          .insert([{ usuario_id, tipo: "EMG", evento_id }]);
-
-        if (!error) alert("Suscripción a emergencia realizada.");
+        await supabase.from("suscripciones").insert([{ usuario_id, tipo: "EMG", evento_id }]);
+        alert("Suscripción a emergencia realizada.");
       } else {
-        // CANCELAR
-        const { error } = await supabase
+        await supabase
           .from("suscripciones")
           .delete()
           .eq("usuario_id", usuario_id)
           .eq("tipo", "EMG")
           .eq("evento_id", evento_id);
-
-        if (!error) alert("Suscripción cancelada.");
+        alert("Suscripción cancelada.");
       }
 
       cargarEmergencias();
     }
   </script>
 
+  <!-- CONTROL DE PANTALLAS -->
 
   <script>
     function showScreen(name) {
@@ -354,6 +308,7 @@
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
         document.getElementById("welcome-screen").style.display = "none";
+        document.getElementById("welcome-header").style.display = "none";
 
         document.getElementById("app-screens").style.display = "block";
         document.getElementById("main-header").style.display = "flex";
