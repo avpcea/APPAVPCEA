@@ -351,6 +351,24 @@
 
 
 
+  <script>
+  async function probarConexion() {
+    const { data, error } = await supabase.from("operativos").select("*").limit(1);
+
+    if (error) {
+      console.error("❌ Error de conexión:", error);
+      alert("❌ No se pudo conectar con Supabase");
+    } else {
+      console.log("✅ Conexión correcta. Primer registro:", data);
+      alert("✅ Conexión correcta con Supabase");
+    }
+    }
+
+    probarConexion();
+  </script>
+
+
+
   <!-- INICIO DE LA APP COMPLETA-->
   <SCRIPT>
     document.addEventListener("DOMContentLoaded", () => {
