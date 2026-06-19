@@ -363,21 +363,25 @@
 
       if (error) {
         alert("❌ Error Supabase: " + JSON.stringify(error));
-        console.error(error);
         return;
       }
 
-      alert("✅ Conexión correcta. Resultado: " + JSON.stringify(data));
-      console.log("Resultado:", data);
+      alert("✅ Conexión correcta: " + JSON.stringify(data));
 
     } catch (e) {
       alert("🔥 Error inesperado: " + e.message);
-      console.error(e);
     }
   }
 
   probarConexion();
 </script>
+
+<script>
+  alert("¿Existe Supabase?: " + (typeof supabase));
+</script>
+
+
+
 
 
 
@@ -425,14 +429,6 @@
     });
   </script>
   <!-- FIN DE LA APP COMPLETA -->
-
-
-
-<script>
-  alert("¿Existe Supabase?: " + (typeof supabase));
-</script>
-
-
 
 </body>
 </html>
