@@ -245,46 +245,6 @@
 
 
 
-
-
-
-<script>
-  async function probarConexion() {
-    alert("🔵 Ejecutando prueba de conexión…");
-
-    try {
-      const { data, error } = await supabase
-        .from("operativos")
-        .select("*")
-        .limit(1);
-
-      if (error) {
-        alert("❌ Error Supabase: " + JSON.stringify(error));
-        console.error(error);
-        return;
-      }
-
-      alert("✅ Conexión correcta. Resultado: " + JSON.stringify(data));
-      console.log("Resultado:", data);
-
-    } catch (e) {
-      alert("🔥 Error inesperado: " + e.message);
-      console.error(e);
-    }
-  }
-
-  probarConexion();
-</script>
-<script>
-  alert("¿Existe Supabase?: " + (typeof supabase));
-</script>
-
-
-
-
-
-
-
   <!-- INICIO APP -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
