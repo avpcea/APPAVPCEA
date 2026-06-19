@@ -60,22 +60,6 @@
 
 
 
-  <!-- AVISO DE NUEVA VERSIÓN -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-        reg.onupdatefound = () => {
-          const newWorker = reg.installing;
-          newWorker.onstatechange = () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              alert("Nueva versión disponible. Recarga la app.");
-            }
-          };
-        };
-      });
-    }
-  </script>
-  <!-- FIN AVISO DE NUEVA VERSIÓN -->
 
 
 
@@ -152,6 +136,10 @@
 
   </div>
   <!-- FIN APP COMPLETA -->
+
+
+
+
 
 
 
@@ -351,9 +339,6 @@
 
 
 
-
-
-
   <!-- INICIO DE LA APP COMPLETA-->
   <SCRIPT>
     document.addEventListener("DOMContentLoaded", () => {
@@ -398,6 +383,27 @@
     });
   </script>
   <!-- FIN DE LA APP COMPLETA -->
+
+
+
+  <!-- AVISO DE NUEVA VERSIÓN -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              alert("Nueva versión disponible. Recarga la app.");
+            }
+          };
+        };
+      });
+    }
+  </script>
+  <!-- FIN AVISO DE NUEVA VERSIÓN -->
+
+
 
 </body>
 </html>
