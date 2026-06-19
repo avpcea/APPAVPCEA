@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
+
+
+
+
+
 <head>
   <meta charset="UTF-8">
   <link rel="manifest" href="/APPAVPCEA/manifest.json">
@@ -12,6 +18,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
 
+
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
     const supabase = supabase.createClient(
@@ -21,9 +29,14 @@
   </script>
 </head>
 
+
+
+
+
+
 <body>
 
-  <!-- TOKEN DE AUTORIZACIÓN -->
+  <!-- INICIO TOKEN DE AUTORIZACIÓN -->
   <script>
     const TOKEN_SECRETO = "v3";
     const tokenGuardado = localStorage.getItem("avpcea_token");
@@ -43,6 +56,9 @@
       }
     }
   </script>
+  <!-- FIN TOKEN DE AUTORIZACIÓN -->
+
+
 
   <!-- AVISO DE NUEVA VERSIÓN -->
   <script>
@@ -59,10 +75,15 @@
       });
     }
   </script>
+  <!-- FIN AVISO DE NUEVA VERSIÓN -->
 
-  <!-- APP COMPLETA -->
+
+
+  <!-- INICIO APP COMPLETA -->
   <div id="app-container" class="app-container" style="display:none;">
 
+
+  
     <!-- PANTALLA DE BIENVENIDA -->
     <div id="welcome-screen" class="screen active">
       <header id="welcome-header" class="welcome-header">
@@ -73,15 +94,23 @@
         <button id="btn-acceder" class="btn-primary">Acceder</button>
       </div>
     </div>
+    <!-- FIN PANTALLA DE BIENVENIDA -->
+
+
 
     <!-- CABECERA NORMAL -->
     <header id="main-header" class="app-header" style="display:none;">
       <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
       <span class="header-title">Protección Civil El Arenal</span>
     </header>
+    <!-- CABECERA NORMAL -->
+
+
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="app-content">
+
+
 
       <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
@@ -102,8 +131,14 @@
         </div>
 
       </div>
+      <!-- FIN PANTALLAS DE LA APP -->
+
+
 
     </main>
+    <!-- FIN CONTENIDO PRINCIPAL -->
+
+
 
     <!-- BARRA INFERIOR -->
     <nav class="bottom-nav" style="display:none;">
@@ -111,11 +146,16 @@
       <button class="nav-btn" data-screen="preventivos">Preventivos</button>
       <button class="nav-btn" data-screen="emergencias">Emergencias</button>
     </nav>
+    <!-- BARRA INFERIOR -->
+
+
 
   </div>
+  <!-- FIN APP COMPLETA -->
 
-  <!-- SCRIPTS DE CARGA -->
 
+
+  <!-- SCRIPTS DE CARGA PREVENTIVOS-->
   <script>
     async function cargarPreventivos() {
       const cont = document.getElementById("lista-preventivos");
@@ -151,7 +191,11 @@
       }
     }
   </script>
+  <!-- FIN SCRIPTS DE CARGA PREVENTIVOS-->
 
+
+
+  <!-- SCRIPTS DE CARGA OPERATIVOS-->
   <script>
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
@@ -187,7 +231,11 @@
       }
     }
   </script>
+  <!-- FIN SCRIPTS DE CARGA OPERATIVOS-->
 
+
+
+  <!-- SCRIPTS DE CARGA EMERGENCIAS-->
   <script>
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
@@ -201,9 +249,11 @@
       `;
     }
   </script>
+  <!-- FIN SCRIPTS DE CARGA EMERGENCIAS-->
+
+
 
   <!-- SUSCRIPCIONES -->
-
   <script>
     async function estaSuscrito(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
@@ -219,7 +269,11 @@
       return data ? true : false;
     }
   </script>
+  <!-- FIN SUSCRIPCIONES -->
 
+
+
+  <!-- AÑADIR SUSCRIPCIONES OPERATIVOS/PREVENTIVOS -->
   <script>
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
@@ -242,7 +296,11 @@
       if (tipo === "OPR") cargarOperativos();
     }
   </script>
+  <!-- AÑADIR SUSCRIPCIONES OPERATIVOS/PREVENTIVOS -->
 
+
+
+  <!-- AÑADIR SUSCRIPCIONES EMERGENCIAS -->
   <script>
     async function toggleSuscripcionEmergencia(evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
@@ -271,9 +329,11 @@
       cargarEmergencias();
     }
   </script>
+  <!-- FIN AÑADIR SUSCRIPCIONES EMERGENCIAS -->
 
-  <!-- CONTROL DE PANTALLAS -->
 
+
+  <!-- CONTROL DE NAVEGACION SPA -->
   <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
@@ -286,7 +346,13 @@
       document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
       document.getElementById("screen-" + name).classList.add("active");
     }
+  </script>
+  <!-- FIN CONTROL DE NAVEGACION SPA -->
 
+
+
+  <!-- INICIO DE LA APP COMPLETA-->
+  <SCRIPT>
     document.addEventListener("DOMContentLoaded", () => {
 
       if (!window.AVPCEA_AUTORIZADO) {
@@ -328,6 +394,7 @@
 
     });
   </script>
+  <!-- FIN DE LA APP COMPLETA -->
 
 </body>
 </html>
