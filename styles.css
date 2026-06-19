@@ -1,4 +1,6 @@
-/* GENERAL */
+/* ============================
+   GENERAL
+============================ */
 
 html, body {
   height: 100%;
@@ -6,31 +8,38 @@ html, body {
   padding: 0;
   font-family: system-ui, sans-serif;
   background: #f5f5f5;
+  color: #222;
 }
 
-/* UTILIDADES */
 .hidden {
   display: none !important;
 }
 
-/* CONTENEDOR PRINCIPAL */
+/* ============================
+   CONTENEDOR PRINCIPAL
+============================ */
+
 .app-container {
   max-width: 480px;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   background: #fff;
+  margin: 0 auto;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
 }
 
-/* CABECERA DE BIENVENIDA */
+/* ============================
+   CABECERA DE BIENVENIDA
+============================ */
+
 .welcome-header {
   width: 100%;
   overflow: hidden;
-  background: none;
   padding: 0;
   margin: 0;
+  background: none;
 }
 
 .welcome-hero {
@@ -40,57 +49,78 @@ html, body {
   object-fit: cover;
 }
 
-/* CABECERA NORMAL */
+/* ============================
+   CABECERA NORMAL
+============================ */
+
 .app-header {
   display: flex;
   align-items: center;
-  background: #f49404;
+  background: #f49404; /* naranja corporativo */
   padding: 10px 15px;
   color: #000;
   font-weight: bold;
   box-sizing: border-box;
-  gap: 20px; /* ← separación automática entre icono y texto */
+  gap: 20px;
 }
 
 .header-logo {
   width: 48px;
   height: 48px;
   object-fit: contain;
-  margin: 0;
 }
 
 .header-title {
   font-size: 18px;
   line-height: 1.2;
   color: #000;
-  margin-left: 25px; /* antes 15px o 0px */
 }
 
-/* CONTENIDO */
+/* ============================
+   CONTENIDO PRINCIPAL
+============================ */
+
 .app-content {
   flex: 1;
   overflow-y: auto;
   padding: 0 0 70px 0; /* espacio para barra inferior */
 }
 
-/* TARJETAS */
+.section-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 20px 15px 10px;
+  color: #22349a; /* azul corporativo */
+}
+
+/* ============================
+   TARJETAS
+============================ */
+
 .card {
   background: white;
   padding: 20px;
-  margin-bottom: 15px;
+  margin: 15px;
   border-radius: 14px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-.card h2 {
+.card h3 {
   margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #22349a;
 }
 
-/* BIENVENIDA */
+/* ============================
+   BIENVENIDA
+============================ */
+
 .welcome-card {
   background: none;
   box-shadow: none;
   padding: 20px 15px;
+  text-align: center;
 }
 
 .welcome-title {
@@ -108,7 +138,10 @@ html, body {
   margin-top: 10px;
 }
 
-/* BOTONES */
+/* ============================
+   BOTONES
+============================ */
+
 .btn-primary {
   background: #0d6efd;
   color: white;
@@ -118,6 +151,11 @@ html, body {
   font-size: 16px;
   width: 100%;
   margin-top: 20px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #0b5ed7;
 }
 
 .btn-secondary {
@@ -129,14 +167,24 @@ html, body {
   font-size: 16px;
   width: 100%;
   margin-top: 10px;
+  cursor: pointer;
 }
 
-/* BARRA INFERIOR */
+.btn-secondary:hover {
+  background: #5c636a;
+}
+
+/* ============================
+   BARRA INFERIOR
+============================ */
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 480px;
   background: #ffffff;
   border-top: 1px solid #ccc;
   display: flex;
@@ -150,6 +198,7 @@ html, body {
   border: none;
   font-size: 16px;
   color: #666;
+  cursor: pointer;
 }
 
 .nav-btn.active {
@@ -157,7 +206,10 @@ html, body {
   font-weight: bold;
 }
 
-/* PANTALLAS */
+/* ============================
+   PANTALLAS
+============================ */
+
 .screen {
   display: none;
   animation: fade 0.2s ease-in-out;
@@ -172,7 +224,8 @@ html, body {
   to { opacity: 1; }
 }
 
-
-
-/* f49404 Naranja logo */
-/* 22349a Azul logo */
+/* ============================
+   COLORES CORPORATIVOS
+============================ */
+/* Naranja: #f49404 */
+/* Azul:    #22349a */
