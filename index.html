@@ -351,21 +351,33 @@
 
 
 
-  <script>
+<script>
   async function probarConexion() {
-    const { data, error } = await supabase.from("operativos").select("*").limit(1);
+    alert("🔵 Ejecutando prueba de conexión…");
 
-    if (error) {
-      console.error("❌ Error de conexión:", error);
-      alert("❌ No se pudo conectar con Supabase");
-    } else {
-      console.log("✅ Conexión correcta. Primer registro:", data);
-      alert("✅ Conexión correcta con Supabase");
-    }
-    }
+    try {
+      const { data, error } = await supabase
+        .from("operativos")
+        .select("*")
+        .limit(1);
 
-    probarConexion();
-  </script>
+      if (error) {
+        alert("❌ Error Supabase: " + JSON.stringify(error));
+        console.error(error);
+        return;
+      }
+
+      alert("✅ Conexión correcta. Resultado: " + JSON.stringify(data));
+      console.log("Resultado:", data);
+
+    } catch (e) {
+      alert("🔥 Error inesperado: " + e.message);
+      console.error(e);
+    }
+  }
+
+  probarConexion();
+</script>
 
 
 
@@ -413,6 +425,14 @@
     });
   </script>
   <!-- FIN DE LA APP COMPLETA -->
+
+
+
+<script>
+  alert("¿Existe Supabase?: " + (typeof supabase));
+</script>
+
+
 
 </body>
 </html>
