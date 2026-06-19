@@ -23,10 +23,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient(
-      "https://hptnaoliiychgkxsaksy.supabase.co ,
+    const supabase = window.supabase.createClient(
+      "https://hptnaoliiychgkxsaksy.supabase.co",
       "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
     );
+  </script>
+  <script>
+    alert("Versión Supabase: " + window.supabase.version);
   </script>
   <script>
     alert("Métodos disponibles: " + Object.keys(supabase));
