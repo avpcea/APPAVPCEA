@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 
-
-
-
-
-
 <head>
   <meta charset="UTF-8">
   <link rel="manifest" href="/APPAVPCEA/manifest.json">
@@ -18,8 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
 
-
-
+  <!-- SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const supabase = window.supabase.createClient(
@@ -29,14 +23,9 @@
   </script>
 </head>
 
-
-
-
-
-
 <body>
 
-  <!-- INICIO TOKEN DE AUTORIZACIÓN -->
+  <!-- TOKEN DE AUTORIZACIÓN -->
   <script>
     const TOKEN_SECRETO = "v3";
     const tokenGuardado = localStorage.getItem("avpcea_token");
@@ -51,23 +40,14 @@
         localStorage.setItem("avpcea_token", TOKEN_SECRETO);
         alert("Dispositivo autorizado.");
         window.AVPCEA_AUTORIZADO = true;
-      } else {
-        window.AVPCEA_AUTORIZADO = false;
       }
     }
   </script>
-  <!-- FIN TOKEN DE AUTORIZACIÓN -->
+  <!-- FIN TOKEN -->
 
-
-
-
-
-
-  <!-- INICIO APP COMPLETA -->
+  <!-- APP -->
   <div id="app-container" class="app-container" style="display:none;">
 
-
-  
     <!-- PANTALLA DE BIENVENIDA -->
     <div id="welcome-screen" class="screen active">
       <header id="welcome-header" class="welcome-header">
@@ -78,25 +58,16 @@
         <button id="btn-acceder" class="btn-primary">Acceder</button>
       </div>
     </div>
-    <!-- FIN PANTALLA DE BIENVENIDA -->
-
-
 
     <!-- CABECERA NORMAL -->
     <header id="main-header" class="app-header" style="display:none;">
       <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
       <span class="header-title">Protección Civil El Arenal</span>
     </header>
-    <!-- CABECERA NORMAL -->
-
-
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="app-content">
 
-
-
-      <!-- PANTALLAS DE LA APP -->
       <div id="app-screens" style="display:none;">
 
         <div id="screen-operativos" class="screen">
@@ -115,14 +86,8 @@
         </div>
 
       </div>
-      <!-- FIN PANTALLAS DE LA APP -->
-
-
 
     </main>
-    <!-- FIN CONTENIDO PRINCIPAL -->
-
-
 
     <!-- BARRA INFERIOR -->
     <nav class="bottom-nav" style="display:none;">
@@ -130,20 +95,11 @@
       <button class="nav-btn" data-screen="preventivos">Preventivos</button>
       <button class="nav-btn" data-screen="emergencias">Emergencias</button>
     </nav>
-    <!-- BARRA INFERIOR -->
-
-
 
   </div>
-  <!-- FIN APP COMPLETA -->
+  <!-- FIN APP -->
 
-
-
-
-
-
-
-  <!-- SCRIPTS DE CARGA PREVENTIVOS-->
+  <!-- CARGA PREVENTIVOS -->
   <script>
     async function cargarPreventivos() {
       const cont = document.getElementById("lista-preventivos");
@@ -179,11 +135,8 @@
       }
     }
   </script>
-  <!-- FIN SCRIPTS DE CARGA PREVENTIVOS-->
 
-
-
-  <!-- SCRIPTS DE CARGA OPERATIVOS-->
+  <!-- CARGA OPERATIVOS -->
   <script>
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
@@ -219,11 +172,8 @@
       }
     }
   </script>
-  <!-- FIN SCRIPTS DE CARGA OPERATIVOS-->
 
-
-
-  <!-- SCRIPTS DE CARGA EMERGENCIAS-->
+  <!-- CARGA EMERGENCIAS -->
   <script>
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
@@ -232,14 +182,10 @@
         <div class="card">
           <h3>Sin emergencias activas</h3>
           <p>Actualmente no hay emergencias registradas.</p>
-          <p>Cuando se active una emergencia, aparecerá aquí automáticamente.</p>
         </div>
       `;
     }
   </script>
-  <!-- FIN SCRIPTS DE CARGA EMERGENCIAS-->
-
-
 
   <!-- SUSCRIPCIONES -->
   <script>
@@ -257,11 +203,8 @@
       return data ? true : false;
     }
   </script>
-  <!-- FIN SUSCRIPCIONES -->
 
-
-
-  <!-- AÑADIR SUSCRIPCIONES OPERATIVOS/PREVENTIVOS -->
+  <!-- TOGGLE SUSCRIPCIONES -->
   <script>
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
@@ -284,44 +227,8 @@
       if (tipo === "OPR") cargarOperativos();
     }
   </script>
-  <!-- AÑADIR SUSCRIPCIONES OPERATIVOS/PREVENTIVOS -->
 
-
-
-  <!-- AÑADIR SUSCRIPCIONES EMERGENCIAS -->
-  <script>
-    async function toggleSuscripcionEmergencia(evento_id) {
-      const usuario_id = localStorage.getItem("usuario_id");
-
-      const { data: suscrito } = await supabase
-        .from("suscripciones")
-        .select("*")
-        .eq("usuario_id", usuario_id)
-        .eq("tipo", "EMG")
-        .eq("evento_id", evento_id)
-        .maybeSingle();
-
-      if (!suscrito) {
-        await supabase.from("suscripciones").insert([{ usuario_id, tipo: "EMG", evento_id }]);
-        alert("Suscripción a emergencia realizada.");
-      } else {
-        await supabase
-          .from("suscripciones")
-          .delete()
-          .eq("usuario_id", usuario_id)
-          .eq("tipo", "EMG")
-          .eq("evento_id", evento_id);
-        alert("Suscripción cancelada.");
-      }
-
-      cargarEmergencias();
-    }
-  </script>
-  <!-- FIN AÑADIR SUSCRIPCIONES EMERGENCIAS -->
-
-
-
-  <!-- CONTROL DE NAVEGACION SPA -->
+  <!-- NAVEGACIÓN SPA -->
   <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
@@ -335,12 +242,9 @@
       document.getElementById("screen-" + name).classList.add("active");
     }
   </script>
-  <!-- FIN CONTROL DE NAVEGACION SPA -->
 
-
-
-  <!-- INICIO DE LA APP COMPLETA-->
-  <SCRIPT>
+  <!-- INICIO APP -->
+  <script>
     document.addEventListener("DOMContentLoaded", () => {
 
       if (!window.AVPCEA_AUTORIZADO) {
@@ -358,8 +262,6 @@
       }
 
       document.getElementById("app-container").style.display = "block";
-
-      showScreen("operativos");   // ← CARGA OPERATIVOS AUTOMÁTICAMENTE
 
       // BOTÓN ACCEDER
       document.getElementById("btn-acceder").addEventListener("click", () => {
@@ -382,11 +284,8 @@
 
     });
   </script>
-  <!-- FIN DE LA APP COMPLETA -->
 
-
-
-  <!-- AVISO DE NUEVA VERSIÓN -->
+  <!-- SERVICE WORKER -->
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
@@ -401,9 +300,7 @@
       });
     }
   </script>
-  <!-- FIN AVISO DE NUEVA VERSIÓN -->
-
-
 
 </body>
 </html>
+
