@@ -13,7 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
 
-  <!-- SUPABASE -->
+  <!-- SUPABASE UMD CORRECTO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script>
     const supabase = window.supabase.createClient(
@@ -43,7 +43,6 @@
       }
     }
   </script>
-  <!-- FIN TOKEN -->
 
   <!-- APP -->
   <div id="app-container" class="app-container" style="display:none;">
@@ -243,8 +242,6 @@
     }
   </script>
 
-
-
   <!-- INICIO APP -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -305,4 +302,3 @@
 
 </body>
 </html>
-
