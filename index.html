@@ -239,8 +239,9 @@
       if (name === "operativos") cargarOperativos();
       if (name === "emergencias") cargarEmergencias();
 
-      // Cambiar título de cabecera
-      cambiarTituloCabecera(name.charAt(0).toUpperCase() + name.slice(1));
+      // Cambiar el título de la cabecera
+      document.querySelector(".header-title").textContent =
+      name.charAt(0).toUpperCase() + name.slice(1);
       
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
