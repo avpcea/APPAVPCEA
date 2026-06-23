@@ -61,7 +61,7 @@
     <!-- CABECERA NORMAL -->
     <header id="main-header" class="app-header" style="display:none;">
       <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
-      <span class="header-title">Protección Civil El Arenal</span>
+      <!-- <span class="header-title">Protección Civil El Arenal</span> -->
     </header>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -229,11 +229,19 @@
 
   <!-- NAVEGACIÓN SPA -->
   <script>
+    function cambiarTituloCabecera(texto) {
+      document.querySelector(".header-title").textContent = texto;
+    }
+  </script>
+  <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
       if (name === "operativos") cargarOperativos();
       if (name === "emergencias") cargarEmergencias();
 
+      // Cambiar título de cabecera
+      cambiarTituloCabecera(name.charAt(0).toUpperCase() + name.slice(1));
+      
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
 
