@@ -77,6 +77,10 @@ html, body {
   white-space: nowrap;
 }
 
+.section-title {
+  display: none;
+}
+
 
 /* ============================
    CONTENIDO PRINCIPAL
