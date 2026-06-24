@@ -143,13 +143,6 @@ html, body {
 /* ============================
    BOTONES
 ============================ */
-button,
-.btn-primary,
-.nav-btn {
-  background-color: #22349a !important;
-  border-color: #22349a !important;
-}
-
 
 .btn-primary {
   background: #0d6efd;
@@ -161,6 +154,8 @@ button,
   width: 100%;
   margin-top: 20px;
   cursor: pointer;
+  background-color: #22349a !important;
+  border-color: #22349a !important;
 }
 
 .btn-primary:hover {
