@@ -59,7 +59,7 @@ html, body {
   align-items: center;
   height: 60px; /* ajusta si tu cabecera es más alta */
   background: #f49404; /* o el color que uses */
-  color: white;
+  color: black;
 }
 
 .header-logo {
