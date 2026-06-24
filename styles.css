@@ -77,11 +77,6 @@ html, body {
   white-space: nowrap;
 }
 
-.section-title {
-  display: none;
-}
-
-
 /* ============================
    CONTENIDO PRINCIPAL
 ============================ */
@@ -97,6 +92,7 @@ html, body {
   font-weight: bold;
   margin: 20px 15px 10px;
   color: #22349a; /* azul corporativo */
+  display: none;
 }
 
 /* ============================
@@ -147,6 +143,13 @@ html, body {
 /* ============================
    BOTONES
 ============================ */
+button,
+.btn-primary,
+.nav-btn {
+  background-color: #22349a !important;
+  border-color: #22349a !important;
+}
+
 
 .btn-primary {
   background: #0d6efd;
