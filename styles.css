@@ -58,7 +58,7 @@ html, body {
   display: flex;
   align-items: center;
   height: 60px; /* ajusta si tu cabecera es más alta */
-  background: #0d6efd; /* o el color que uses */
+  background: #f49404; /* o el color que uses */
   color: white;
 }
 
