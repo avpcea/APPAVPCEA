@@ -54,27 +54,29 @@ html, body {
 ============================ */
 
 .app-header {
+  position: relative;
   display: flex;
   align-items: center;
-  background: #f49404; /* naranja corporativo */
-  padding: 10px 15px;
-  color: #000;
-  font-weight: bold;
-  box-sizing: border-box;
-  gap: 20px;
+  height: 60px; /* ajusta si tu cabecera es más alta */
+  background: #0d6efd; /* o el color que uses */
+  color: white;
 }
 
 .header-logo {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
+  position: absolute;
+  left: 10px; /* distancia del borde izquierdo */
+  height: 40px; /* ajusta según tu icono */
 }
 
 .header-title {
-  font-size: 18px;
-  line-height: 1.2;
-  color: #000;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.3em;
+  font-weight: bold;
+  white-space: nowrap;
 }
+
 
 /* ============================
    CONTENIDO PRINCIPAL
