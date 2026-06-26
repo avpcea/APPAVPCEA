@@ -405,19 +405,11 @@
     // REGISTRO DEL DISPOSITIVO
     registrarDispositivo();
 
-    // MOSTRAR ADMIN SI CORRESPONDE
-    esAdmin().then(admin => {
-      if (admin) {
-        document.getElementById("admin-btn").style.display = "block";
-      }
-    });
-
     // CARGAR ADMIN
     document.getElementById("admin-btn").addEventListener("click", () => {
       showScreen("admin");
       cargarListadoAdmin();
     });
-
 
     // SI ES ADMIN CARGA SUPABASE
     esAdmin().then(admin => {
