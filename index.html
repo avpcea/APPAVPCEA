@@ -343,6 +343,18 @@
       }
     });
 
+    // SI ES ADMIN CARGA SUPABASE
+    esAdmin().then(admin => {
+      if (admin) {
+        document.getElementById("admin-btn").style.display = "block";
+
+        // Cargar cliente admin
+        const script = document.createElement("script");
+        script.src = "supabase-admin.js";
+        document.body.appendChild(script);
+      }
+    });
+
     // BOTÓN ACCEDER
     document.getElementById("btn-acceder").addEventListener("click", () => {
       document.getElementById("welcome-screen").style.display = "none";
