@@ -13,7 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
 
-  <!-- SUPABASE UMD CORRECTO -->
+  <!-- SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script>
     const supabase = window.supabase.createClient(
@@ -70,17 +70,14 @@
       <div id="app-screens" style="display:none;">
 
         <div id="screen-operativos" class="screen">
-          <!-- <h2 class="section-title">Operativos</h2> -->
           <div id="lista-operativos"></div>
         </div>
 
         <div id="screen-preventivos" class="screen">
-          <!-- <h2 class="section-title">Preventivos</h2> -->
           <div id="lista-preventivos"></div>
         </div>
 
         <div id="screen-emergencias" class="screen">
-          <!-- <h2 class="section-title">Emergencias</h2> -->
           <div id="lista-emergencias"></div>
         </div>
 
@@ -123,12 +120,20 @@
       <button class="nav-btn active" data-screen="operativos">Operativos</button>
       <button class="nav-btn" data-screen="preventivos">Preventivos</button>
       <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+
+      <!-- BOTÓN ADMIN QUE FALTABA -->
+      <button id="admin-btn" class="nav-btn" data-screen="admin" style="display:none;">
+        Administración
+      </button>
     </nav>
 
   </div>
   <!-- FIN APP -->
 
-  <!-- CARGA PREVENTIVOS -->
+  <!-- ========================= -->
+  <!--  CARGA DE LISTAS          -->
+  <!-- ========================= -->
+
   <script>
     async function cargarPreventivos() {
       const cont = document.getElementById("lista-preventivos");
@@ -163,10 +168,7 @@
         `;
       }
     }
-  </script>
 
-  <!-- CARGA OPERATIVOS -->
-  <script>
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
       cont.innerHTML = "<p>Cargando operativos...</p>";
@@ -200,10 +202,7 @@
         `;
       }
     }
-  </script>
 
-  <!-- CARGA EMERGENCIAS -->
-  <script>
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
 
@@ -231,10 +230,7 @@
 
       return data ? true : false;
     }
-  </script>
 
-  <!-- TOGGLE SUSCRIPCIONES -->
-  <script>
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
       const suscrito = await estaSuscrito(tipo, evento_id);
@@ -257,325 +253,218 @@
     }
   </script>
 
-  <!-- LISTADOS ADMIN -->
+  <!-- ========================= -->
+  <!--  FUNCIONES DE ROLES       -->
+  <!-- ========================= -->
   <script>
-    function cargarListadoAdmin() {
-      Promise.all([
-        supabase.from("operativos").select("*"),
-        supabase.from("preventivos").select("*"),
-        supabase.from("emergencias").select("*")
-      ]).then(([op, pr, em]) => {
-        const cont = document.getElementById("admin-listado");
-        cont.innerHTML = "";
+    async function registrarDispositivo() {
+      const usuario_id = localStorage.getItem("usuario_id");
 
-        const render = (lista, tipo) => {
-          lista.forEach(item => {
-            const div = document.createElement("div");
-            div.innerHTML = `
-              <strong>${tipo}:</strong> ${item.titulo}<br>
-              <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-            `;
-            cont.appendChild(div);
-          });
-        };
+      const { data } = await supabase
+        .from("dispositivos")
+        .select("*")
+        .eq("id", usuario_id)
+        .maybeSingle();
 
-        render(op.data, "operativos");
-        render(pr.data, "preventivos");
-        render(em.data, "emergencias");
-
-        document.querySelectorAll(".btn-borrar").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.dataset.id;
-            const tipo = btn.dataset.tipo;
-
-            await supabaseAdmin.from(tipo).delete().eq("id", id);
-            cargarListadoAdmin();
-          });
-        });
-      });
+      if (!data) {
+        await supabase.from("dispositivos").insert([
+          { id: usuario_id, rol: "normal" }
+        ]);
+      }
     }
 
-    document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-      await supabaseAdmin.from("operativos").insert({
-        titulo: document.getElementById("op-titulo").value,
-        descripcion: document.getElementById("op-descripcion").value
-      });
-      cargarListadoAdmin();
-    });
+    async function esAdmin() {
+      const usuario_id = localStorage.getItem("usuario_id");
 
-    document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-      await supabaseAdmin.from("preventivos").insert({
-        titulo: document.getElementById("pr-titulo").value,
-        descripcion: document.getElementById("pr-descripcion").value
-      });
-      cargarListadoAdmin();
-    });
+      const { data } = await supabase
+        .from("dispositivos")
+        .select("rol")
+        .eq("id", usuario_id)
+        .maybeSingle();
 
-    document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-      await supabaseAdmin.from("emergencias").insert({
-        titulo: document.getElementById("em-titulo").value,
-        descripcion: document.getElementById("em-descripcion").value
-      });
-      cargarListadoAdmin();
-    });
-  </script>
-
-  <!-- NAVEGACIÓN SPA -->
-  <script>
-    function cambiarTituloCabecera(texto) {
-      document.querySelector(".header-title").textContent = texto;
+      return data && data.rol === "admin";
     }
   </script>
+
+  <!-- ========================= -->
+  <!--  SPA: CAMBIO DE PANTALLAS -->
+  <!-- ========================= -->
   <script>
     function showScreen(name) {
       if (name === "preventivos") cargarPreventivos();
       if (name === "operativos") cargarOperativos();
       if (name === "emergencias") cargarEmergencias();
 
-      // Cambiar título de cabecera (versión segura)
-      document.querySelector(".header-title").textContent = 
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" : "";
+      document.querySelector(".header-title").textContent =
+        name === "operativos" ? "Operativos" :
+        name === "preventivos" ? "Preventivos" :
+        name === "emergencias" ? "Emergencias" :
+        name === "admin" ? "Administración" : "";
 
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add("active");
+      const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
+      if (btn) btn.classList.add("active");
 
       document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-      document.getElementById("screen-" + name).classList.add("active");
+      const screen = document.getElementById("screen-" + name);
+      if (screen) screen.classList.add("active");
 
       if (name === "admin") {
         document.getElementById("admin-screen").style.display = "block";
-        document.querySelector(".header-title").textContent = "Administración";
+        cargarListadoAdmin();
       }
-
     }
   </script>
 
-<!-- ========================= -->
-<!--  FUNCIONES DE ROLES       -->
-<!-- ========================= -->
-<script>
-  async function registrarDispositivo() {
-    const usuario_id = localStorage.getItem("usuario_id");
-
-    const { data } = await supabase
-      .from("dispositivos")
-      .select("*")
-      .eq("id", usuario_id)
-      .maybeSingle();
-
-    if (!data) {
-      await supabase.from("dispositivos").insert([
-        { id: usuario_id, rol: "normal" }
-      ]);
+  <!-- ========================= -->
+  <!--  ADMIN: LISTADO VACÍO     -->
+  <!-- ========================= -->
+  <script>
+    function cargarListadoAdmin() {
+      /* Se sobrescribe cuando cargue supabase-admin.js */
     }
-  }
+  </script>
 
-  async function esAdmin() {
-    const usuario_id = localStorage.getItem("usuario_id");
+  <!-- ========================= -->
+  <!--  INICIO DE LA APP         -->
+  <!-- ========================= -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
 
-    const { data } = await supabase
-      .from("dispositivos")
-      .select("rol")
-      .eq("id", usuario_id)
-      .maybeSingle();
+      if (!window.AVPCEA_AUTORIZADO) {
+        document.body.innerHTML = `
+          <div style="padding:20px; text-align:center;">
+            <h2>Acceso no autorizado</h2>
+            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+          </div>
+        `;
+        return;
+      }
 
-    return data && data.rol === "admin";
-  }
-</script>
+      if (!localStorage.getItem("usuario_id")) {
+        localStorage.setItem("usuario_id", crypto.randomUUID());
+      }
 
-<!-- ========================= -->
-<!--  SPA: CAMBIO DE PANTALLAS -->
-<!-- ========================= -->
-<script>
-  function showScreen(name) {
-    if (name === "preventivos") cargarPreventivos();
-    if (name === "operativos") cargarOperativos();
-    if (name === "emergencias") cargarEmergencias();
+      document.getElementById("app-container").style.display = "block";
 
-    document.querySelector(".header-title").textContent =
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" :
-      name === "admin" ? "Administración" : "";
+      registrarDispositivo();
 
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-    if (btn) btn.classList.add("active");
+      document.getElementById("admin-btn").addEventListener("click", () => {
+        showScreen("admin");
+      });
 
-    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-    const screen = document.getElementById("screen-" + name);
-    if (screen) screen.classList.add("active");
+      esAdmin().then(admin => {
+        if (admin) {
+          document.getElementById("admin-btn").style.display = "block";
 
-    if (name === "admin") {
-      document.getElementById("admin-screen").style.display = "block";
-      cargarListadoAdmin();
-    }
-  }
-</script>
+          const script = document.createElement("script");
+          script.src = "supabase-admin.js";
+          script.onload = () => {
 
-<!-- ========================= -->
-<!--  ADMIN: LISTADO VACÍO     -->
-<!--  (SE RELLENA SI ES ADMIN) -->
-<!-- ========================= -->
-<script>
-  function cargarListadoAdmin() {
-    /* Esta función se sobrescribe cuando cargue supabase-admin.js */
-  }
-</script>
+            cargarListadoAdmin = function () {
+              Promise.all([
+                supabase.from("operativos").select("*"),
+                supabase.from("preventivos").select("*"),
+                supabase.from("emergencias").select("*")
+              ]).then(([op, pr, em]) => {
+                const cont = document.getElementById("admin-listado");
+                cont.innerHTML = "";
 
-<!-- ========================= -->
-<!--  INICIO DE LA APP         -->
-<!-- ========================= -->
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
+                const render = (lista, tipo) => {
+                  lista.forEach(item => {
+                    const div = document.createElement("div");
+                    div.innerHTML = `
+                      <strong>${tipo}:</strong> ${item.titulo}<br>
+                      <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+                    `;
+                    cont.appendChild(div);
+                  });
+                };
 
-    /* AUTORIZACIÓN */
-    if (!window.AVPCEA_AUTORIZADO) {
-      document.body.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-          <h2>Acceso no autorizado</h2>
-          <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-        </div>
-      `;
-      return;
-    }
+                render(op.data, "operativos");
+                render(pr.data, "preventivos");
+                render(em.data, "emergencias");
 
-    /* ID DEL DISPOSITIVO */
-    if (!localStorage.getItem("usuario_id")) {
-      localStorage.setItem("usuario_id", crypto.randomUUID());
-    }
+                document.querySelectorAll(".btn-borrar").forEach(btn => {
+                  btn.addEventListener("click", async () => {
+                    const id = btn.dataset.id;
+                    const tipo = btn.dataset.tipo;
 
-    /* MOSTRAR APP */
-    document.getElementById("app-container").style.display = "block";
-
-    /* REGISTRAR DISPOSITIVO */
-    registrarDispositivo();
-
-    /* BOTÓN ADMIN */
-    document.getElementById("admin-btn").addEventListener("click", () => {
-      showScreen("admin");
-    });
-
-    /* SI ES ADMIN → CARGAR CLIENTE ADMIN Y LÓGICA ADMIN */
-    esAdmin().then(admin => {
-      if (admin) {
-        document.getElementById("admin-btn").style.display = "block";
-
-        const script = document.createElement("script");
-        script.src = "supabase-admin.js";
-        script.onload = () => {
-
-          /* ========================= */
-          /*  LÓGICA COMPLETA ADMIN     */
-          /* ========================= */
-
-          cargarListadoAdmin = function () {
-            Promise.all([
-              supabase.from("operativos").select("*"),
-              supabase.from("preventivos").select("*"),
-              supabase.from("emergencias").select("*")
-            ]).then(([op, pr, em]) => {
-              const cont = document.getElementById("admin-listado");
-              cont.innerHTML = "";
-
-              const render = (lista, tipo) => {
-                lista.forEach(item => {
-                  const div = document.createElement("div");
-                  div.innerHTML = `
-                    <strong>${tipo}:</strong> ${item.titulo}<br>
-                    <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-                  `;
-                  cont.appendChild(div);
-                });
-              };
-
-              render(op.data, "operativos");
-              render(pr.data, "preventivos");
-              render(em.data, "emergencias");
-
-              document.querySelectorAll(".btn-borrar").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                  const id = btn.dataset.id;
-                  const tipo = btn.dataset.tipo;
-
-                  await supabaseAdmin.from(tipo).delete().eq("id", id);
-                  cargarListadoAdmin();
+                    await supabaseAdmin.from(tipo).delete().eq("id", id);
+                    cargarListadoAdmin();
+                  });
                 });
               });
+            };
+
+            document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+              await supabaseAdmin.from("operativos").insert({
+                titulo: document.getElementById("op-titulo").value,
+                descripcion: document.getElementById("op-descripcion").value
+              });
+              cargarListadoAdmin();
             });
+
+            document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+              await supabaseAdmin.from("preventivos").insert({
+                titulo: document.getElementById("pr-titulo").value,
+                descripcion: document.getElementById("pr-descripcion").value
+              });
+              cargarListadoAdmin();
+            });
+
+            document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+              await supabaseAdmin.from("emergencias").insert({
+                titulo: document.getElementById("em-titulo").value,
+                descripcion: document.getElementById("em-descripcion").value
+              });
+              cargarListadoAdmin();
+            });
+
           };
 
-          document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-            await supabaseAdmin.from("operativos").insert({
-              titulo: document.getElementById("op-titulo").value,
-              descripcion: document.getElementById("op-descripcion").value
-            });
-            cargarListadoAdmin();
-          });
-
-          document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-            await supabaseAdmin.from("preventivos").insert({
-              titulo: document.getElementById("pr-titulo").value,
-              descripcion: document.getElementById("pr-descripcion").value
-            });
-            cargarListadoAdmin();
-          });
-
-          document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-            await supabaseAdmin.from("emergencias").insert({
-              titulo: document.getElementById("em-titulo").value,
-              descripcion: document.getElementById("em-descripcion").value
-            });
-            cargarListadoAdmin();
-          });
-
-        };
-
-        document.body.appendChild(script);
-      }
-    });
-
-    /* BOTÓN ACCEDER */
-    document.getElementById("btn-acceder").addEventListener("click", () => {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("welcome-header").style.display = "none";
-
-      document.getElementById("app-screens").style.display = "block";
-      document.getElementById("main-header").style.display = "flex";
-      document.querySelector(".bottom-nav").style.display = "flex";
-
-      showScreen("operativos");
-    });
-
-    /* NAVEGACIÓN */
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        showScreen(btn.dataset.screen);
+          document.body.appendChild(script);
+        }
       });
+
+      document.getElementById("btn-acceder").addEventListener("click", () => {
+        document.getElementById("welcome-screen").style.display = "none";
+        document.getElementById("welcome-header").style.display = "none";
+
+        document.getElementById("app-screens").style.display = "block";
+        document.getElementById("main-header").style.display = "flex";
+        document.querySelector(".bottom-nav").style.display = "flex";
+
+        showScreen("operativos");
+      });
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          showScreen(btn.dataset.screen);
+        });
+      });
+
     });
+  </script>
 
-  });
-</script>
-
-<!-- ========================= -->
-<!--  SERVICE WORKER           -->
-<!-- ========================= -->
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-      reg.onupdatefound = () => {
-        const newWorker = reg.installing;
-        newWorker.onstatechange = () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            alert("Nueva versión disponible. Recarga la app.");
-          }
+  <!-- ========================= -->
+  <!--  SERVICE WORKER           -->
+  <!-- ========================= -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              alert("Nueva versión disponible. Recarga la app.");
+            }
+          };
         };
-      };
-    });
-  }
-</script>
+      });
+    }
+  </script>
 
 </body>
 </html>
+
