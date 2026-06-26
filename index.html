@@ -352,7 +352,10 @@
     }
   </script>
 
-  <script>
+<!-- ========================= -->
+<!--  FUNCIONES DE ROLES       -->
+<!-- ========================= -->
+<script>
   async function registrarDispositivo() {
     const usuario_id = localStorage.getItem("usuario_id");
 
@@ -382,10 +385,53 @@
   }
 </script>
 
-<!-- INICIO APP -->
+<!-- ========================= -->
+<!--  SPA: CAMBIO DE PANTALLAS -->
+<!-- ========================= -->
+<script>
+  function showScreen(name) {
+    if (name === "preventivos") cargarPreventivos();
+    if (name === "operativos") cargarOperativos();
+    if (name === "emergencias") cargarEmergencias();
+
+    document.querySelector(".header-title").textContent =
+      name === "operativos" ? "Operativos" :
+      name === "preventivos" ? "Preventivos" :
+      name === "emergencias" ? "Emergencias" :
+      name === "admin" ? "Administración" : "";
+
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
+    if (btn) btn.classList.add("active");
+
+    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+    const screen = document.getElementById("screen-" + name);
+    if (screen) screen.classList.add("active");
+
+    if (name === "admin") {
+      document.getElementById("admin-screen").style.display = "block";
+      cargarListadoAdmin();
+    }
+  }
+</script>
+
+<!-- ========================= -->
+<!--  ADMIN: LISTADO VACÍO     -->
+<!--  (SE RELLENA SI ES ADMIN) -->
+<!-- ========================= -->
+<script>
+  function cargarListadoAdmin() {
+    /* Esta función se sobrescribe cuando cargue supabase-admin.js */
+  }
+</script>
+
+<!-- ========================= -->
+<!--  INICIO DE LA APP         -->
+<!-- ========================= -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
 
+    /* AUTORIZACIÓN */
     if (!window.AVPCEA_AUTORIZADO) {
       document.body.innerHTML = `
         <div style="padding:20px; text-align:center;">
@@ -396,34 +442,102 @@
       return;
     }
 
+    /* ID DEL DISPOSITIVO */
     if (!localStorage.getItem("usuario_id")) {
       localStorage.setItem("usuario_id", crypto.randomUUID());
     }
 
+    /* MOSTRAR APP */
     document.getElementById("app-container").style.display = "block";
 
-    // REGISTRO DEL DISPOSITIVO
+    /* REGISTRAR DISPOSITIVO */
     registrarDispositivo();
 
-    // CARGAR ADMIN
+    /* BOTÓN ADMIN */
     document.getElementById("admin-btn").addEventListener("click", () => {
       showScreen("admin");
-      cargarListadoAdmin();
     });
 
-    // SI ES ADMIN CARGA SUPABASE
+    /* SI ES ADMIN → CARGAR CLIENTE ADMIN Y LÓGICA ADMIN */
     esAdmin().then(admin => {
       if (admin) {
         document.getElementById("admin-btn").style.display = "block";
 
-        // Cargar cliente admin
         const script = document.createElement("script");
         script.src = "supabase-admin.js";
+        script.onload = () => {
+
+          /* ========================= */
+          /*  LÓGICA COMPLETA ADMIN     */
+          /* ========================= */
+
+          cargarListadoAdmin = function () {
+            Promise.all([
+              supabase.from("operativos").select("*"),
+              supabase.from("preventivos").select("*"),
+              supabase.from("emergencias").select("*")
+            ]).then(([op, pr, em]) => {
+              const cont = document.getElementById("admin-listado");
+              cont.innerHTML = "";
+
+              const render = (lista, tipo) => {
+                lista.forEach(item => {
+                  const div = document.createElement("div");
+                  div.innerHTML = `
+                    <strong>${tipo}:</strong> ${item.titulo}<br>
+                    <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+                  `;
+                  cont.appendChild(div);
+                });
+              };
+
+              render(op.data, "operativos");
+              render(pr.data, "preventivos");
+              render(em.data, "emergencias");
+
+              document.querySelectorAll(".btn-borrar").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                  const id = btn.dataset.id;
+                  const tipo = btn.dataset.tipo;
+
+                  await supabaseAdmin.from(tipo).delete().eq("id", id);
+                  cargarListadoAdmin();
+                });
+              });
+            });
+          };
+
+          document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+            await supabaseAdmin.from("operativos").insert({
+              titulo: document.getElementById("op-titulo").value,
+              descripcion: document.getElementById("op-descripcion").value
+            });
+            cargarListadoAdmin();
+          });
+
+          document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+            await supabaseAdmin.from("preventivos").insert({
+              titulo: document.getElementById("pr-titulo").value,
+              descripcion: document.getElementById("pr-descripcion").value
+            });
+            cargarListadoAdmin();
+          });
+
+          document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+            await supabaseAdmin.from("emergencias").insert({
+              titulo: document.getElementById("em-titulo").value,
+              descripcion: document.getElementById("em-descripcion").value
+            });
+            cargarListadoAdmin();
+          });
+
+        };
+
         document.body.appendChild(script);
       }
     });
 
-    // BOTÓN ACCEDER
+    /* BOTÓN ACCEDER */
     document.getElementById("btn-acceder").addEventListener("click", () => {
       document.getElementById("welcome-screen").style.display = "none";
       document.getElementById("welcome-header").style.display = "none";
@@ -435,7 +549,7 @@
       showScreen("operativos");
     });
 
-    // BOTONES DE NAVEGACIÓN
+    /* NAVEGACIÓN */
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         showScreen(btn.dataset.screen);
@@ -445,21 +559,23 @@
   });
 </script>
 
-  <!-- SERVICE WORKER -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-        reg.onupdatefound = () => {
-          const newWorker = reg.installing;
-          newWorker.onstatechange = () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              alert("Nueva versión disponible. Recarga la app.");
-            }
-          };
+<!-- ========================= -->
+<!--  SERVICE WORKER           -->
+<!-- ========================= -->
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+        newWorker.onstatechange = () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            alert("Nueva versión disponible. Recarga la app.");
+          }
         };
-      });
-    }
-  </script>
+      };
+    });
+  }
+</script>
 
 </body>
 </html>
