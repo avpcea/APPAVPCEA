@@ -96,6 +96,31 @@ html, body {
 }
 
 /* ============================
+   SECCIÓN DE ADMINISTRACIÓN
+============================ */
+
+.admin-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f2f2f2;
+  border-radius: 8px;
+}
+
+.admin-section input,
+.admin-section textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+#admin-listado div {
+  background: #eee;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+
+/* ============================
    TARJETAS
 ============================ */
 
