@@ -343,6 +343,12 @@
 
       document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
       document.getElementById("screen-" + name).classList.add("active");
+
+      if (name === "admin") {
+        document.getElementById("admin-screen").style.display = "block";
+        document.querySelector(".header-title").textContent = "Administración";
+      }
+
     }
   </script>
 
@@ -405,6 +411,13 @@
         document.getElementById("admin-btn").style.display = "block";
       }
     });
+
+    // CARGAR ADMIN
+    document.getElementById("admin-btn").addEventListener("click", () => {
+      showScreen("admin");
+      cargarListadoAdmin();
+    });
+
 
     // SI ES ADMIN CARGA SUPABASE
     esAdmin().then(admin => {
