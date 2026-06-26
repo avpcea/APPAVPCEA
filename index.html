@@ -253,47 +253,87 @@
     }
   </script>
 
-  <!-- INICIO APP -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+  async function registrarDispositivo() {
+    const usuario_id = localStorage.getItem("usuario_id");
 
-      if (!window.AVPCEA_AUTORIZADO) {
-        document.body.innerHTML = `
-          <div style="padding:20px; text-align:center;">
-            <h2>Acceso no autorizado</h2>
-            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-          </div>
-        `;
-        return;
+    const { data } = await supabase
+      .from("dispositivos")
+      .select("*")
+      .eq("id", usuario_id)
+      .maybeSingle();
+
+    if (!data) {
+      await supabase.from("dispositivos").insert([
+        { id: usuario_id, rol: "normal" }
+      ]);
+    }
+  }
+
+  async function esAdmin() {
+    const usuario_id = localStorage.getItem("usuario_id");
+
+    const { data } = await supabase
+      .from("dispositivos")
+      .select("rol")
+      .eq("id", usuario_id)
+      .maybeSingle();
+
+    return data && data.rol === "admin";
+  }
+</script>
+
+<!-- INICIO APP -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+    if (!window.AVPCEA_AUTORIZADO) {
+      document.body.innerHTML = `
+        <div style="padding:20px; text-align:center;">
+          <h2>Acceso no autorizado</h2>
+          <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!localStorage.getItem("usuario_id")) {
+      localStorage.setItem("usuario_id", crypto.randomUUID());
+    }
+
+    document.getElementById("app-container").style.display = "block";
+
+    // REGISTRO DEL DISPOSITIVO
+    registrarDispositivo();
+
+    // MOSTRAR ADMIN SI CORRESPONDE
+    esAdmin().then(admin => {
+      if (admin) {
+        document.getElementById("admin-btn").style.display = "block";
       }
-
-      if (!localStorage.getItem("usuario_id")) {
-        localStorage.setItem("usuario_id", crypto.randomUUID());
-      }
-
-      document.getElementById("app-container").style.display = "block";
-
-      // BOTÓN ACCEDER
-      document.getElementById("btn-acceder").addEventListener("click", () => {
-        document.getElementById("welcome-screen").style.display = "none";
-        document.getElementById("welcome-header").style.display = "none";
-
-        document.getElementById("app-screens").style.display = "block";
-        document.getElementById("main-header").style.display = "flex";
-        document.querySelector(".bottom-nav").style.display = "flex";
-
-        showScreen("operativos");
-      });
-
-      // BOTONES DE NAVEGACIÓN
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          showScreen(btn.dataset.screen);
-        });
-      });
-
     });
-  </script>
+
+    // BOTÓN ACCEDER
+    document.getElementById("btn-acceder").addEventListener("click", () => {
+      document.getElementById("welcome-screen").style.display = "none";
+      document.getElementById("welcome-header").style.display = "none";
+
+      document.getElementById("app-screens").style.display = "block";
+      document.getElementById("main-header").style.display = "flex";
+      document.querySelector(".bottom-nav").style.display = "flex";
+
+      showScreen("operativos");
+    });
+
+    // BOTONES DE NAVEGACIÓN
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        showScreen(btn.dataset.screen);
+      });
+    });
+
+  });
+</script>
 
   <!-- SERVICE WORKER -->
   <script>
