@@ -257,6 +257,69 @@
     }
   </script>
 
+  <!-- LISTADOS ADMIN -->
+  <script>
+    function cargarListadoAdmin() {
+      Promise.all([
+        supabase.from("operativos").select("*"),
+        supabase.from("preventivos").select("*"),
+        supabase.from("emergencias").select("*")
+      ]).then(([op, pr, em]) => {
+        const cont = document.getElementById("admin-listado");
+        cont.innerHTML = "";
+
+        const render = (lista, tipo) => {
+          lista.forEach(item => {
+            const div = document.createElement("div");
+            div.innerHTML = `
+              <strong>${tipo}:</strong> ${item.titulo}<br>
+              <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+            `;
+            cont.appendChild(div);
+          });
+        };
+
+        render(op.data, "operativos");
+        render(pr.data, "preventivos");
+        render(em.data, "emergencias");
+
+        document.querySelectorAll(".btn-borrar").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.dataset.id;
+            const tipo = btn.dataset.tipo;
+
+            await supabaseAdmin.from(tipo).delete().eq("id", id);
+            cargarListadoAdmin();
+          });
+        });
+      });
+    }
+
+    document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+      await supabaseAdmin.from("operativos").insert({
+        titulo: document.getElementById("op-titulo").value,
+        descripcion: document.getElementById("op-descripcion").value
+      });
+      cargarListadoAdmin();
+    });
+
+    document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+      await supabaseAdmin.from("preventivos").insert({
+        titulo: document.getElementById("pr-titulo").value,
+        descripcion: document.getElementById("pr-descripcion").value
+      });
+      cargarListadoAdmin();
+    });
+
+    document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+      await supabaseAdmin.from("emergencias").insert({
+        titulo: document.getElementById("em-titulo").value,
+        descripcion: document.getElementById("em-descripcion").value
+      });
+      cargarListadoAdmin();
+    });
+  </script>
+
   <!-- NAVEGACIÓN SPA -->
   <script>
     function cambiarTituloCabecera(texto) {
