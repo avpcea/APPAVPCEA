@@ -446,45 +446,43 @@
 
       if (name === "admin") {
         document.getElementById("admin-screen").style.display = "block";
-        cargarListadoAdmin();
-      }
 
-      cargarListadoAdmin()cargarListadoAdmin = function () {
-        Promise.all([
-        supabase.from("operativos").select("*"),
-        supabase.from("preventivos").select("*"),
-        supabase.from("emergencias").select("*")
-        ]).then(([op, pr, em]) => {
-        const cont = document.getElementById("admin-listado");
-        cont.innerHTML = "";
+        cargarListadoAdmin = function () {
+          Promise.all([
+          supabase.from("operativos").select("*"),
+          supabase.from("preventivos").select("*"),
+          supabase.from("emergencias").select("*")
+          ]).then(([op, pr, em]) => {
+          const cont = document.getElementById("admin-listado");
+          cont.innerHTML = "";
 
-        const render = (lista, tipo) => {
-          lista.forEach(item => {
-            const div = document.createElement("div");
-            div.innerHTML = `
-              <strong>${tipo}:</strong> ${item.titulo}<br>
-              <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-            `;
-            cont.appendChild(div);
+          const render = (lista, tipo) => {
+            lista.forEach(item => {
+              const div = document.createElement("div");
+              div.innerHTML = `
+                <strong>${tipo}:</strong> ${item.titulo}<br>
+                <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+              `;
+              cont.appendChild(div);
+            });
+          };
+
+          render(op.data, "operativos");
+          render(pr.data, "preventivos");
+          render(em.data, "emergencias");
+
+          document.querySelectorAll(".btn-borrar").forEach(btn => {
+            btn.addEventListener("click", async () => {
+              const id = btn.dataset.id;
+              const tipo = btn.dataset.tipo;
+
+              await supabaseAdmin.from(tipo).delete().eq("id", id);
+              cargarListadoAdmin();
+            });
+          });
           });
         };
-
-        render(op.data, "operativos");
-        render(pr.data, "preventivos");
-        render(em.data, "emergencias");
-
-        document.querySelectorAll(".btn-borrar").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.dataset.id;
-            const tipo = btn.dataset.tipo;
-
-            await supabaseAdmin.from(tipo).delete().eq("id", id);
-            cargarListadoAdmin();
-          });
-        });
-        });
-      };
-
+      }
     }
   </script>
 
