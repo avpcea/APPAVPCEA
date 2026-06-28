@@ -114,6 +114,10 @@
 
           <div class="admin-section">
             <h3>Gestión de Usuarios</h3>
+  
+            <!-- BOTÓN PARA ACTUALIZAR -->
+            <button id="btn-actualizar-usuarios">Actualizar usuarios</button>
+  
             <div id="admin-usuarios"></div>
           </div>
         </div>
@@ -568,6 +572,7 @@
           script.src = "supabase-admin.js";
           script.onload = () => {
 
+            cargarUsuariosAdmin();
             cargarListadoAdmin = function () {
               Promise.all([
                 supabase.from("operativos").select("*"),
@@ -628,6 +633,9 @@
               cargarListadoAdmin();
             });
 
+            document.getElementById("btn-actualizar-usuarios").addEventListener("click", cargarUsuariosAdmin);
+            cargarUsuariosAdmin();
+  
           };
 
           document.body.appendChild(script);
