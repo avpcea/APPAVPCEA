@@ -198,9 +198,9 @@
       }
     }
 
-    <!-- =============================== -->
-    <!--  CARGA OPERATIVOS               -->
-    <!-- =============================== -->
+    // ===============================
+    //  CARGA OPERATIVOS              
+    // ===============================
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
       cont.innerHTML = "<p>Cargando operativos...</p>";
@@ -235,9 +235,9 @@
       }
     }
   
-    <!-- =============================== -->
-    <!--  CARGA EMERGENCIAS              -->
-    <!-- =============================== -->
+    // ===============================
+    //  CARGA EMERGENCIAS             
+    // ===============================
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
 
@@ -268,9 +268,9 @@
       return data ? true : false;
     }
   
-    <!-- =============================== -->
-    <!--  ADMINISTRACIÓN SUSCRIPCIONES   -->
-    <!-- =============================== -->
+    // ===============================
+    //  ADMINISTRACIÓN SUSCRIPCIONES  
+    // ===============================
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
       const suscrito = await estaSuscrito(tipo, evento_id);
@@ -338,9 +338,9 @@
       if (tipo === "EMG") cargarEmergencias();
     }
 
-    <!-- =============================== -->
-    <!--  ADMINISTRACIÓN CERRAR EVENTO   -->
-    <!-- =============================== -->
+    // ===============================
+    //  ADMINISTRACIÓN CERRAR EVENTO  
+    // ===============================
     async function cerrarEvento(tabla, evento_id, fecha_fin) {
       // 1. Obtener fecha de inicio
       const { data: evento } = await supabaseAdmin
