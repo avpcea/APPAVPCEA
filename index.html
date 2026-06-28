@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -235,23 +235,115 @@
       const usuario_id = localStorage.getItem("usuario_id");
       const suscrito = await estaSuscrito(tipo, evento_id);
 
+      const tabla = tipo === "NRP" ? "preventivos" :
+                    tipo === "OPR" ? "operativos" :
+                    tipo === "EMG" ? "emergencias" : null;
+
+      if (!tabla) {
+        alert("Tipo de evento desconocido.");
+        return;
+      }
+
       if (!suscrito) {
-        await supabase.from("suscripciones").insert([{ usuario_id, tipo, evento_id }]);
+        // 1. Insertar suscripción
+        await supabase.from("suscripciones").insert([
+          { usuario_id, tipo, evento_id: String(evento_id) }
+        ]);
+
+        // 2. Obtener duración del evento
+        const { data: evento } = await supabase
+          .from(tabla)
+          .select("duracion_horas")
+          .eq("id", evento_id)
+          .maybeSingle();
+
+        const horas = evento?.duracion_horas || 0;
+        const año = new Date().getFullYear();
+
+        // 3. Insertar horas iniciales
+        await supabase.from("horas").insert([
+          {
+            usuario_id,
+            evento_id: String(evento_id),
+            tipo,
+            horas,
+            año
+          }
+        ]);
+
         alert("Suscripción realizada.");
       } else {
+        // 1. Borrar suscripción
         await supabase
           .from("suscripciones")
           .delete()
           .eq("usuario_id", usuario_id)
           .eq("tipo", tipo)
-          .eq("evento_id", evento_id);
+          .eq("evento_id", String(evento_id));
+
+        // 2. Borrar horas
+        await supabase
+          .from("horas")
+          .delete()
+          .eq("usuario_id", usuario_id)
+          .eq("evento_id", String(evento_id))
+          .eq("tipo", tipo);
+
         alert("Suscripción cancelada.");
       }
 
+      // Recargar pantalla
       if (tipo === "NRP") cargarPreventivos();
       if (tipo === "OPR") cargarOperativos();
+      if (tipo === "EMG") cargarEmergencias();
+    }
+
+    async function cerrarEvento(tabla, evento_id, fecha_fin) {
+      // 1. Obtener fecha de inicio
+      const { data: evento } = await supabaseAdmin
+        .from(tabla)
+        .select("fecha_inicio")
+        .eq("id", evento_id)
+        .maybeSingle();
+
+      const inicio = new Date(evento.fecha_inicio);
+      const fin = new Date(fecha_fin);
+
+      // 2. Calcular duración
+      const duracion_horas = (fin - inicio) / (1000 * 60 * 60);
+
+      // 3. Actualizar evento
+      await supabaseAdmin
+        .from(tabla)
+        .update({
+          fecha_fin,
+          duracion_horas
+        })
+        .eq("id", evento_id);
+
+      // 4. Obtener suscritos
+      const { data: suscritos } = await supabaseAdmin
+        .from("suscripciones")
+        .select("usuario_id, tipo")
+        .eq("evento_id", String(evento_id));
+
+      const año = new Date().getFullYear();
+
+      // 5. Actualizar horas
+      for (const s of suscritos) {
+        await supabaseAdmin
+          .from("horas")
+          .update({ horas: duracion_horas })
+          .eq("usuario_id", s.usuario_id)
+          .eq("evento_id", String(evento_id))
+          .eq("tipo", s.tipo)
+          .eq("año", año);
+      }
+
+      alert("Evento cerrado y horas recalculadas.");
     }
   </script>
+
 
   <!-- ========================= -->
   <!--  FUNCIONES DE ROLES       -->
