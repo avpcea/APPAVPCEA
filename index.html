@@ -574,42 +574,114 @@
           script.src = "supabase-admin.js";
           script.onload = () => {
 
-            cargarUsuariosAdmin();
-            cargarListadoAdmin = function () {
-              Promise.all([
-                supabase.from("operativos").select("*"),
-                supabase.from("preventivos").select("*"),
-                supabase.from("emergencias").select("*")
-              ]).then(([op, pr, em]) => {
-                const cont = document.getElementById("admin-listado");
-                cont.innerHTML = "";
+            // ===============================
+            //   GESTIÓN DE USUARIOS (ADMIN)
+            // ===============================
 
-                const render = (lista, tipo) => {
-                  lista.forEach(item => {
-                    const div = document.createElement("div");
-                    div.innerHTML = `
-                      <strong>${tipo}:</strong> ${item.titulo}<br>
-                      <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-                    `;
-                    cont.appendChild(div);
-                  });
-                };
+            async function cargarUsuariosAdmin() {
+              const cont = document.getElementById("admin-usuarios");
+              cont.innerHTML = "<p>Cargando usuarios...</p>";
 
-                render(op.data, "operativos");
-                render(pr.data, "preventivos");
-                render(em.data, "emergencias");
+              const { data: usuarios, error } = await supabaseAdmin
+                .from("usuarios")
+                .select("id, nombre, telefono, rol, creado_en");
 
-                document.querySelectorAll(".btn-borrar").forEach(btn => {
-                  btn.addEventListener("click", async () => {
-                    const id = btn.dataset.id;
-                    const tipo = btn.dataset.tipo;
+              if (error) {
+                cont.innerHTML = "<p>Error al cargar usuarios.</p>";
+                return;
+              }
 
-                    await supabaseAdmin.from(tipo).delete().eq("id", id);
-                    cargarListadoAdmin();
-                  });
-                });
+              cont.innerHTML = "";
+
+              usuarios.forEach(u => {
+                cont.innerHTML += `
+                  <div class="card">
+                    <h4>${u.nombre}</h4>
+                    <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
+                    <p><strong>Rol:</strong> ${u.rol}</p>
+                    <p><strong>Creado:</strong> ${u.creado_en}</p>
+
+                    <button onclick="editarUsuario('${u.id}')">Editar</button>
+                    <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
+                    <button onclick="verHorasUsuario('${u.id}')">Horas</button>
+                    <button onclick="verSuscripcionesUsuario('${u.id}')">Suscripciones</button>
+                    <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+                  </div>
+                `;
               });
-            };
+
+            document.getElementById("btn-actualizar-usuarios").addEventListener("click", cargarUsuariosAdmin);
+            cargarUsuariosAdmin();
+
+            }
+
+            async function editarUsuario(id) {
+              const nombre = prompt("Nuevo nombre:");
+              const telefono = prompt("Nuevo teléfono:");
+
+              if (!nombre) return;
+
+              await supabaseAdmin
+                .from("usuarios")
+                .update({ nombre, telefono })
+                .eq("id", id);
+
+              cargarUsuariosAdmin();
+            }
+
+            async function cambiarRol(id) {
+              const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
+
+              if (!nuevoRol) return;
+
+              await supabaseAdmin
+                .from("usuarios")
+                .update({ rol: nuevoRol })
+                .eq("id", id);
+
+              cargarUsuariosAdmin();
+            }
+
+            async function verHorasUsuario(id) {
+              const año = new Date().getFullYear();
+
+              const { data } = await supabaseAdmin
+                .from("horas")
+                .select("horas")
+                .eq("usuario_id", id)
+                .eq("año", año);
+
+              const total = data.reduce((acc, h) => acc + Number(h.horas), 0);
+
+              alert(`Horas acumuladas en ${año}: ${total}`);
+            }
+
+            async function verSuscripcionesUsuario(id) {
+              const { data } = await supabaseAdmin
+                .from("suscripciones")
+                .select("tipo, evento_id, fecha")
+                .eq("usuario_id", id);
+
+              let msg = "Suscripciones:\n\n";
+
+              data.forEach(s => {
+                msg += `• ${s.tipo} → Evento ${s.evento_id} (${s.fecha})\n`;
+              });
+
+              alert(msg);
+            }
+
+            async function borrarUsuario(id) {
+              if (!confirm("¿Eliminar usuario y todos sus datos asociados?")) return;
+
+              await supabaseAdmin
+                .from("usuarios")
+                .delete()
+                .eq("id", id);
+
+              cargarUsuariosAdmin();
+            }
+
 
             document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
               await supabaseAdmin.from("operativos").insert({
@@ -634,9 +706,6 @@
               });
               cargarListadoAdmin();
             });
-
-            document.getElementById("btn-actualizar-usuarios").addEventListener("click", cargarUsuariosAdmin);
-            cargarUsuariosAdmin();
   
           };
 
