@@ -491,6 +491,7 @@
 
           const script = document.createElement("script");
           script.src = "supabase-admin.js";
+
           script.onload = () => {
 
             // ===============================
@@ -520,7 +521,7 @@
                     <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
                     <p><strong>Rol:</strong> ${u.rol}</p>
                     <p><strong>Creado:</strong> ${u.creado_en}</p>
-
+  
                     <button onclick="editarUsuario('${u.id}')">Editar</button>
                     <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
                     <button onclick="verHorasUsuario('${u.id}')">Horas</button>
@@ -534,11 +535,9 @@
             async function editarUsuario(id) {
               const nombre = prompt("Nuevo nombre:");
               const telefono = prompt("Nuevo teléfono:");
-
               if (!nombre) return;
 
-              await supabaseAdmin
-                .from("usuarios")
+              await supabaseAdmin.from("usuarios")
                 .update({ nombre, telefono })
                 .eq("id", id);
 
@@ -547,16 +546,13 @@
 
             async function cambiarRol(id) {
               const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-
               if (!nuevoRol) return;
 
-              await supabaseAdmin
-                .from("usuarios")
+              await supabaseAdmin.from("usuarios")
                 .update({ rol: nuevoRol })
                 .eq("id", id);
-
-              cargarUsuariosAdmin();
-            }
+                cargarUsuariosAdmin();
+              }
 
             async function verHorasUsuario(id) {
               const año = new Date().getFullYear();
@@ -584,14 +580,13 @@
                 msg += `• ${s.tipo} → Evento ${s.evento_id} (${s.fecha})\n`;
               });
 
-             alert(msg);
+              alert(msg);
             }
 
             async function borrarUsuario(id) {
               if (!confirm("¿Eliminar usuario y todos sus datos asociados?")) return;
 
-              await supabaseAdmin
-                .from("usuarios")
+              await supabaseAdmin.from("usuarios")
                 .delete()
                 .eq("id", id);
 
@@ -604,7 +599,11 @@
 
             // CARGAR AL ENTRAR EN ADMIN
             cargarUsuariosAdmin();
-          };
+
+
+            // ===============================
+            //   CREACIÓN DE EVENTOS (ADMIN)
+            // ===============================
 
             document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
               await supabaseAdmin.from("operativos").insert({
@@ -629,11 +628,11 @@
               });
               cargarListadoAdmin();
             });
-  
-          };
+
+          }; // FIN script.onload
 
           document.body.appendChild(script);
-
+        }
       });
 
       document.getElementById("btn-acceder").addEventListener("click", () => {
@@ -655,6 +654,7 @@
 
     });
   </script>
+
 
   <!-- ========================= -->
   <!--  SERVICE WORKER           -->
