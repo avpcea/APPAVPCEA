@@ -198,9 +198,9 @@
       }
     }
 
-    // ===============================
+    // =============================== 
     //  CARGA OPERATIVOS              
-    // ===============================
+    // =============================== 
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
       cont.innerHTML = "<p>Cargando operativos...</p>";
@@ -234,10 +234,10 @@
         `;
       }
     }
-  
-    // ===============================
+
+    // =============================== 
     //  CARGA EMERGENCIAS             
-    // ===============================
+    // =============================== 
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
 
@@ -267,10 +267,10 @@
 
       return data ? true : false;
     }
-  
-    // ===============================
+
+    // =============================== 
     //  ADMINISTRACIÓN SUSCRIPCIONES  
-    // ===============================
+    // =============================== 
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
       const suscrito = await estaSuscrito(tipo, evento_id);
@@ -285,12 +285,10 @@
       }
 
       if (!suscrito) {
-        // 1. Insertar suscripción
         await supabase.from("suscripciones").insert([
           { usuario_id, tipo, evento_id: String(evento_id) }
         ]);
 
-        // 2. Obtener duración del evento
         const { data: evento } = await supabase
           .from(tabla)
           .select("duracion_horas")
@@ -300,7 +298,6 @@
         const horas = evento?.duracion_horas || 0;
         const año = new Date().getFullYear();
 
-        // 3. Insertar horas iniciales
         await supabase.from("horas").insert([
           {
             usuario_id,
@@ -313,7 +310,6 @@
 
         alert("Suscripción realizada.");
       } else {
-        // 1. Borrar suscripción
         await supabase
           .from("suscripciones")
           .delete()
@@ -321,7 +317,6 @@
           .eq("tipo", tipo)
           .eq("evento_id", String(evento_id));
 
-        // 2. Borrar horas
         await supabase
           .from("horas")
           .delete()
@@ -332,17 +327,15 @@
         alert("Suscripción cancelada.");
       }
 
-      // Recargar pantalla
       if (tipo === "NRP") cargarPreventivos();
       if (tipo === "OPR") cargarOperativos();
       if (tipo === "EMG") cargarEmergencias();
     }
 
-    // ===============================
+    // =============================== 
     //  ADMINISTRACIÓN CERRAR EVENTO  
-    // ===============================
+    // =============================== 
     async function cerrarEvento(tabla, evento_id, fecha_fin) {
-      // 1. Obtener fecha de inicio
       const { data: evento } = await supabaseAdmin
         .from(tabla)
         .select("fecha_inicio")
@@ -352,10 +345,8 @@
       const inicio = new Date(evento.fecha_inicio);
       const fin = new Date(fecha_fin);
 
-      // 2. Calcular duración
       const duracion_horas = (fin - inicio) / (1000 * 60 * 60);
 
-      // 3. Actualizar evento
       await supabaseAdmin
         .from(tabla)
         .update({
@@ -364,7 +355,6 @@
         })
         .eq("id", evento_id);
 
-      // 4. Obtener suscritos
       const { data: suscritos } = await supabaseAdmin
         .from("suscripciones")
         .select("usuario_id, tipo")
@@ -372,7 +362,6 @@
 
       const año = new Date().getFullYear();
 
-      // 5. Actualizar horas
       for (const s of suscritos) {
         await supabaseAdmin
           .from("horas")
@@ -384,9 +373,8 @@
       }
 
       alert("Evento cerrado y horas recalculadas.");
-    }  
+    }
   </script>
-
 
   <!-- ========================= -->
   <!--  FUNCIONES DE ROLES       -->
