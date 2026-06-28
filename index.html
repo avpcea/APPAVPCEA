@@ -577,13 +577,13 @@
               cargarUsuariosAdmin();
             }
 
-            // ACTIVAR BOTÓN
-            document.getElementById("btn-actualizar-usuarios")
-              .addEventListener("click", cargarUsuariosAdmin);
-
             // CARGAR AL ENTRAR EN ADMIN
             cargarUsuariosAdmin();
             cargarListadoAdmin();
+
+            // ACTIVAR BOTÓN
+            document.getElementById("btn-actualizar-usuarios")
+              .addEventListener("click", cargarUsuariosAdmin);
 
             // ===============================
             //   CREACIÓN DE EVENTOS (ADMIN)
