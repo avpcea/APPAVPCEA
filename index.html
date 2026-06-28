@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -138,7 +138,7 @@
   <!-- FIN APP -->
 
   <!-- ========================= -->
-  <!--  CARGA DE LISTAS          -->
+  <!--  CARGA PREVENTIVOS        -->
   <!-- ========================= -->
 
   <script>
@@ -176,6 +176,9 @@
       }
     }
 
+    <!-- =============================== -->
+    <!--  CARGA OPERATIVOS               -->
+    <!-- =============================== -->
     async function cargarOperativos() {
       const cont = document.getElementById("lista-operativos");
       cont.innerHTML = "<p>Cargando operativos...</p>";
@@ -209,7 +212,10 @@
         `;
       }
     }
-
+  
+    <!-- =============================== -->
+    <!--  CARGA EMERGENCIAS              -->
+    <!-- =============================== -->
     async function cargarEmergencias() {
       const cont = document.getElementById("lista-emergencias");
 
@@ -222,7 +228,9 @@
     }
   </script>
 
-  <!-- SUSCRIPCIONES -->
+  <!-- ================ -->
+  <!--  SUSCRIPCIONES   -->
+  <!-- ================ -->
   <script>
     async function estaSuscrito(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
@@ -237,7 +245,10 @@
 
       return data ? true : false;
     }
-
+  
+    <!-- =============================== -->
+    <!--  ADMINISTRACIÓN SUSCRIPCIONES   -->
+    <!-- =============================== -->
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
       const suscrito = await estaSuscrito(tipo, evento_id);
@@ -305,6 +316,9 @@
       if (tipo === "EMG") cargarEmergencias();
     }
 
+    <!-- =============================== -->
+    <!--  ADMINISTRACIÓN CERRAR EVENTO   -->
+    <!-- =============================== -->
     async function cerrarEvento(tabla, evento_id, fecha_fin) {
       // 1. Obtener fecha de inicio
       const { data: evento } = await supabaseAdmin
@@ -348,6 +362,37 @@
       }
 
       alert("Evento cerrado y horas recalculadas.");
+    }
+    
+    <!-- ================================= -->
+    <!--  ADMINISTRACIÓN CARGAR USUARIOS   -->
+    <!-- ================================= -->
+    async function cargarUsuariosAdmin() {
+      const cont = document.getElementById("admin-usuarios");
+      cont.innerHTML = "<p>Cargando usuarios...</p>";
+
+      const { data: usuarios } = await supabaseAdmin
+        .from("usuarios")
+        .select("id, nombre, telefono, rol, creado_en");
+
+      cont.innerHTML = "";
+
+      usuarios.forEach(u => {
+        cont.innerHTML += `
+          <div class="card">
+            <h4>${u.nombre}</h4>
+            <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
+            <p><strong>Rol:</strong> ${u.rol}</p>
+            <p><strong>Creado:</strong> ${u.creado_en}</p>
+
+            <button onclick="editarUsuario('${u.id}')">Editar</button>
+            <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
+            <button onclick="verHorasUsuario('${u.id}')">Horas</button>
+            <button onclick="verSuscripcionesUsuario('${u.id}')">Suscripciones</button>
+            <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+          </div>
+        `;
+      });
     }
   </script>
 
