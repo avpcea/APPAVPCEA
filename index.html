@@ -529,6 +529,26 @@
               });
             }
 
+            document.getElementById("btn-crear-usuario").addEventListener("click", async () => {
+              const nombre = document.getElementById("usr-nombre").value;
+              const telefono = document.getElementById("usr-telefono").value;
+              const rol = document.getElementById("usr-rol").value;
+
+              if (!nombre) {
+                alert("El nombre es obligatorio.");
+                return;
+              }
+
+              await supabaseAdmin.from("usuarios").insert({
+                nombre,
+                telefono,
+                rol
+              });
+
+              alert("Usuario creado correctamente.");
+              cargarUsuariosAdmin();
+            });
+
             async function editarUsuario(id) {
               const nombre = prompt("Nuevo nombre:");
               const telefono = prompt("Nuevo teléfono:");
