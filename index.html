@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -393,6 +393,69 @@
           </div>
         `;
       });
+    }
+      
+    async function editarUsuario(id) {
+      const nombre = prompt("Nuevo nombre:");
+      const telefono = prompt("Nuevo teléfono:");
+
+      await supabaseAdmin
+        .from("usuarios")
+        .update({ nombre, telefono })
+        .eq("id", id);
+
+      cargarUsuariosAdmin();
+    }
+
+    async function cambiarRol(id) {
+      const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
+
+      await supabaseAdmin
+        .from("usuarios")
+        .update({ rol: nuevoRol })
+        .eq("id", id);
+
+      cargarUsuariosAdmin();
+    }
+
+    async function verHorasUsuario(id) {
+      const año = new Date().getFullYear();
+
+      const { data } = await supabaseAdmin
+        .from("horas")
+        .select("horas")
+        .eq("usuario_id", id)
+        .eq("año", año);
+
+      const total = data.reduce((acc, h) => acc + Number(h.horas), 0);
+
+      alert(`Horas acumuladas en ${año}: ${total}`);
+    }
+
+    async function verSuscripcionesUsuario(id) {
+      const { data } = await supabaseAdmin
+        .from("suscripciones")
+        .select("tipo, evento_id, fecha")
+        .eq("usuario_id", id);
+
+      let msg = "Suscripciones:\n\n";
+
+      data.forEach(s => {
+        msg += `• ${s.tipo} → Evento ${s.evento_id} (${s.fecha})\n`;
+      });
+
+      alert(msg);
+    }
+
+    async function borrarUsuario(id) {
+      if (!confirm("¿Eliminar usuario y todos sus datos?")) return;
+
+      await supabaseAdmin
+        .from("usuarios")
+        .delete()
+        .eq("id", id);
+
+      cargarUsuariosAdmin();
     }
   </script>
 
