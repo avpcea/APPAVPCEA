@@ -409,194 +409,53 @@
     }
   </script>
 
-<!-- ========================= -->
-<!--  SPA: CAMBIO DE PANTALLAS -->
-<!-- ========================= -->
-<script>
-  function showScreen(name) {
+  <!-- ========================= -->
+  <!--  SPA: CAMBIO DE PANTALLAS -->
+  <!-- ========================= -->
+  <script>
+    function showScreen(name) {
 
-    if (name === "preventivos") cargarPreventivos();
-    if (name === "operativos") cargarOperativos();
-    if (name === "emergencias") cargarEmergencias();
+      if (name === "preventivos") cargarPreventivos();
+      if (name === "operativos") cargarOperativos();
+      if (name === "emergencias") cargarEmergencias();
 
-    document.querySelector(".header-title").textContent =
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" :
-      name === "admin" ? "Administración" : "";
+      document.querySelector(".header-title").textContent =
+        name === "operativos" ? "Operativos" :
+        name === "preventivos" ? "Preventivos" :
+        name === "emergencias" ? "Emergencias" :
+        name === "admin" ? "Administración" : "";
 
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-    if (btn) btn.classList.add("active");
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
+      if (btn) btn.classList.add("active");
 
-    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-    const screen = document.getElementById("screen-" + name);
-    if (screen) screen.classList.add("active");
+      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+      const screen = document.getElementById("screen-" + name);
+      if (screen) screen.classList.add("active");
 
-    if (name === "admin") {
-      document.getElementById("admin-screen").style.display = "block";
+      if (name === "admin") {
+        document.getElementById("admin-screen").style.display = "block";
 
-      // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
-      // La función se define dentro de script.onload (PARTE 4)
-      // Aquí solo se llama, si ya existe:
-      if (typeof cargarListadoAdmin === "function") {
-        cargarListadoAdmin();
-      }
-      if (typeof cargarUsuariosAdmin === "function") {
-        cargarUsuariosAdmin();
-      }
-    }
-  }
-</script>
-
-<!-- ========================= -->
-<!--  ADMIN: LISTADO VACÍO     -->
-<!-- ========================= -->
-<script>
-  // Esta función se sobrescribe dentro de supabase-admin.js
-  function cargarListadoAdmin() {}
-</script>
-<!-- ========================= -->
-<!--  SPA: CAMBIO DE PANTALLAS -->
-<!-- ========================= -->
-<script>
-  function showScreen(name) {
-
-    if (name === "preventivos") cargarPreventivos();
-    if (name === "operativos") cargarOperativos();
-    if (name === "emergencias") cargarEmergencias();
-
-    document.querySelector(".header-title").textContent =
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" :
-      name === "admin" ? "Administración" : "";
-
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-    if (btn) btn.classList.add("active");
-
-    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-    const screen = document.getElementById("screen-" + name);
-    if (screen) screen.classList.add("active");
-
-    if (name === "admin") {
-      document.getElementById("admin-screen").style.display = "block";
-
-      // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
-      // La función se define dentro de script.onload (PARTE 4)
-      // Aquí solo se llama, si ya existe:
-      if (typeof cargarListadoAdmin === "function") {
-        cargarListadoAdmin();
-      }
-      if (typeof cargarUsuariosAdmin === "function") {
-        cargarUsuariosAdmin();
+        // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
+        // La función se define dentro de script.onload (PARTE 4)
+        // Aquí solo se llama, si ya existe:
+        if (typeof cargarListadoAdmin === "function") {
+          cargarListadoAdmin();
+        }
+        if (typeof cargarUsuariosAdmin === "function") {
+          cargarUsuariosAdmin();
+        }
       }
     }
-  }
-</script>
+  </script>
 
-<!-- ========================= -->
-<!--  ADMIN: LISTADO VACÍO     -->
-<!-- ========================= -->
-<script>
-  // Esta función se sobrescribe dentro de supabase-admin.js
-  function cargarListadoAdmin() {}
-</script>
-<!-- ========================= -->
-<!--  SPA: CAMBIO DE PANTALLAS -->
-<!-- ========================= -->
-<script>
-  function showScreen(name) {
-
-    if (name === "preventivos") cargarPreventivos();
-    if (name === "operativos") cargarOperativos();
-    if (name === "emergencias") cargarEmergencias();
-
-    document.querySelector(".header-title").textContent =
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" :
-      name === "admin" ? "Administración" : "";
-
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-    if (btn) btn.classList.add("active");
-
-    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-    const screen = document.getElementById("screen-" + name);
-    if (screen) screen.classList.add("active");
-
-    if (name === "admin") {
-      document.getElementById("admin-screen").style.display = "block";
-
-      // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
-      // La función se define dentro de script.onload (PARTE 4)
-      // Aquí solo se llama, si ya existe:
-      if (typeof cargarListadoAdmin === "function") {
-        cargarListadoAdmin();
-      }
-      if (typeof cargarUsuariosAdmin === "function") {
-        cargarUsuariosAdmin();
-      }
-    }
-  }
-</script>
-
-<!-- ========================= -->
-<!--  ADMIN: LISTADO VACÍO     -->
-<!-- ========================= -->
-<script>
-  // Esta función se sobrescribe dentro de supabase-admin.js
-  function cargarListadoAdmin() {}
-</script>
-<!-- ========================= -->
-<!--  SPA: CAMBIO DE PANTALLAS -->
-<!-- ========================= -->
-<script>
-  function showScreen(name) {
-
-    if (name === "preventivos") cargarPreventivos();
-    if (name === "operativos") cargarOperativos();
-    if (name === "emergencias") cargarEmergencias();
-
-    document.querySelector(".header-title").textContent =
-      name === "operativos" ? "Operativos" :
-      name === "preventivos" ? "Preventivos" :
-      name === "emergencias" ? "Emergencias" :
-      name === "admin" ? "Administración" : "";
-
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-    if (btn) btn.classList.add("active");
-
-    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-    const screen = document.getElementById("screen-" + name);
-    if (screen) screen.classList.add("active");
-
-    if (name === "admin") {
-      document.getElementById("admin-screen").style.display = "block";
-
-      // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
-      // La función se define dentro de script.onload (PARTE 4)
-      // Aquí solo se llama, si ya existe:
-      if (typeof cargarListadoAdmin === "function") {
-        cargarListadoAdmin();
-      }
-      if (typeof cargarUsuariosAdmin === "function") {
-        cargarUsuariosAdmin();
-      }
-    }
-  }
-</script>
-
-<!-- ========================= -->
-<!--  ADMIN: LISTADO VACÍO     -->
-<!-- ========================= -->
-<script>
-  // Esta función se sobrescribe dentro de supabase-admin.js
-  function cargarListadoAdmin() {}
-</script>
+  <!-- ========================= -->
+  <!--  ADMIN: LISTADO VACÍO     -->
+  <!-- ========================= -->
+  <script>
+    // Esta función se sobrescribe dentro de supabase-admin.js
+    function cargarListadoAdmin() {}
+  </script>
 
   <!-- ========================= -->
   <!--  INICIO DE LA APP         -->
