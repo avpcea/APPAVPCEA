@@ -489,10 +489,12 @@
 script.onload = () => {
 
   // ===============================
-  //   LISTADO DE ELEMENTOS (ADMIN)
+  //   LISTADO DE ELEMENTOS
   // ===============================
   async function cargarListadoAdmin() {
     const cont = document.getElementById("admin-listado");
+    if (!cont) return;
+
     cont.innerHTML = "<p>Cargando elementos...</p>";
 
     const [op, pr, em] = await Promise.all([
@@ -559,6 +561,39 @@ script.onload = () => {
     });
   }
 
+  async function editarUsuario(id) {
+    const nombre = prompt("Nuevo nombre:");
+    const telefono = prompt("Nuevo teléfono:");
+    if (!nombre) return;
+
+    await supabaseAdmin.from("usuarios")
+      .update({ nombre, telefono })
+      .eq("id", id);
+
+    cargarUsuariosAdmin();
+  }
+
+  async function cambiarRol(id) {
+    const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
+    if (!nuevoRol) return;
+
+    await supabaseAdmin.from("usuarios")
+      .update({ rol: nuevoRol })
+      .eq("id", id);
+
+    cargarUsuariosAdmin();
+  }
+
+  async function borrarUsuario(id) {
+    if (!confirm("¿Eliminar usuario?")) return;
+
+    await supabaseAdmin.from("usuarios")
+      .delete()
+      .eq("id", id);
+
+    cargarUsuariosAdmin();
+  }
+
   // ===============================
   //   CREACIÓN DE EVENTOS
   // ===============================
@@ -592,11 +627,11 @@ script.onload = () => {
   document.getElementById("btn-actualizar-usuarios")
     .addEventListener("click", cargarUsuariosAdmin);
 
-  // ❗ NO LLAMAR cargarListadoAdmin() aquí
-  // Se llama cuando el usuario entra en admin
+  // NO LLAMAR cargarListadoAdmin() aquí
+  // Se llama al entrar en admin
 
-};
- // FIN script.onload
+}; // ← cierre correcto del script.onload
+
 
           document.body.appendChild(script);
         }
