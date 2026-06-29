@@ -486,210 +486,117 @@
           const script = document.createElement("script");
           script.src = "supabase-admin.js";
 
-          script.onload = () => {
+script.onload = () => {
 
-            // ===============================
-            //   GESTIÓN DE USUARIOS (ADMIN)
-            // ===============================
+  // ===============================
+  //   LISTADO DE ELEMENTOS (ADMIN)
+  // ===============================
+  async function cargarListadoAdmin() {
+    const cont = document.getElementById("admin-listado");
+    cont.innerHTML = "<p>Cargando elementos...</p>";
 
-            async function cargarUsuariosAdmin() {
-              const cont = document.getElementById("admin-usuarios");
-              cont.innerHTML = "<p>Cargando usuarios...</p>";
+    const [op, pr, em] = await Promise.all([
+      supabaseAdmin.from("operativos").select("*"),
+      supabaseAdmin.from("preventivos").select("*"),
+      supabaseAdmin.from("emergencias").select("*")
+    ]);
 
-              const { data: usuarios, error } = await supabaseAdmin
-                .from("usuarios")
-                .select("id, nombre, telefono, rol, creado_en");
+    cont.innerHTML = "";
 
-              if (error) {
-                cont.innerHTML = "<p>Error al cargar usuarios.</p>";
-                console.error(error);
-                return;
-              }
+    const render = (lista, tipo) => {
+      if (!lista.data) return;
+      lista.data.forEach(item => {
+        const div = document.createElement("div");
+        div.classList.add("card");
+        div.innerHTML = `
+          <strong>${tipo}:</strong> ${item.titulo}<br>
+          <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+        `;
+        cont.appendChild(div);
+      });
+    };
 
-              cont.innerHTML = "";
+    render(op, "operativos");
+    render(pr, "preventivos");
+    render(em, "emergencias");
 
-              usuarios.forEach(u => {
-                cont.innerHTML += `
-                  <div class="card">
-                    <h4>${u.nombre}</h4>
-                    <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-                    <p><strong>Rol:</strong> ${u.rol}</p>
-                    <p><strong>Creado:</strong> ${u.creado_en}</p>
-  
-                    <button onclick="editarUsuario('${u.id}')">Editar</button>
-                    <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-                    <button onclick="verHorasUsuario('${u.id}')">Horas</button>
-                    <button onclick="verSuscripcionesUsuario('${u.id}')">Suscripciones</button>
-                    <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
-                  </div>
-                `;
-              });
-            }
+    document.querySelectorAll(".btn-borrar").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        const tipo = btn.dataset.tipo;
 
-            document.getElementById("btn-crear-usuario").addEventListener("click", async () => {
-              const nombre = document.getElementById("usr-nombre").value;
-              const telefono = document.getElementById("usr-telefono").value;
-              const rol = document.getElementById("usr-rol").value;
+        await supabaseAdmin.from(tipo).delete().eq("id", id);
+        cargarListadoAdmin();
+      });
+    });
+  }
 
-              if (!nombre) {
-                alert("El nombre es obligatorio.");
-                return;
-              }
+  // ===============================
+  //   GESTIÓN DE USUARIOS
+  // ===============================
+  async function cargarUsuariosAdmin() {
+    const cont = document.getElementById("admin-usuarios");
+    cont.innerHTML = "<p>Cargando usuarios...</p>";
 
-              await supabaseAdmin.from("usuarios").insert({
-                nombre,
-                telefono,
-                rol
-              });
+    const { data: usuarios } = await supabaseAdmin
+      .from("usuarios")
+      .select("*");
 
-              alert("Usuario creado correctamente.");
-              cargarUsuariosAdmin();
-            });
+    cont.innerHTML = "";
 
-            async function editarUsuario(id) {
-              const nombre = prompt("Nuevo nombre:");
-              const telefono = prompt("Nuevo teléfono:");
-              if (!nombre) return;
+    usuarios.forEach(u => {
+      cont.innerHTML += `
+        <div class="card">
+          <h4>${u.nombre}</h4>
+          <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
+          <p><strong>Rol:</strong> ${u.rol}</p>
 
-              await supabaseAdmin.from("usuarios")
-                .update({ nombre, telefono })
-                .eq("id", id);
+          <button onclick="editarUsuario('${u.id}')">Editar</button>
+          <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
+          <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+        </div>
+      `;
+    });
+  }
 
-              cargarUsuariosAdmin();
-            }
+  // ===============================
+  //   CREACIÓN DE EVENTOS
+  // ===============================
+  document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+    await supabaseAdmin.from("operativos").insert({
+      titulo: document.getElementById("op-titulo").value,
+      descripcion: document.getElementById("op-descripcion").value
+    });
+    cargarListadoAdmin();
+  });
 
-            async function cambiarRol(id) {
-              const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-              if (!nuevoRol) return;
+  document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+    await supabaseAdmin.from("preventivos").insert({
+      titulo: document.getElementById("pr-titulo").value,
+      descripcion: document.getElementById("pr-descripcion").value
+    });
+    cargarListadoAdmin();
+  });
 
-              await supabaseAdmin.from("usuarios")
-                .update({ rol: nuevoRol })
-                .eq("id", id);
-              cargarUsuariosAdmin();
-            }
+  document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+    await supabaseAdmin.from("emergencias").insert({
+      titulo: document.getElementById("em-titulo").value,
+      descripcion: document.getElementById("em-descripcion").value
+    });
+    cargarListadoAdmin();
+  });
 
-            async function verHorasUsuario(id) {
-              const año = new Date().getFullYear();
+  // ===============================
+  //   BOTONES
+  // ===============================
+  document.getElementById("btn-actualizar-usuarios")
+    .addEventListener("click", cargarUsuariosAdmin);
 
-              const { data } = await supabaseAdmin
-                .from("horas")
-                .select("horas")
-                .eq("usuario_id", id)
-                .eq("año", año);
+  // ❗ NO LLAMAR cargarListadoAdmin() aquí
+  // Se llama cuando el usuario entra en admin
 
-              const total = data.reduce((acc, h) => acc + Number(h.horas), 0);
-
-              alert(`Horas acumuladas en ${año}: ${total}`);
-            }
-
-            async function verSuscripcionesUsuario(id) {
-              const { data } = await supabaseAdmin
-                .from("suscripciones")
-                .select("tipo, evento_id, fecha")
-                .eq("usuario_id", id);
-
-              let msg = "Suscripciones:\n\n";
-
-              data.forEach(s => {
-                msg += `• ${s.tipo} → Evento ${s.evento_id} (${s.fecha})\n`;
-              });
-
-              alert(msg);
-            }
-
-            async function borrarUsuario(id) {
-              if (!confirm("¿Eliminar usuario y todos sus datos asociados?")) return;
-
-              await supabaseAdmin.from("usuarios")
-                .delete()
-                .eq("id", id);
-
-              cargarUsuariosAdmin();
-            }
-
-            // ===============================
-            //   LISTADO DE ELEMENTOS (ADMIN)
-            // ===============================
-            async function cargarListadoAdmin() {
-              const cont = document.getElementById("admin-listado");
-              cont.innerHTML = "<p>Cargando elementos...</p>";
-
-              const [op, pr, em] = await Promise.all([
-                supabaseAdmin.from("operativos").select("*"),
-                supabaseAdmin.from("preventivos").select("*"),
-                supabaseAdmin.from("emergencias").select("*")
-              ]);
-
-              cont.innerHTML = "";
-
-              const render = (lista, tipo) => {
-                lista.data.forEach(item => {
-                  const div = document.createElement("div");
-                  div.classList.add("card");
-                  div.innerHTML = `
-                    <strong>${tipo}:</strong> ${item.titulo}<br>
-                    <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-                  `;
-                  cont.appendChild(div);
-                });
-              };
-
-              render(op, "operativos");
-              render(pr, "preventivos");
-              render(em, "emergencias");
-
-              document.querySelectorAll(".btn-borrar").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                  const id = btn.dataset.id;
-                  const tipo = btn.dataset.tipo;
-
-                  await supabaseAdmin.from(tipo).delete().eq("id", id);
-                  cargarListadoAdmin();
-                });
-              });
-            }
-
-            // ===============================
-            //   CARGAR AL ENTRAR EN ADMIN
-            // ===============================
-            cargarUsuariosAdmin();
-            // cargarListadoAdmin();
-
-            // ===============================
-            //   ACTIVAR BOTÓN
-            // ===============================
-            document.getElementById("btn-actualizar-usuarios")
-              .addEventListener("click", cargarUsuariosAdmin);
-
-            // ===============================
-            //   CREACIÓN DE EVENTOS (ADMIN)
-            // ===============================
-
-            document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-              await supabaseAdmin.from("operativos").insert({
-                titulo: document.getElementById("op-titulo").value,
-                descripcion: document.getElementById("op-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-            document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-              await supabaseAdmin.from("preventivos").insert({
-                titulo: document.getElementById("pr-titulo").value,
-                descripcion: document.getElementById("pr-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-            document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-              await supabaseAdmin.from("emergencias").insert({
-                titulo: document.getElementById("em-titulo").value,
-                descripcion: document.getElementById("em-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-          }; // FIN script.onload
+};
+ // FIN script.onload
 
           document.body.appendChild(script);
         }
