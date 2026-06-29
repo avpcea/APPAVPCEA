@@ -403,9 +403,9 @@
     }
   </script>
 
-  <!-- ========================= -->
-  <!--  SPA: CAMBIO DE PANTALLAS -->
-  <!-- ========================= -->
+  <!-- ========================== -->
+  <!--   SPA: CAMBIO DE PANTALLAS -->
+  <!-- ========================== -->
   <script>
     function showScreen(name) {
 
@@ -444,7 +444,7 @@
   </script>
 
   <!-- ========================= -->
-  <!--  ADMIN: LISTADO VACÍO     -->
+  <!--   ADMIN: LISTADO VACÍO    -->
   <!-- ========================= -->
   <script>
     // Esta función se sobrescribe dentro de supabase-admin.js
@@ -452,7 +452,7 @@
   </script>
 
   <!-- ========================= -->
-  <!--  INICIO DE LA APP         -->
+  <!--   INICIO DE LA APP        -->
   <!-- ========================= -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -565,8 +565,8 @@
               await supabaseAdmin.from("usuarios")
                 .update({ rol: nuevoRol })
                 .eq("id", id);
-                cargarUsuariosAdmin();
-              }
+              cargarUsuariosAdmin();
+            }
 
             async function verHorasUsuario(id) {
               const año = new Date().getFullYear();
@@ -649,11 +649,15 @@
               });
             }
 
-            // CARGAR AL ENTRAR EN ADMIN
+            // ===============================
+            //   CARGAR AL ENTRAR EN ADMIN
+            // ===============================
             cargarUsuariosAdmin();
             cargarListadoAdmin();
 
-            // ACTIVAR BOTÓN
+            // ===============================
+            //   ACTIVAR BOTÓN
+            // ===============================
             document.getElementById("btn-actualizar-usuarios")
               .addEventListener("click", cargarUsuariosAdmin);
 
