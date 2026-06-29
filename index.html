@@ -607,6 +607,48 @@
               cargarUsuariosAdmin();
             }
 
+            // ===============================
+            //   LISTADO DE ELEMENTOS (ADMIN)
+            // ===============================
+            async function cargarListadoAdmin() {
+              const cont = document.getElementById("admin-listado");
+              cont.innerHTML = "<p>Cargando elementos...</p>";
+
+              const [op, pr, em] = await Promise.all([
+                supabaseAdmin.from("operativos").select("*"),
+                supabaseAdmin.from("preventivos").select("*"),
+                supabaseAdmin.from("emergencias").select("*")
+              ]);
+
+              cont.innerHTML = "";
+
+              const render = (lista, tipo) => {
+                lista.data.forEach(item => {
+                  const div = document.createElement("div");
+                  div.classList.add("card");
+                  div.innerHTML = `
+                    <strong>${tipo}:</strong> ${item.titulo}<br>
+                    <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+                  `;
+                  cont.appendChild(div);
+                });
+              };
+
+              render(op, "operativos");
+              render(pr, "preventivos");
+              render(em, "emergencias");
+
+              document.querySelectorAll(".btn-borrar").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                  const id = btn.dataset.id;
+                  const tipo = btn.dataset.tipo;
+
+                  await supabaseAdmin.from(tipo).delete().eq("id", id);
+                  cargarListadoAdmin();
+                });
+              });
+            }
+
             // CARGAR AL ENTRAR EN ADMIN
             cargarUsuariosAdmin();
             cargarListadoAdmin();
