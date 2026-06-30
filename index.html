@@ -190,13 +190,6 @@
             </button>
           </div>
         `;
-
-
-        
-      alert("Carga preventivos")
-
-
-        
       }
     }
 
@@ -385,6 +378,13 @@
     async function registrarDispositivo() {
       const usuario_id = localStorage.getItem("usuario_id");
 
+
+
+        
+      alert("Funciones de roles")
+
+
+        
       const { data } = await supabase
         .from("dispositivos")
         .select("*")
