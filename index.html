@@ -277,9 +277,17 @@
       }
 
       if (!suscrito) {
-        await supabase.from("suscripciones").insert([
+        const { data: subData, error: subError } = await supabase
+          .from("suscripciones")
+          .insert([
           { usuario_id, tipo, evento_id: String(evento_id) }
         ]);
+
+        if (subError) {
+          alert("ERROR al suscribirse: " + subError.message);
+          console.error(subError);
+          return;
+        }
 
         const { data: evento } = await supabase
           .from(tabla)
