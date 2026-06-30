@@ -665,11 +665,32 @@ script.onload = () => {
         showScreen("operativos");
       });
 
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          showScreen(btn.dataset.screen);
-        });
-      });
+//      document.querySelectorAll(".nav-btn").forEach(btn => {
+//        btn.addEventListener("click", () => {
+//          showScreen(btn.dataset.screen);
+//        });
+//      });
+
+// =========================
+// NAVEGACIÓN ENTRE PANTALLAS
+// =========================
+
+// Navegación inferior (todos los botones con class="nav-btn")
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const screen = btn.dataset.screen;
+    showScreen(screen);
+  });
+});
+
+// Botón de administración (solo si existe y eres admin)
+const adminBtn = document.getElementById("admin-btn");
+if (adminBtn) {
+  adminBtn.addEventListener("click", () => {
+    showScreen("admin");
+  });
+}
+
 
     });
   </script>
