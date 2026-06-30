@@ -265,6 +265,9 @@
     // =============================== 
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
+      
+console.log("usuario_id =", usuario_id);
+
       const suscrito = await estaSuscrito(tipo, evento_id);
 
       const tabla = tipo === "NRP" ? "preventivos" :
