@@ -271,15 +271,6 @@
                     tipo === "OPR" ? "operativos" :
                     tipo === "EMG" ? "emergencias" : null;
 
-
-
-        
-      alert("Administrador suscripciones")
-
-
-
-        
-
       if (!tabla) {
         alert("Tipo de evento desconocido.");
         return;
@@ -295,6 +286,15 @@
           .select("duracion_horas")
           .eq("id", evento_id)
           .maybeSingle();
+
+
+
+        
+      alert("Administrador suscripciones")
+
+
+
+        
 
         const horas = evento?.duracion_horas || 0;
         const año = new Date().getFullYear();
