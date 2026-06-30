@@ -457,6 +457,8 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
 
+console.log("usuario_id =", localStorage.getItem("usuario_id"));
+
       if (!window.AVPCEA_AUTORIZADO) {
         document.body.innerHTML = `
           <div style="padding:20px; text-align:center;">
