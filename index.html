@@ -298,15 +298,17 @@
         const horas = evento?.duracion_horas || 0;
         const año = new Date().getFullYear();
 
-        await supabase.from("horas").insert([
-          {
-            usuario_id,
-            evento_id: String(evento_id),
-            tipo,
-            horas,
-            año
-          }
+        const { data: horasData, error: horasError } = await supabase
+          .from("horas")
+          .insert([
+          { usuario_id, evento_id: String(evento_id), tipo, horas, año }
         ]);
+
+        if (horasError) {
+          alert("ERROR al guardar horas: " + horasError.message);
+          console.error(horasError);
+          return;
+        }
 
         alert("Suscripción realizada.");
       } else {
