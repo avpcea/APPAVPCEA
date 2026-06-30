@@ -249,16 +249,6 @@
     async function estaSuscrito(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
 
-
-
-        
-      alert("Carga suscripciones")
-      console.log("Carga suscripciones");
-
-
-
-        
-
       const { data } = await supabase
         .from("suscripciones")
         .select("*")
@@ -280,6 +270,15 @@
       const tabla = tipo === "NRP" ? "preventivos" :
                     tipo === "OPR" ? "operativos" :
                     tipo === "EMG" ? "emergencias" : null;
+
+
+
+        
+      alert("Administrador suscripciones")
+
+
+
+        
 
       if (!tabla) {
         alert("Tipo de evento desconocido.");
