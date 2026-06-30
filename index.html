@@ -145,10 +145,7 @@
       <button class="nav-btn" data-screen="emergencias">Emergencias</button>
 
       <!-- BOTÓN ADMIN QUE FALTABA -->
-<button id="admin-btn" class="nav-btn" data-screen="admin">
-  Administración
-</button>
-
+      <button id="admin-btn" class="nav-btn" data-screen="admin">Administración</button>
     </nav>
 
   </div>
@@ -377,14 +374,6 @@
   <script>
     async function registrarDispositivo() {
       const usuario_id = localStorage.getItem("usuario_id");
-
-
-
-        
-      alert("Funciones de roles")
-
-
-        
       const { data } = await supabase
         .from("dispositivos")
         .select("*")
@@ -408,6 +397,14 @@
         .maybeSingle();
 
       return data && data.rol === "admin";
+
+
+
+        
+      alert("Funcion esadmin")
+
+
+        
     }
   </script>
 
