@@ -249,14 +249,6 @@
     async function estaSuscrito(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
 
-      const { data } = await supabase
-        .from("suscripciones")
-        .select("*")
-        .eq("usuario_id", usuario_id)
-        .eq("tipo", tipo)
-        .eq("evento_id", evento_id)
-        .maybeSingle();
-
 
 
         
@@ -266,6 +258,14 @@
 
 
         
+
+      const { data } = await supabase
+        .from("suscripciones")
+        .select("*")
+        .eq("usuario_id", usuario_id)
+        .eq("tipo", tipo)
+        .eq("evento_id", evento_id)
+        .maybeSingle();
 
       return data ? true : false;
     }
