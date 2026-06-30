@@ -287,15 +287,6 @@
           .eq("id", evento_id)
           .maybeSingle();
 
-
-
-        
-      alert("Administrador suscripciones")
-
-
-
-        
-
         const horas = evento?.duracion_horas || 0;
         const año = new Date().getFullYear();
 
@@ -382,6 +373,15 @@
   <!-- ========================= -->
   <script>
     async function registrarDispositivo() {
+
+
+
+        
+      alert("Administrador suscripciones")
+
+
+
+        
       const usuario_id = localStorage.getItem("usuario_id");
       const { data } = await supabase
         .from("dispositivos")
