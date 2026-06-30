@@ -34,6 +34,7 @@
 
     if (tokenGuardado === TOKEN_SECRETO) {
       window.AVPCEA_AUTORIZADO = true;
+      alert("Por aqui bien")
     } else {
       const codigo = prompt("Introduce el código de autorización:");
       if (codigo === TOKEN_SECRETO) {
