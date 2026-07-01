@@ -479,6 +479,29 @@ if (!usuario_id || usuario_id.trim() === "") {
   localStorage.setItem("usuario_id", usuario_id);
 }
 
+// Crear usuario en la tabla usuarios si no existe
+async function asegurarUsuario() {
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("id")
+    .eq("id", usuario_id)
+    .maybeSingle();
+
+  if (!data) {
+    const { error: insertError } = await supabase
+      .from("usuarios")
+      .insert([{ id: usuario_id }]);
+
+    if (insertError) {
+      alert("ERROR creando usuario: " + insertError.message);
+      console.error(insertError);
+    }
+  }
+}
+
+asegurarUsuario();
+
+
 alert(localStorage.getItem("usuario_id"));
 
       document.getElementById("app-container").style.display = "block";
