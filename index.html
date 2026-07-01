@@ -267,9 +267,6 @@ alert("SCRIPT CARGADO");
     // =============================== 
     async function toggleSuscripcion(tipo, evento_id) {
       const usuario_id = localStorage.getItem("usuario_id");
-      
-alert("usuario_id =", usuario_id);
-
       const suscrito = await estaSuscrito(tipo, evento_id);
 
       const tabla = tipo === "NRP" ? "preventivos" :
@@ -388,15 +385,6 @@ alert("usuario_id =", usuario_id);
   <!-- ========================= -->
   <script>
     async function registrarDispositivo() {
-
-
-
-        
-      alert("Funciones de roles")
-
-
-
-        
       const usuario_id = localStorage.getItem("usuario_id");
       const { data } = await supabase
         .from("dispositivos")
@@ -429,14 +417,6 @@ alert("usuario_id =", usuario_id);
   <!-- ========================== -->
   <script>
     function showScreen(name) {
-
-
-      
-console.log("showScreen ejecutado con:", name);
-
-
-
-      
       if (name === "preventivos") cargarPreventivos();
       if (name === "operativos") cargarOperativos();
       if (name === "emergencias") cargarEmergencias();
@@ -484,9 +464,6 @@ console.log("showScreen ejecutado con:", name);
   <!-- ========================= -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-
-console.log("usuario_id =", localStorage.getItem("usuario_id"));
-
       if (!window.AVPCEA_AUTORIZADO) {
         document.body.innerHTML = `
           <div style="padding:20px; text-align:center;">
@@ -497,9 +474,14 @@ console.log("usuario_id =", localStorage.getItem("usuario_id"));
         return;
       }
 
-      if (!localStorage.getItem("usuario_id")) {
-        localStorage.setItem("usuario_id", crypto.randomUUID());
-      }
+let usuario_id = localStorage.getItem("usuario_id");
+
+if (!usuario_id || usuario_id.trim() === "") {
+  usuario_id = crypto.randomUUID();
+  localStorage.setItem("usuario_id", usuario_id);
+}
+
+alert("usuario_id =", usuario_id);
 
       document.getElementById("app-container").style.display = "block";
 
@@ -507,20 +489,6 @@ console.log("usuario_id =", localStorage.getItem("usuario_id"));
 
       document.getElementById("admin-btn").addEventListener("click", () => {
         showScreen("admin");
-
-
-
-
-
-console.log("Entrando en admin");
-console.log("usuario_id =", localStorage.getItem("usuario_id"));
-console.log("cargarListadoAdmin =", cargarListadoAdmin);
-console.log("cargarUsuariosAdmin =", cargarUsuariosAdmin);
-
-
-
-        
-
       });
 
       esAdmin().then(admin => {
