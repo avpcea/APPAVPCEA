@@ -479,7 +479,7 @@ if (!usuario_id || usuario_id.trim() === "") {
   localStorage.setItem("usuario_id", usuario_id);
 }
 
-alert("usuario_id =", usuario_id);
+alert(localStorage.getItem("usuario_id"));
 
       document.getElementById("app-container").style.display = "block";
 
