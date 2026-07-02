@@ -461,7 +461,10 @@
   <!--   INICIO DE LA APP        -->
   <!-- ========================= -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await asegurarUsuario();
+  showScreen("welcome-screen");
+});
       if (!window.AVPCEA_AUTORIZADO) {
         document.body.innerHTML = `
           <div style="padding:20px; text-align:center;">
@@ -482,26 +485,46 @@ if (!usuario_id || usuario_id.trim() === "") {
 
 // 2. Función para asegurar que el usuario existe en Supabase
 async function asegurarUsuario() {
+  const usuario_id = localStorage.getItem("usuario_id");
+
   const { data } = await supabase
     .from("usuarios")
     .select("id")
     .eq("id", usuario_id)
     .maybeSingle();
 
-  // Si NO existe → mostrar alert y pedir nombre
   if (!data) {
+
+    // ALERT EXTENDIDO
     alert(
       "Hola.\n\n" +
       "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
-      "Por favor, introduce tu Nombre y un Apellido.\n\n" +
       "Gracias."
     );
 
-    // Mostrar tu formulario actual
-    document.getElementById("registroUsuario").style.display = "block";
-    return;
+    // PEDIR NOMBRE DIRECTAMENTE
+    const nombre = prompt("Por favor, introduce tu nombre y apellido:");
+
+    if (!nombre || nombre.trim() === "") {
+      alert("Debes introducir tu nombre y un apellido para continuar.");
+      return;
+    }
+
+    // CREAR USUARIO EN SUPABASE
+    const { error } = await supabase
+      .from("usuarios")
+      .insert([{ id: usuario_id, nombre: nombre.trim() }]);
+
+    if (error) {
+      alert("ERROR creando usuario: " + error.message);
+      console.error(error);
+      return;
+    }
+
+    alert("Usuario registrado correctamente.");
   }
 }
+
 
 // 3. AQUÍ va registrarUsuario()
 async function registrarUsuario() {
@@ -737,7 +760,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           showScreen("admin");
         });
       }
-    });
   </script>
 
 
