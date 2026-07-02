@@ -472,34 +472,71 @@
         return;
       }
 
-      let usuario_id = localStorage.getItem("usuario_id");
+// 1. Generar usuario_id si no existe
+let usuario_id = localStorage.getItem("usuario_id");
 
-      if (!usuario_id || usuario_id.trim() === "") {
-        usuario_id = crypto.randomUUID();
-        localStorage.setItem("usuario_id", usuario_id);
-      }
+if (!usuario_id || usuario_id.trim() === "") {
+  usuario_id = crypto.randomUUID();
+  localStorage.setItem("usuario_id", usuario_id);
+}
 
-      // Crear usuario en la tabla usuarios si no existe
-      async function asegurarUsuario() {
-        const { data, error } = await supabase
-          .from("usuarios")
-          .select("id")
-          .eq("id", usuario_id)
-          .maybeSingle();
+// 2. Función para asegurar que el usuario existe en Supabase
+async function asegurarUsuario() {
+  const { data } = await supabase
+    .from("usuarios")
+    .select("id")
+    .eq("id", usuario_id)
+    .maybeSingle();
 
-        if (!data) {
-          const { error: insertError } = await supabase
-            .from("usuarios")
-            .insert([{ id: usuario_id }]);
+  if (!data) {
+    alert(
+      "Hola.\n\n" +
+      "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
+      "Por favor, introduce tu Nombre y un Apellido.\n\n" +
+      "Gracias."
+    );
 
-          if (insertError) {
-            alert("ERROR creando usuario: " + insertError.message);
-            console.error(insertError);
-          }
-        }
-      }
+    document.getElementById("registroUsuario").style.display = "block";
+    return;
+  }
+}
 
-      asegurarUsuario();
+// 3. AQUÍ va registrarUsuario()
+async function registrarUsuario() {
+  const nombre = document.getElementById("nombreUsuario").value.trim();
+
+  if (!nombre) {
+    alert("Por favor, introduce tu nombre y apellido.");
+    return;
+  }
+
+  const usuario_id = localStorage.getItem("usuario_id");
+
+  const { error } = await supabase
+    .from("usuarios")
+    .insert([{ id: usuario_id, nombre }]);
+
+  if (error) {
+    alert("ERROR creando usuario: " + error.message);
+    console.error(error);
+    return;
+  }
+
+  document.getElementById("registroUsuario").style.display = "none";
+  alert("Usuario registrado correctamente.");
+}
+
+// 4. Función de navegación
+async function showScreen(name) {
+  // tu código actual...
+}
+
+// 5. Inicio de la app
+document.addEventListener("DOMContentLoaded", () => {
+  asegurarUsuario();
+  showScreen("principal");
+});
+
 
       document.getElementById("app-container").style.display = "block";
 
