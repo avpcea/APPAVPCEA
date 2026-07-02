@@ -488,6 +488,7 @@ async function asegurarUsuario() {
     .eq("id", usuario_id)
     .maybeSingle();
 
+  // Si NO existe → mostrar alert y pedir nombre
   if (!data) {
     alert(
       "Hola.\n\n" +
@@ -496,6 +497,7 @@ async function asegurarUsuario() {
       "Gracias."
     );
 
+    // Mostrar tu formulario actual
     document.getElementById("registroUsuario").style.display = "block";
     return;
   }
@@ -510,8 +512,6 @@ async function registrarUsuario() {
     return;
   }
 
-  const usuario_id = localStorage.getItem("usuario_id");
-
   const { error } = await supabase
     .from("usuarios")
     .insert([{ id: usuario_id, nombre }]);
@@ -522,19 +522,22 @@ async function registrarUsuario() {
     return;
   }
 
+  // Ocultar formulario
   document.getElementById("registroUsuario").style.display = "none";
+
   alert("Usuario registrado correctamente.");
 }
 
 // 4. Función de navegación
 async function showScreen(name) {
-  // tu código actual...
+  document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+  document.getElementById(name).style.display = "block";
 }
 
 // 5. Inicio de la app
-document.addEventListener("DOMContentLoaded", () => {
-  asegurarUsuario();
-  showScreen("principal");
+document.addEventListener("DOMContentLoaded", async () => {
+  await asegurarUsuario();   // Primero asegurar usuario
+  showScreen("principal");   // Luego mostrar la pantalla principal
 });
 
 
