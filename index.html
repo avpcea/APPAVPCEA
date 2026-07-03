@@ -473,92 +473,92 @@
         return;
       }
 
-// 1. Generar usuario_id si no existe
-let usuario_id = localStorage.getItem("usuario_id");
+      // 1. Generar usuario_id si no existe
+      let usuario_id = localStorage.getItem("usuario_id");
 
-if (!usuario_id || usuario_id.trim() === "") {
-  usuario_id = crypto.randomUUID();
-  localStorage.setItem("usuario_id", usuario_id);
-}
+      if (!usuario_id || usuario_id.trim() === "") {
+        usuario_id = crypto.randomUUID();
+        localStorage.setItem("usuario_id", usuario_id);
+      }
 
-// 2. Función para asegurar que el usuario existe en Supabase
-async function asegurarUsuario() {
-  const usuario_id = localStorage.getItem("usuario_id");
+      // 2. Función para asegurar que el usuario existe en Supabase
+      async function asegurarUsuario() {
+        const usuario_id = localStorage.getItem("usuario_id");
 
-  const { data } = await supabase
-    .from("usuarios")
-    .select("id")
-    .eq("id", usuario_id)
-    .maybeSingle();
+        const { data } = await supabase
+          .from("usuarios")
+          .select("id")
+          .eq("id", usuario_id)
+          .maybeSingle();
 
-  if (!data) {
+        if (!data) {
 
-    // ALERT EXTENDIDO
-    alert(
-      "Hola.\n\n" +
-      "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
-      "Gracias."
-    );
+          // ALERT EXTENDIDO
+          alert(
+            "Hola.\n\n" +
+            "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
+            "Gracias."
+          );
 
-    // PEDIR NOMBRE DIRECTAMENTE
-    const nombre = prompt("Por favor, introduce tu nombre y apellido:");
+          // PEDIR NOMBRE DIRECTAMENTE
+          const nombre = prompt("Por favor, introduce tu nombre y apellido:");
 
-    if (!nombre || nombre.trim() === "") {
-      alert("Debes introducir un nombre y apeliido para continuar.");
+          if (!nombre || nombre.trim() === "") {
+            alert("Debes introducir un nombre y apeliido para continuar.");
+            return;
+          }
+
+          // CREAR USUARIO EN SUPABASE
+          const { error } = await supabase
+            .from("usuarios")
+            .insert([{ id: usuario_id, nombre: nombre.trim() }]);
+
+          if (error) {
+            alert("ERROR creando usuario: " + error.message);
+            console.error(error);
+            return;
+          }
+
+          alert("Usuario registrado correctamente.");
+        }
+      }
+
+      // 3. AQUÍ va registrarUsuario()
+      async function registrarUsuario() {
+        const nombre = document.getElementById("nombreUsuario").value.trim();
+
+        if (!nombre) {
+          alert("Por favor, introduce tu nombre y apellido.");
       return;
-    }
+        }
 
-    // CREAR USUARIO EN SUPABASE
-    const { error } = await supabase
-      .from("usuarios")
-      .insert([{ id: usuario_id, nombre: nombre.trim() }]);
+        const { error } = await supabase
+          .from("usuarios")
+          .insert([{ id: usuario_id, nombre }]);
 
-    if (error) {
-      alert("ERROR creando usuario: " + error.message);
-      console.error(error);
-      return;
-    }
+        if (error) {
+          alert("ERROR creando usuario: " + error.message);
+          console.error(error);
+          return;
+        }
 
-    alert("Usuario registrado correctamente.");
-  }
-}
+        // Ocultar formulario
+        document.getElementById("registroUsuario").style.display = "none";
 
-// 3. AQUÍ va registrarUsuario()
-async function registrarUsuario() {
-  const nombre = document.getElementById("nombreUsuario").value.trim();
+        alert("Usuario registrado correctamente.");
+      }
 
-  if (!nombre) {
-    alert("Por favor, introduce tu nombre y apellido.");
-    return;
-  }
+      // 4. Función de navegación
+      async function showScreen(name) {
+        document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+        document.getElementById(name).style.display = "block";
+      }
 
-  const { error } = await supabase
-    .from("usuarios")
-    .insert([{ id: usuario_id, nombre }]);
-
-  if (error) {
-    alert("ERROR creando usuario: " + error.message);
-    console.error(error);
-    return;
-  }
-
-  // Ocultar formulario
-  document.getElementById("registroUsuario").style.display = "none";
-
-  alert("Usuario registrado correctamente.");
-}
-
-// 4. Función de navegación
-async function showScreen(name) {
-  document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
-  document.getElementById(name).style.display = "block";
-}
-
-// 5. Inicio de la app
-document.addEventListener("DOMContentLoaded", async () => {
-  await asegurarUsuario();   // Primero asegurar usuario
-  showScreen("principal");   // Luego mostrar la pantalla principal
-});
+      // 5. Inicio de la app
+      document.addEventListener("DOMContentLoaded", async () => {
+        await asegurarUsuario();   // Primero asegurar usuario
+        showScreen("principal");   // Luego mostrar la pantalla principal
+      });
 
 
       document.getElementById("app-container").style.display = "block";
