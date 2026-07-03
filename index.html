@@ -568,6 +568,19 @@
 
       // 4. Función de navegación
       async function showScreen(name) {
+
+
+
+
+
+        
+    alert("El script se está ejecutando");
+
+
+
+
+
+        
         document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
         document.getElementById(name).style.display = "block";
       }
@@ -745,7 +758,6 @@
         }
       });
 
-    alert("El script se está ejecutando");
       document.getElementById("btn-acceder").addEventListener("click", () => {
         document.getElementById("welcome-screen").style.display = "none";
         document.getElementById("welcome-header").style.display = "none";
