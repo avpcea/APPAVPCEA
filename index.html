@@ -568,6 +568,12 @@
 
       // 4. Función de navegación
       async function showScreen(name) {
+        document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+        document.getElementById(name).style.display = "block";
+      }
+
+      // 5. Inicio de la app
+      document.addEventListener("DOMContentLoaded", async () => {
 
 
 
@@ -581,12 +587,6 @@
 
 
         
-        document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
-        document.getElementById(name).style.display = "block";
-      }
-
-      // 5. Inicio de la app
-      document.addEventListener("DOMContentLoaded", async () => {
         await asegurarUsuario();   // Primero asegurar usuario
         showScreen("principal");   // Luego mostrar la pantalla principal
       });
