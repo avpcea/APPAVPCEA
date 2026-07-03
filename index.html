@@ -574,8 +574,7 @@
 
       // 5. Inicio de la app
       document.addEventListener("DOMContentLoaded", async () => {
-        await asegurarUsuario();   // Primero asegurar usuario
-        showScreen("principal");   // Luego mostrar la pantalla principal
+        showScreen("welcome-screen");   // Luego mostrar la pantalla principal
       });
 
 
@@ -753,7 +752,9 @@
         document.getElementById("main-header").style.display = "flex";
         document.querySelector(".bottom-nav").style.display = "flex";
 
-        showScreen("operativos");
+        await asegurarUsuario();   // Registro si es necesario
+        showScreen("screen-operativos");  // Navegación
+        cargarOperativos();        // Cargar eventos
       });
 
       // =========================
