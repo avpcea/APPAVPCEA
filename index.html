@@ -461,10 +461,8 @@
   <!--   INICIO DE LA APP        -->
   <!-- ========================= -->
   <script>
-document.addEventListener("DOMContentLoaded", async () => {
-  await asegurarUsuario();
-  showScreen("welcome-screen");
-});
+    document.addEventListener("DOMContentLoaded", () => {
+
       if (!window.AVPCEA_AUTORIZADO) {
         document.body.innerHTML = `
           <div style="padding:20px; text-align:center;">
@@ -506,7 +504,7 @@ async function asegurarUsuario() {
     const nombre = prompt("Por favor, introduce tu nombre y apellido:");
 
     if (!nombre || nombre.trim() === "") {
-      alert("Debes introducir tu nombre y un apellido para continuar.");
+      alert("Debes introducir un nombre y apeliido para continuar.");
       return;
     }
 
@@ -524,7 +522,6 @@ async function asegurarUsuario() {
     alert("Usuario registrado correctamente.");
   }
 }
-
 
 // 3. AQUÍ va registrarUsuario()
 async function registrarUsuario() {
@@ -760,6 +757,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           showScreen("admin");
         });
       }
+    });
   </script>
 
 
