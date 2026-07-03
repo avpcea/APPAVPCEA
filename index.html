@@ -784,7 +784,6 @@
       // =========================
       // NAVEGACIÓN ENTRE PANTALLAS
       // =========================
-
       // Navegación inferior (todos los botones con class="nav-btn")
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -792,7 +791,6 @@
           showScreen(screen);
          });
       });
-
       // Botón de administración (solo si existe y eres admin)
       const adminBtn = document.getElementById("admin-btn");
       if (adminBtn) {
