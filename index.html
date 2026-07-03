@@ -478,6 +478,19 @@
   <!--   INICIO DE LA APP        -->
   <!-- ========================= -->
   <script>
+
+
+
+
+    alert("El script se está ejecutando");
+    alert("usuario_id actual = " + localStorage.getItem("usuario_id"));if (!localStorage.getItem("usuario_id")) {
+
+
+
+
+
+
+    
     document.addEventListener("DOMContentLoaded", () => {
 
       if (!window.AVPCEA_AUTORIZADO) {
@@ -497,6 +510,19 @@
         usuario_id = crypto.randomUUID();
         localStorage.setItem("usuario_id", usuario_id);
       }
+
+
+
+
+
+      alert("usuario_id = " + usuario_id);
+      alert(localStorage.getItem("usuario_id"));
+
+
+
+
+
+      
 
       // 2. Función para asegurar que el usuario existe en Supabase
       async function asegurarUsuario() {
