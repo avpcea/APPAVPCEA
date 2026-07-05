@@ -25,461 +25,145 @@
 
 <body>
 
+<script>
+window.onerror = function(msg, url, line) {
+  alert("ERROR: " + msg + "\nLinea: " + line);
+};
+</script>
 
+<!-- TOKEN DE AUTORIZACIÓN -->
+<script>
+const TOKEN_SECRETO = "v3";
+const tokenGuardado = localStorage.getItem("avpcea_token");
 
+window.AVPCEA_AUTORIZADO = false;
 
+if (tokenGuardado === TOKEN_SECRETO) {
+  window.AVPCEA_AUTORIZADO = true;
+} else {
+  const codigo = prompt("Introduce el código de autorización:");
+  if (codigo === TOKEN_SECRETO) {
+    localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+    alert("Dispositivo autorizado.");
+    window.AVPCEA_AUTORIZADO = true;
+  }
+}
+</script>
 
-  
-  <script>
-    window.onerror = function(msg, url, line) {
-      alert("ERROR: " + msg + "\nLinea: " + line);
-    };
-  </script>
+<!-- APP -->
+<div id="app-container" class="app-container" style="display:none;">
 
-
-
-
-
-
-  
-  <!-- TOKEN DE AUTORIZACIÓN -->
-  <script>
-    const TOKEN_SECRETO = "v3";
-    const tokenGuardado = localStorage.getItem("avpcea_token");
-
-    window.AVPCEA_AUTORIZADO = false;
-
-    if (tokenGuardado === TOKEN_SECRETO) {
-      window.AVPCEA_AUTORIZADO = true;
-    } else {
-      const codigo = prompt("Introduce el código de autorización:");
-      if (codigo === TOKEN_SECRETO) {
-        localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-        alert("Dispositivo autorizado.");
-        window.AVPCEA_AUTORIZADO = true;
-      }
-    }
-  </script>
-
-  <!-- APP -->
-  <div id="app-container" class="app-container" style="display:none;">
-
-    <!-- PANTALLA DE BIENVENIDA -->
-    <div id="welcome-screen" class="screen active">
-      <header id="welcome-header" class="welcome-header">
-        <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
-      </header>
-
-      <div class="card welcome-card">
-        <button id="btn-acceder" class="btn-primary">Acceder</button>
-      </div>
-    </div>
-
-    <!-- CABECERA NORMAL -->
-    <header id="main-header" class="app-header" style="display:none;">
-      <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
-      <span class="header-title">Protección Civil El Arenal</span>
+  <!-- PANTALLA DE BIENVENIDA -->
+  <div id="welcome-screen" class="screen active">
+    <header id="welcome-header" class="welcome-header">
+      <img src="/APPAVPCEA/icons/icon-512.png" class="welcome-hero">
     </header>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="app-content">
+    <div class="card welcome-card">
+      <button id="btn-acceder" class="btn-primary">Acceder</button>
+    </div>
+  </div>
 
-      <div id="app-screens" style="display:none;">
+  <!-- CABECERA NORMAL -->
+  <header id="main-header" class="app-header" style="display:none;">
+    <img src="/APPAVPCEA/icons/icon-192.png" class="header-logo">
+    <span class="header-title">Protección Civil El Arenal</span>
+  </header>
 
-        <div id="screen-operativos" class="screen">
-          <div id="lista-operativos"></div>
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="app-content">
+
+    <div id="app-screens" style="display:none;">
+
+      <div id="screen-operativos" class="screen">
+        <div id="lista-operativos"></div>
+      </div>
+
+      <div id="screen-preventivos" class="screen">
+        <div id="lista-preventivos"></div>
+      </div>
+
+      <div id="screen-emergencias" class="screen">
+        <div id="lista-emergencias"></div>
+      </div>
+
+      <div id="admin-screen" class="screen" style="display:none; padding:20px;">
+        <h2>Administración</h2>
+
+        <div class="admin-section">
+          <h3>Crear Operativo</h3>
+          <input id="op-titulo" placeholder="Título">
+          <textarea id="op-descripcion" placeholder="Descripción"></textarea>
+          <button id="btn-crear-operativo">Crear Operativo</button>
         </div>
 
-        <div id="screen-preventivos" class="screen">
-          <div id="lista-preventivos"></div>
+        <div class="admin-section">
+          <h3>Crear Preventivo</h3>
+          <input id="pr-titulo" placeholder="Título">
+          <textarea id="pr-descripcion" placeholder="Descripción"></textarea>
+          <button id="btn-crear-preventivo">Crear Preventivo</button>
         </div>
 
-        <div id="screen-emergencias" class="screen">
-          <div id="lista-emergencias"></div>
+        <div class="admin-section">
+          <h3>Crear Emergencia</h3>
+          <input id="em-titulo" placeholder="Título">
+          <textarea id="em-descripcion" placeholder="Descripción"></textarea>
+          <button id="btn-crear-emergencia">Crear Emergencia</button>
         </div>
 
-        <div id="admin-screen" class="screen" style="display:none; padding:20px;">
-          <h2>Administración</h2>
+        <hr>
 
-          <div class="admin-section">
-            <h3>Crear Operativo</h3>
-            <input id="op-titulo" placeholder="Título">
-            <textarea id="op-descripcion" placeholder="Descripción"></textarea>
-            <button id="btn-crear-operativo">Crear Operativo</button>
-          </div>
+        <h3>Listado de elementos</h3>
+        <div id="admin-listado"></div>
 
-          <div class="admin-section">
-            <h3>Crear Preventivo</h3>
-            <input id="pr-titulo" placeholder="Título">
-            <textarea id="pr-descripcion" placeholder="Descripción"></textarea>
-            <button id="btn-crear-preventivo">Crear Preventivo</button>
-          </div>
+        <hr>
 
-          <div class="admin-section">
-            <h3>Crear Emergencia</h3>
-            <input id="em-titulo" placeholder="Título">
-            <textarea id="em-descripcion" placeholder="Descripción"></textarea>
-            <button id="btn-crear-emergencia">Crear Emergencia</button>
-          </div>
-
-          <hr>
-
-          <h3>Listado de elementos</h3>
-          <div id="admin-listado"></div>
-
-          <hr>
-
-          <div class="admin-section">
-            <h3>Crear Usuario</h3>
-            <input id="usr-nombre" placeholder="Nombre">
-            <input id="usr-telefono" placeholder="Teléfono">
-            <select id="usr-rol">
-                <option value="usuario">Usuario</option>
-                <option value="admin">Administrador</option>
-                <option value="coordinador">Coordinador</option>
-            </select>
-            <button id="btn-crear-usuario">Crear Usuario</button>
-          </div>
-          
-          <div class="admin-section">
-            <h3>Gestión de Usuarios</h3>
-            <button id="btn-actualizar-usuarios" class="btn-secondary">
-              🔄 Actualizar usuarios
-            </button>
-            <div id="admin-usuarios"></div>
-          </div>
-
+        <div class="admin-section">
+          <h3>Crear Usuario</h3>
+          <input id="usr-nombre" placeholder="Nombre">
+          <input id="usr-telefono" placeholder="Teléfono">
+          <select id="usr-rol">
+              <option value="usuario">Usuario</option>
+              <option value="admin">Administrador</option>
+              <option value="coordinador">Coordinador</option>
+          </select>
+          <button id="btn-crear-usuario">Crear Usuario</button>
+        </div>
+        
+        <div class="admin-section">
+          <h3>Gestión de Usuarios</h3>
+          <button id="btn-actualizar-usuarios" class="btn-secondary">
+            🔄 Actualizar usuarios
+          </button>
+          <div id="admin-usuarios"></div>
         </div>
 
       </div>
 
-    </main>
+    </div>
 
-    <!-- BARRA INFERIOR -->
-    <nav class="bottom-nav" style="display:none;">
-      <button class="nav-btn active" data-screen="operativos">Operativos</button>
-      <button class="nav-btn" data-screen="preventivos">Preventivos</button>
-      <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+  </main>
 
-      <!-- BOTÓN ADMIN QUE FALTABA -->
-      <button id="admin-btn" class="nav-btn" data-screen="admin">Administración</button>
-    </nav>
+  <!-- BARRA INFERIOR -->
+  <nav class="bottom-nav" style="display:none;">
+    <button class="nav-btn active" data-screen="operativos">Operativos</button>
+    <button class="nav-btn" data-screen="preventivos">Preventivos</button>
+    <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+    <button id="admin-btn" class="nav-btn" data-screen="admin">Administración</button>
+  </nav>
 
-  </div>
-  <!-- FIN APP -->
+</div>
+<!-- FIN APP -->
 
-
-  <!-- ========================= -->
-  <!--  CARGA PREVENTIVOS        -->
-  <!-- ========================= -->
-  <script>
-    async function cargarPreventivos() {
-      const cont = document.getElementById("lista-preventivos");
-      cont.innerHTML = "<p>Cargando preventivos...</p>";
-
-      const { data: preventivos, error } = await supabase
-        .from("preventivos")
-        .select("*")
-        .order("fecha", { ascending: true });
-
-      if (error) {
-        cont.innerHTML = "<p>Error al cargar preventivos.</p>";
-        return;
-      }
-
-      cont.innerHTML = "";
-
-      for (const p of preventivos) {
-        const suscrito = await estaSuscrito("NRP", p.id);
-
-        cont.innerHTML += `
-          <div class="card">
-            <h3>${p.titulo}</h3>
-            <p><strong>Fecha:</strong> ${p.fecha}</p>
-            <p><strong>Lugar:</strong> ${p.lugar}</p>
-            <p>${p.descripcion || ""}</p>
-
-            <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
-              ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-            </button>
-          </div>
-        `;
-      }
-    }
-
-    // =============================== 
-    //  CARGA OPERATIVOS              
-    // =============================== 
-    async function cargarOperativos() {
-      const cont = document.getElementById("lista-operativos");
-      cont.innerHTML = "<p>Cargando operativos...</p>";
-
-      const { data: operativos, error } = await supabase
-        .from("operativos")
-        .select("*")
-        .order("fecha", { ascending: true });
-
-      if (error) {
-        cont.innerHTML = "<p>Error al cargar operativos.</p>";
-        return;
-      }
-
-      cont.innerHTML = "";
-
-      for (const op of operativos) {
-        const suscrito = await estaSuscrito("OPR", op.id);
-
-        cont.innerHTML += `
-          <div class="card">
-            <h3>${op.titulo}</h3>
-            <p><strong>Entidad:</strong> ${op.entidad || "—"}</p>
-            <p><strong>Fecha:</strong> ${op.fecha}</p>
-            <p>${op.descripcion || ""}</p>
-
-            <button class="btn-primary" onclick="toggleSuscripcion('OPR', ${op.id})">
-              ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-            </button>
-          </div>
-        `;
-      }
-    }
-
-    // =============================== 
-    //  CARGA EMERGENCIAS             
-    // =============================== 
-    async function cargarEmergencias() {
-      const cont = document.getElementById("lista-emergencias");
-
-      cont.innerHTML = `
-        <div class="card">
-          <h3>Sin emergencias activas</h3>
-          <p>Actualmente no hay emergencias registradas.</p>
-        </div>
-      `;
-    }
-  </script>
-
-  <!-- ================ -->
-  <!--  SUSCRIPCIONES   -->
-  <!-- ================ -->
-  <script>
-    async function estaSuscrito(tipo, evento_id) {
-      const usuario_id = localStorage.getItem("usuario_id");
-
-      const { data } = await supabase
-        .from("suscripciones")
-        .select("*")
-        .eq("usuario_id", usuario_id)
-        .eq("tipo", tipo)
-        .eq("evento_id", evento_id)
-        .maybeSingle();
-
-      return data ? true : false;
-    }
-
-    // =============================== 
-    //  ADMINISTRACIÓN SUSCRIPCIONES  
-    // =============================== 
-    async function toggleSuscripcion(tipo, evento_id) {
-      const usuario_id = localStorage.getItem("usuario_id");
-      const suscrito = await estaSuscrito(tipo, evento_id);
-
-      const tabla = tipo === "NRP" ? "preventivos" :
-                    tipo === "OPR" ? "operativos" :
-                    tipo === "EMG" ? "emergencias" : null;
-
-      if (!tabla) {
-        alert("Tipo de evento desconocido.");
-        return;
-      }
-
-      if (!suscrito) {
-        const { data: subData, error: subError } = await supabase
-          .from("suscripciones")
-          .insert([
-          { usuario_id, tipo, evento_id: String(evento_id) }
-        ]);
-
-        if (subError) {
-          alert("ERROR al suscribirse: " + subError.message);
-          console.error(subError);
-          return;
-        }
-
-        const { data: evento } = await supabase
-          .from(tabla)
-          .select("duracion_horas")
-          .eq("id", evento_id)
-          .maybeSingle();
-
-        const horas = evento?.duracion_horas || 0;
-        const año = new Date().getFullYear();
-
-        const { data: horasData, error: horasError } = await supabase
-          .from("horas")
-          .insert([
-          { usuario_id, evento_id: String(evento_id), tipo, horas, año }
-        ]);
-
-        if (horasError) {
-          alert("ERROR al guardar horas: " + horasError.message);
-          console.error(horasError);
-          return;
-        }
-
-        alert("Suscripción realizada.");
-      } else {
-        await supabase
-          .from("suscripciones")
-          .delete()
-          .eq("usuario_id", usuario_id)
-          .eq("tipo", tipo)
-          .eq("evento_id", String(evento_id));
-
-        await supabase
-          .from("horas")
-          .delete()
-          .eq("usuario_id", usuario_id)
-          .eq("evento_id", String(evento_id))
-          .eq("tipo", tipo);
-
-        alert("Suscripción cancelada.");
-      }
-
-      if (tipo === "NRP") cargarPreventivos();
-      if (tipo === "OPR") cargarOperativos();
-      if (tipo === "EMG") cargarEmergencias();
-    }
-
-    // =============================== 
-    //  ADMINISTRACIÓN CERRAR EVENTO  
-    // =============================== 
-    async function cerrarEvento(tabla, evento_id, fecha_fin) {
-      const { data: evento } = await supabaseAdmin
-        .from(tabla)
-        .select("fecha_inicio")
-        .eq("id", evento_id)
-        .maybeSingle();
-
-      const inicio = new Date(evento.fecha_inicio);
-      const fin = new Date(fecha_fin);
-
-      const duracion_horas = (fin - inicio) / (1000 * 60 * 60);
-
-      await supabaseAdmin
-        .from(tabla)
-        .update({
-          fecha_fin,
-          duracion_horas
-        })
-        .eq("id", evento_id);
-
-      const { data: suscritos } = await supabaseAdmin
-        .from("suscripciones")
-        .select("usuario_id, tipo")
-        .eq("evento_id", String(evento_id));
-
-      const año = new Date().getFullYear();
-
-      for (const s of suscritos) {
-        await supabaseAdmin
-          .from("horas")
-          .update({ horas: duracion_horas })
-          .eq("usuario_id", s.usuario_id)
-          .eq("evento_id", String(evento_id))
-          .eq("tipo", s.tipo)
-          .eq("año", año);
-      }
-
-      alert("Evento cerrado y horas recalculadas.");
-    }
-  </script>
-
-  <!-- ========================= -->
-  <!--  FUNCIONES DE ROLES       -->
-  <!-- ========================= -->
-  <script>
-    async function registrarDispositivo() {
-      const usuario_id = localStorage.getItem("usuario_id");
-      const { data } = await supabase
-        .from("dispositivos")
-        .select("*")
-        .eq("id", usuario_id)
-        .maybeSingle();
-
-      if (!data) {
-        await supabase.from("dispositivos").insert([
-          { id: usuario_id, rol: "normal" }
-        ]);
-      }
-    }
-
-    async function esAdmin() {
-      const usuario_id = localStorage.getItem("usuario_id");
-
-      const { data } = await supabase
-        .from("dispositivos")
-        .select("rol")
-        .eq("id", usuario_id)
-        .maybeSingle();
-
-      return data && data.rol === "admin";
-    }
-  </script>
-
-  <!-- ========================== -->
-  <!--   SPA: CAMBIO DE PANTALLAS -->
-  <!-- ========================== -->
-  <script>
-    function showScreen(name) {
-      if (name === "preventivos") cargarPreventivos();
-      if (name === "operativos") cargarOperativos();
-      if (name === "emergencias") cargarEmergencias();
-
-      document.querySelector(".header-title").textContent =
-        name === "operativos" ? "Operativos" :
-        name === "preventivos" ? "Preventivos" :
-        name === "emergencias" ? "Emergencias" :
-        name === "admin" ? "Administración" : "";
-
-      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
-      if (btn) btn.classList.add("active");
-
-      document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
-      const screen = document.getElementById("screen-" + name);
-      if (screen) screen.classList.add("active");
-
-      if (name === "admin") {
-        document.getElementById("admin-screen").style.display = "block";
-
-        // ❗ YA NO SE DEFINE cargarListadoAdmin AQUÍ
-        // La función se define dentro de script.onload (PARTE 4)
-        // Aquí solo se llama, si ya existe:
-        if (typeof cargarListadoAdmin === "function") {
-          cargarListadoAdmin();
-        }
-        if (typeof cargarUsuariosAdmin === "function") {
-          cargarUsuariosAdmin();
-        }
-      }
-    }
-  </script>
-
-  <!-- ========================= -->
-  <!--   ADMIN: LISTADO VACÍO    -->
-  <!-- ========================= -->
-  <script>
-    // Esta función se sobrescribe dentro de supabase-admin.js
-    function cargarListadoAdmin() {}
-  </script>
-
-  <!-- ========================= -->
-  <!--   INICIO DE LA APP        -->
-  <!-- ========================= -->
+<!-- ============================================================
+     SCRIPTS UNIFICADOS
+============================================================ -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* ============================================================
+     AUTORIZACIÓN
+  ============================================================ */
   if (!window.AVPCEA_AUTORIZADO) {
     document.body.innerHTML = `
       <div style="padding:20px; text-align:center;">
@@ -490,19 +174,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // ============================
-  // 1. Generar usuario_id
-  // ============================
+  /* ============================================================
+     USUARIO ID
+  ============================================================ */
   let usuario_id = localStorage.getItem("usuario_id");
-
   if (!usuario_id || usuario_id.trim() === "") {
     usuario_id = crypto.randomUUID();
     localStorage.setItem("usuario_id", usuario_id);
   }
 
-  // ============================
-  // 2. asegurarUsuario()
-  // ============================
+  /* ============================================================
+     REGISTRO DE USUARIO
+  ============================================================ */
   async function asegurarUsuario() {
     const usuario_id = localStorage.getItem("usuario_id");
 
@@ -513,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .maybeSingle();
 
     if (!data) {
-
       alert(
         "Hola.\n\n" +
         "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
@@ -542,183 +224,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ============================
-  // 3. showScreen()
-  // ============================
+  /* ============================================================
+     FUNCIÓN showScreen — LA BUENA
+  ============================================================ */
   function showScreen(name) {
-    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
-    document.getElementById(name).style.display = "block";
+
+    if (name === "preventivos") cargarPreventivos();
+    if (name === "operativos") cargarOperativos();
+    if (name === "emergencias") cargarEmergencias();
+
+    document.querySelector(".header-title").textContent =
+      name === "operativos" ? "Operativos" :
+      name === "preventivos" ? "Preventivos" :
+      name === "emergencias" ? "Emergencias" :
+      name === "admin" ? "Administración" : "";
+
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
+    if (btn) btn.classList.add("active");
+
+    document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+    const screen = document.getElementById("screen-" + name);
+    if (screen) screen.classList.add("active");
+
+    if (name === "admin") {
+      document.getElementById("admin-screen").style.display = "block";
+
+      if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
+      if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
+    }
   }
 
-  // ============================
-  // 4. Mostrar bienvenida
-  // ============================
+  /* ============================================================
+     MOSTRAR BIENVENIDA
+  ============================================================ */
   showScreen("welcome-screen");
   document.getElementById("app-container").style.display = "block";
 
   registrarDispositivo();
 
-  // ============================
-  // 5. Botón ADMIN
-  // ============================
-  document.getElementById("admin-btn").addEventListener("click", () => {
-    showScreen("admin");
-  });
-
-  esAdmin().then(admin => {
-    if (admin) {
-      document.getElementById("admin-btn").style.display = "block";
-
-      const script = document.createElement("script");
-      script.src = "supabase-admin.js";
-
-      script.onload = () => {
-
-        // ===============================
-        //   LISTADO DE ELEMENTOS
-        // ===============================
-        async function cargarListadoAdmin() {
-          const cont = document.getElementById("admin-listado");
-          if (!cont) return;
-
-          cont.innerHTML = "<p>Cargando elementos...</p>";
-
-          const [op, pr, em] = await Promise.all([
-            supabaseAdmin.from("operativos").select("*"),
-            supabaseAdmin.from("preventivos").select("*"),
-            supabaseAdmin.from("emergencias").select("*")
-          ]);
-
-          cont.innerHTML = "";
-
-          const render = (lista, tipo) => {
-            if (!lista.data) return;
-            lista.data.forEach(item => {
-              const div = document.createElement("div");
-              div.classList.add("card");
-              div.innerHTML = `
-                <strong>${tipo}:</strong> ${item.titulo}<br>
-                <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-              `;
-              cont.appendChild(div);
-            });
-          };
-
-          render(op, "operativos");
-          render(pr, "preventivos");
-          render(em, "emergencias");
-
-          document.querySelectorAll(".btn-borrar").forEach(btn => {
-            btn.addEventListener("click", async () => {
-              const id = btn.dataset.id;
-              const tipo = btn.dataset.tipo;
-
-              await supabaseAdmin.from(tipo).delete().eq("id", id);
-              cargarListadoAdmin();
-            });
-          });
-        }
-
-        // ===============================
-        //   GESTIÓN DE USUARIOS
-        // ===============================
-        async function cargarUsuariosAdmin() {
-          const cont = document.getElementById("admin-usuarios");
-          cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-          const { data: usuarios } = await supabaseAdmin
-            .from("usuarios")
-            .select("*");
-
-          cont.innerHTML = "";
-
-          usuarios.forEach(u => {
-            cont.innerHTML += `
-              <div class="card">
-                <h4>${u.nombre}</h4>
-                <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-                <p><strong>Rol:</strong> ${u.rol}</p>
-
-                <button onclick="editarUsuario('${u.id}')">Editar</button>
-                <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-                <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
-              </div>
-            `;
-          });
-        }
-
-        async function editarUsuario(id) {
-          const nombre = prompt("Nuevo nombre:");
-          const telefono = prompt("Nuevo teléfono:");
-          if (!nombre) return;
-
-          await supabaseAdmin.from("usuarios")
-            .update({ nombre, telefono })
-            .eq("id", id);
-
-          cargarUsuariosAdmin();
-        }
-
-        async function cambiarRol(id) {
-          const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-          if (!nuevoRol) return;
-
-          await supabaseAdmin.from("usuarios")
-            .update({ rol: nuevoRol })
-            .eq("id", id);
-
-          cargarUsuariosAdmin();
-        }
-
-        async function borrarUsuario(id) {
-          if (!confirm("¿Eliminar usuario?")) return;
-
-          await supabaseAdmin.from("usuarios")
-            .delete()
-            .eq("id", id);
-
-          cargarUsuariosAdmin();
-        }
-
-        // ===============================
-        //   CREACIÓN DE EVENTOS
-        // ===============================
-        document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-          await supabaseAdmin.from("operativos").insert({
-            titulo: document.getElementById("op-titulo").value,
-            descripcion: document.getElementById("op-descripcion").value
-          });
-          cargarListadoAdmin();
-        });
-
-        document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-          await supabaseAdmin.from("preventivos").insert({
-            titulo: document.getElementById("pr-titulo").value,
-            descripcion: document.getElementById("pr-descripcion").value
-          });
-          cargarListadoAdmin();
-        });
-
-        document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-          await supabaseAdmin.from("emergencias").insert({
-            titulo: document.getElementById("em-titulo").value,
-            descripcion: document.getElementById("em-descripcion").value
-          });
-          cargarListadoAdmin();
-        });
-
-        document.getElementById("btn-actualizar-usuarios")
-          .addEventListener("click", cargarUsuariosAdmin);
-
-      }; // cierre script.onload
-
-      document.body.appendChild(script);
-    }
-  });
-
-  // ============================
-  // 6. BOTÓN ACCEDER (CORRECTO)
-  // ============================
+  /* ============================================================
+     BOTÓN ACCEDER — EL ÚNICO
+  ============================================================ */
   document.getElementById("btn-acceder").addEventListener("click", async () => {
 
     document.getElementById("welcome-screen").style.display = "none";
@@ -730,12 +277,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     await asegurarUsuario();
     showScreen("operativos");
-    cargarOperativos();
   });
 
-  // ============================
-  // 7. NAVEGACIÓN INFERIOR
-  // ============================
+  /* ============================================================
+     NAVEGACIÓN INFERIOR
+  ============================================================ */
   document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const screen = btn.dataset.screen;
@@ -746,26 +292,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-
-
-  <!-- ========================= -->
-  <!--  SERVICE WORKER           -->
-  <!-- ========================= -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
-        reg.onupdatefound = () => {
-          const newWorker = reg.installing;
-          newWorker.onstatechange = () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              alert("Nueva versión disponible. Recarga la app.");
-            }
-          };
-        };
-      });
-    }
-  </script>
+<!-- SERVICE WORKER -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/APPAVPCEA/service-worker.js").then(reg => {
+    reg.onupdatefound = () => {
+      const newWorker = reg.installing;
+      newWorker.onstatechange = () => {
+        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+          alert("Nueva versión disponible. Recarga la app.");
+        }
+      };
+    };
+  });
+}
+</script>
 
 </body>
 </html>
-
