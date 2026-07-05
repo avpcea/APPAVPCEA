@@ -477,305 +477,275 @@
   <!-- ========================= -->
   <!--   INICIO DE LA APP        -->
   <!-- ========================= -->
-  <script>
-    
-    document.addEventListener("DOMContentLoaded", () => {
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
-      if (!window.AVPCEA_AUTORIZADO) {
-        document.body.innerHTML = `
-          <div style="padding:20px; text-align:center;">
-            <h2>Acceso no autorizado</h2>
-            <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
-          </div>
-        `;
+  if (!window.AVPCEA_AUTORIZADO) {
+    document.body.innerHTML = `
+      <div style="padding:20px; text-align:center;">
+        <h2>Acceso no autorizado</h2>
+        <p>Este dispositivo no está autorizado para usar la APP AVPCEA.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // ============================
+  // 1. Generar usuario_id
+  // ============================
+  let usuario_id = localStorage.getItem("usuario_id");
+
+  if (!usuario_id || usuario_id.trim() === "") {
+    usuario_id = crypto.randomUUID();
+    localStorage.setItem("usuario_id", usuario_id);
+  }
+
+  // ============================
+  // 2. asegurarUsuario()
+  // ============================
+  async function asegurarUsuario() {
+    const usuario_id = localStorage.getItem("usuario_id");
+
+    const { data } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("id", usuario_id)
+      .maybeSingle();
+
+    if (!data) {
+
+      alert(
+        "Hola.\n\n" +
+        "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
+        "Por favor, introduce tu Nombre y un Apellido.\n\n" +
+        "Gracias."
+      );
+
+      const nombre = prompt("Introduce tu nombre y apellido:");
+
+      if (!nombre || nombre.trim() === "") {
+        alert("Debes introducir un nombre y apellido para continuar.");
         return;
       }
 
-      // 1. Generar usuario_id si no existe
-      let usuario_id = localStorage.getItem("usuario_id");
+      const { error } = await supabase
+        .from("usuarios")
+        .insert([{ id: usuario_id, nombre: nombre.trim() }]);
 
-      if (!usuario_id || usuario_id.trim() === "") {
-        usuario_id = crypto.randomUUID();
-        localStorage.setItem("usuario_id", usuario_id);
+      if (error) {
+        alert("ERROR creando usuario: " + error.message);
+        console.error(error);
+        return;
       }
 
-      // 2. Función para asegurar que el usuario existe en Supabase
-      async function asegurarUsuario() {
-        const usuario_id = localStorage.getItem("usuario_id");
+      alert("Usuario registrado correctamente.");
+    }
+  }
 
-        const { data } = await supabase
-          .from("usuarios")
-          .select("id")
-          .eq("id", usuario_id)
-          .maybeSingle();
+  // ============================
+  // 3. showScreen()
+  // ============================
+  function showScreen(name) {
+    document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+    document.getElementById(name).style.display = "block";
+  }
 
-        if (!data) {
+  // ============================
+  // 4. Mostrar bienvenida
+  // ============================
+  showScreen("welcome-screen");
+  document.getElementById("app-container").style.display = "block";
 
-          // ALERT EXTENDIDO
-          alert(
-            "Hola.\n\n" +
-            "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
-            "Gracias."
-          );
+  registrarDispositivo();
 
-          // PEDIR NOMBRE DIRECTAMENTE
-          const nombre = prompt("Por favor, introduce tu nombre y apellido:");
+  // ============================
+  // 5. Botón ADMIN
+  // ============================
+  document.getElementById("admin-btn").addEventListener("click", () => {
+    showScreen("admin");
+  });
 
-          if (!nombre || nombre.trim() === "") {
-            alert("Debes introducir un nombre y apeliido para continuar.");
-            return;
-          }
+  esAdmin().then(admin => {
+    if (admin) {
+      document.getElementById("admin-btn").style.display = "block";
 
-          // CREAR USUARIO EN SUPABASE
-          const { error } = await supabase
+      const script = document.createElement("script");
+      script.src = "supabase-admin.js";
+
+      script.onload = () => {
+
+        // ===============================
+        //   LISTADO DE ELEMENTOS
+        // ===============================
+        async function cargarListadoAdmin() {
+          const cont = document.getElementById("admin-listado");
+          if (!cont) return;
+
+          cont.innerHTML = "<p>Cargando elementos...</p>";
+
+          const [op, pr, em] = await Promise.all([
+            supabaseAdmin.from("operativos").select("*"),
+            supabaseAdmin.from("preventivos").select("*"),
+            supabaseAdmin.from("emergencias").select("*")
+          ]);
+
+          cont.innerHTML = "";
+
+          const render = (lista, tipo) => {
+            if (!lista.data) return;
+            lista.data.forEach(item => {
+              const div = document.createElement("div");
+              div.classList.add("card");
+              div.innerHTML = `
+                <strong>${tipo}:</strong> ${item.titulo}<br>
+                <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
+              `;
+              cont.appendChild(div);
+            });
+          };
+
+          render(op, "operativos");
+          render(pr, "preventivos");
+          render(em, "emergencias");
+
+          document.querySelectorAll(".btn-borrar").forEach(btn => {
+            btn.addEventListener("click", async () => {
+              const id = btn.dataset.id;
+              const tipo = btn.dataset.tipo;
+
+              await supabaseAdmin.from(tipo).delete().eq("id", id);
+              cargarListadoAdmin();
+            });
+          });
+        }
+
+        // ===============================
+        //   GESTIÓN DE USUARIOS
+        // ===============================
+        async function cargarUsuariosAdmin() {
+          const cont = document.getElementById("admin-usuarios");
+          cont.innerHTML = "<p>Cargando usuarios...</p>";
+
+          const { data: usuarios } = await supabaseAdmin
             .from("usuarios")
-            .insert([{ id: usuario_id, nombre: nombre.trim() }]);
+            .select("*");
 
-          if (error) {
-            alert("ERROR creando usuario: " + error.message);
-            console.error(error);
-            return;
-          }
+          cont.innerHTML = "";
 
-          alert("Usuario registrado correctamente.");
-        }
-      }
+          usuarios.forEach(u => {
+            cont.innerHTML += `
+              <div class="card">
+                <h4>${u.nombre}</h4>
+                <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
+                <p><strong>Rol:</strong> ${u.rol}</p>
 
-      // 3. AQUÍ va registrarUsuario()
-      async function registrarUsuario() {
-        const nombre = document.getElementById("nombreUsuario").value.trim();
-
-        if (!nombre) {
-          alert("Por favor, introduce tu nombre y apellido.");
-      return;
+                <button onclick="editarUsuario('${u.id}')">Editar</button>
+                <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
+                <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+              </div>
+            `;
+          });
         }
 
-        const { error } = await supabase
-          .from("usuarios")
-          .insert([{ id: usuario_id, nombre }]);
+        async function editarUsuario(id) {
+          const nombre = prompt("Nuevo nombre:");
+          const telefono = prompt("Nuevo teléfono:");
+          if (!nombre) return;
 
-        if (error) {
-          alert("ERROR creando usuario: " + error.message);
-          console.error(error);
-          return;
+          await supabaseAdmin.from("usuarios")
+            .update({ nombre, telefono })
+            .eq("id", id);
+
+          cargarUsuariosAdmin();
         }
 
-        // Ocultar formulario
-        document.getElementById("registroUsuario").style.display = "none";
+        async function cambiarRol(id) {
+          const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
+          if (!nuevoRol) return;
 
-        alert("Usuario registrado correctamente.");
-      }
+          await supabaseAdmin.from("usuarios")
+            .update({ rol: nuevoRol })
+            .eq("id", id);
 
-      // 4. Función de navegación
-      async function showScreen(name) {
-        document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
-        document.getElementById(name).style.display = "block";
-      }
-
-      // 5. Inicio de la app
-      document.addEventListener("DOMContentLoaded", async () => {
-        showScreen("welcome-screen");   // Luego mostrar la pantalla principal
-      });
-
-
-      document.getElementById("app-container").style.display = "block";
-
-      registrarDispositivo();
-
-      document.getElementById("admin-btn").addEventListener("click", () => {
-        showScreen("admin");
-      });
-
-      esAdmin().then(admin => {
-        if (admin) {
-          document.getElementById("admin-btn").style.display = "block";
-
-          const script = document.createElement("script");
-          script.src = "supabase-admin.js";
-
-          script.onload = () => {
-
-            // ===============================
-            //   LISTADO DE ELEMENTOS
-            // ===============================
-            async function cargarListadoAdmin() {
-              const cont = document.getElementById("admin-listado");
-              if (!cont) return;
-
-              cont.innerHTML = "<p>Cargando elementos...</p>";
-
-              const [op, pr, em] = await Promise.all([
-                supabaseAdmin.from("operativos").select("*"),
-                supabaseAdmin.from("preventivos").select("*"),
-                supabaseAdmin.from("emergencias").select("*")
-              ]);
-
-              cont.innerHTML = "";
-
-              const render = (lista, tipo) => {
-                if (!lista.data) return;
-                lista.data.forEach(item => {
-                  const div = document.createElement("div");
-                  div.classList.add("card");
-                  div.innerHTML = `
-                    <strong>${tipo}:</strong> ${item.titulo}<br>
-                    <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-                  `;
-                  cont.appendChild(div);
-                });
-              };
-
-              render(op, "operativos");
-              render(pr, "preventivos");
-              render(em, "emergencias");
-
-              document.querySelectorAll(".btn-borrar").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                 const id = btn.dataset.id;
-                  const tipo = btn.dataset.tipo;
-
-                  await supabaseAdmin.from(tipo).delete().eq("id", id);
-                  cargarListadoAdmin();
-               });
-              });
-           }
-
-            // ===============================
-            //   GESTIÓN DE USUARIOS
-            // ===============================
-            async function cargarUsuariosAdmin() {
-              const cont = document.getElementById("admin-usuarios");
-              cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-              const { data: usuarios } = await supabaseAdmin
-                .from("usuarios")
-                .select("*");
-
-              cont.innerHTML = "";
-
-              usuarios.forEach(u => {
-                cont.innerHTML += `
-                  <div class="card">
-                    <h4>${u.nombre}</h4>
-                    <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-                    <p><strong>Rol:</strong> ${u.rol}</p>
-
-                    <button onclick="editarUsuario('${u.id}')">Editar</button>
-                    <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-                    <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
-                  </div>
-                `;
-              });
-            }
-
-            async function editarUsuario(id) {
-              const nombre = prompt("Nuevo nombre:");
-              const telefono = prompt("Nuevo teléfono:");
-              if (!nombre) return;
-
-              await supabaseAdmin.from("usuarios")
-                .update({ nombre, telefono })
-                .eq("id", id);
-
-              cargarUsuariosAdmin();
-            }
-
-            async function cambiarRol(id) {
-              const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-              if (!nuevoRol) return;
-
-              await supabaseAdmin.from("usuarios")
-                .update({ rol: nuevoRol })
-                .eq("id", id);
-
-              cargarUsuariosAdmin();
-            }
-
-            async function borrarUsuario(id) {
-              if (!confirm("¿Eliminar usuario?")) return;
-
-              await supabaseAdmin.from("usuarios")
-                .delete()
-                .eq("id", id);
-
-              cargarUsuariosAdmin();
-            }
-
-            // ===============================
-            //   CREACIÓN DE EVENTOS
-            // ===============================
-            document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-              await supabaseAdmin.from("operativos").insert({
-                titulo: document.getElementById("op-titulo").value,
-                descripcion: document.getElementById("op-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-            document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-              await supabaseAdmin.from("preventivos").insert({
-                titulo: document.getElementById("pr-titulo").value,
-                descripcion: document.getElementById("pr-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-            document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-              await supabaseAdmin.from("emergencias").insert({
-                titulo: document.getElementById("em-titulo").value,
-                descripcion: document.getElementById("em-descripcion").value
-              });
-              cargarListadoAdmin();
-            });
-
-            // ===============================
-            //   BOTONES
-            // ===============================
-            document.getElementById("btn-actualizar-usuarios")
-              .addEventListener("click", cargarUsuariosAdmin);
-
-            // NO LLAMAR cargarListadoAdmin() aquí
-            // Se llama al entrar en admin
-
-          }; // ← cierre correcto del script.onload
-
-
-          document.body.appendChild(script);
+          cargarUsuariosAdmin();
         }
-      });
 
-      document.getElementById("btn-acceder").addEventListener("click", async () => {
-        document.getElementById("welcome-screen").style.display = "none";
-        document.getElementById("welcome-header").style.display = "none";
+        async function borrarUsuario(id) {
+          if (!confirm("¿Eliminar usuario?")) return;
 
-        document.getElementById("app-screens").style.display = "block";
-        document.getElementById("main-header").style.display = "flex";
-        document.querySelector(".bottom-nav").style.display = "flex";
+          await supabaseAdmin.from("usuarios")
+            .delete()
+            .eq("id", id);
 
-        await asegurarUsuario();   // Registro si es necesario
-        showScreen("operativos");  // Navegación
-        cargarOperativos();        // Cargar eventos
-      });
+          cargarUsuariosAdmin();
+        }
 
-      // =========================
-      // NAVEGACIÓN ENTRE PANTALLAS
-      // =========================
-      // Navegación inferior (todos los botones con class="nav-btn")
-      document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const screen = btn.dataset.screen;
-          showScreen(screen);
-         });
-      });
-      // Botón de administración (solo si existe y eres admin)
-      const adminBtn = document.getElementById("admin-btn");
-      if (adminBtn) {
-        adminBtn.addEventListener("click", () => {
-          showScreen("admin");
+        // ===============================
+        //   CREACIÓN DE EVENTOS
+        // ===============================
+        document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+          await supabaseAdmin.from("operativos").insert({
+            titulo: document.getElementById("op-titulo").value,
+            descripcion: document.getElementById("op-descripcion").value
+          });
+          cargarListadoAdmin();
         });
-      }
+
+        document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+          await supabaseAdmin.from("preventivos").insert({
+            titulo: document.getElementById("pr-titulo").value,
+            descripcion: document.getElementById("pr-descripcion").value
+          });
+          cargarListadoAdmin();
+        });
+
+        document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+          await supabaseAdmin.from("emergencias").insert({
+            titulo: document.getElementById("em-titulo").value,
+            descripcion: document.getElementById("em-descripcion").value
+          });
+          cargarListadoAdmin();
+        });
+
+        document.getElementById("btn-actualizar-usuarios")
+          .addEventListener("click", cargarUsuariosAdmin);
+
+      }; // cierre script.onload
+
+      document.body.appendChild(script);
+    }
+  });
+
+  // ============================
+  // 6. BOTÓN ACCEDER (CORRECTO)
+  // ============================
+  document.getElementById("btn-acceder").addEventListener("click", async () => {
+
+    document.getElementById("welcome-screen").style.display = "none";
+    document.getElementById("welcome-header").style.display = "none";
+
+    document.getElementById("app-screens").style.display = "block";
+    document.getElementById("main-header").style.display = "flex";
+    document.querySelector(".bottom-nav").style.display = "flex";
+
+    await asegurarUsuario();
+    showScreen("operativos");
+    cargarOperativos();
+  });
+
+  // ============================
+  // 7. NAVEGACIÓN INFERIOR
+  // ============================
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const screen = btn.dataset.screen;
+      showScreen(screen);
     });
-  </script>
+  });
+
+});
+</script>
+
 
 
   <!-- ========================= -->
