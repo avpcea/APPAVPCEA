@@ -579,11 +579,6 @@ esAdmin().then(admin => {
       // ===============================
       //   GESTIÓN DE USUARIOS
       // ===============================
-
-      document.getElementById("btn-actualizar-usuarios")
-        .addEventListener("click", cargarUsuariosAdmin);
-
-      
       async function cargarUsuariosAdmin() {
         const cont = document.getElementById("admin-usuarios");
         cont.innerHTML = "<p>Cargando usuarios...</p>";
@@ -641,6 +636,11 @@ esAdmin().then(admin => {
 
         cargarUsuariosAdmin();
       }
+
+      document.getElementById("btn-actualizar-usuarios")
+        .addEventListener("click", cargarUsuariosAdmin);
+
+      
 
     }; // cierre script.onload
 
