@@ -533,132 +533,131 @@ function borrarUsuario() {}
    CARGA DINÁMICA DEL PANEL ADMIN
    ============================================================ */
 esAdmin().then(admin => {
-  if (admin) {
-    document.getElementById("admin-btn").style.display = "block";
+  if (!admin) return;
 
-    const script = document.createElement("script");
-    script.src = "supabase-admin.js";
+  document.getElementById("admin-btn").style.display = "block";
 
-    script.onload = () => {
+  const script = document.createElement("script");
+  script.src = "supabase-admin.js";
 
-      /* ===============================
-         LISTADO DE ELEMENTOS
-         =============================== */
-      cargarListadoAdmin = async function () {
-        const cont = document.getElementById("admin-listado");
-        if (!cont) return;
+  script.onload = () => {
 
-        cont.innerHTML = "<p>Cargando elementos...</p>";
+    /* ============================================================
+       A PARTIR DE AQUÍ LAS FUNCIONES YA EXISTEN
+       ============================================================ */
 
-        const [op, pr, em] = await Promise.all([
-          supabaseAdmin.from("operativos").select("*"),
-          supabaseAdmin.from("preventivos").select("*"),
-          supabaseAdmin.from("emergencias").select("*")
-        ]);
+    cargarListadoAdmin = async function () {
+      const cont = document.getElementById("admin-listado");
+      if (!cont) return;
 
-        cont.innerHTML = "";
+      cont.innerHTML = "<p>Cargando elementos...</p>";
 
-        const render = (lista, tipo) => {
-          if (!lista.data) return;
-          lista.data.forEach(item => {
-            const div = document.createElement("div");
-            div.classList.add("card");
-            div.innerHTML = `
-              <strong>${tipo}:</strong> ${item.titulo}<br>
-              <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-            `;
-            cont.appendChild(div);
-          });
-        };
+      const [op, pr, em] = await Promise.all([
+        supabaseAdmin.from("operativos").select("*"),
+        supabaseAdmin.from("preventivos").select("*"),
+        supabaseAdmin.from("emergencias").select("*")
+      ]);
 
-        render(op, "operativos");
-        render(pr, "preventivos");
-        render(em, "emergencias");
+      cont.innerHTML = "";
 
-        document.querySelectorAll(".btn-borrar").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.dataset.id;
-            const tipo = btn.dataset.tipo;
-
-            await supabaseAdmin.from(tipo).delete().eq("id", id);
-            cargarListadoAdmin();
-          });
-        });
-      };
-
-      /* ===============================
-         GESTIÓN DE USUARIOS
-         =============================== */
-      cargarUsuariosAdmin = async function () {
-        const cont = document.getElementById("admin-usuarios");
-        cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-        const { data: usuarios } = await supabaseAdmin
-          .from("usuarios")
-          .select("*");
-
-        cont.innerHTML = "";
-
-        usuarios.forEach(u => {
-          cont.innerHTML += `
-            <div class="card">
-              <h4>${u.nombre}</h4>
-              <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-              <p><strong>Rol:</strong> ${u.rol}</p>
-
-              <button onclick="editarUsuario('${u.id}')">Editar</button>
-              <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-              <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
-            </div>
+      const render = (lista, tipo) => {
+        if (!lista.data) return;
+        lista.data.forEach(item => {
+          const div = document.createElement("div");
+          div.classList.add("card");
+          div.innerHTML = `
+            <strong>${tipo}:</strong> ${item.titulo}<br>
+            <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
           `;
+          cont.appendChild(div);
         });
       };
 
-      editarUsuario = async function (id) {
-        const nombre = prompt("Nuevo nombre:");
-        const telefono = prompt("Nuevo teléfono:");
-        if (!nombre) return;
+      render(op, "operativos");
+      render(pr, "preventivos");
+      render(em, "emergencias");
 
-        await supabaseAdmin.from("usuarios")
-          .update({ nombre, telefono })
-          .eq("id", id);
+      document.querySelectorAll(".btn-borrar").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          const tipo = btn.dataset.tipo;
 
-        cargarUsuariosAdmin();
-      };
+          await supabaseAdmin.from(tipo).delete().eq("id", id);
+          cargarListadoAdmin();
+        });
+      });
+    };
 
-      cambiarRol = async function (id) {
-        const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-        if (!nuevoRol) return;
+    cargarUsuariosAdmin = async function () {
+      const cont = document.getElementById("admin-usuarios");
+      cont.innerHTML = "<p>Cargando usuarios...</p>";
 
-        await supabaseAdmin.from("usuarios")
-          .update({ rol: nuevoRol })
-          .eq("id", id);
+      const { data: usuarios } = await supabaseAdmin
+        .from("usuarios")
+        .select("*");
 
-        cargarUsuariosAdmin();
-      };
+      cont.innerHTML = "";
 
-      borrarUsuario = async function (id) {
-        if (!confirm("¿Eliminar usuario?")) return;
+      usuarios.forEach(u => {
+        cont.innerHTML += `
+          <div class="card">
+            <h4>${u.nombre}</h4>
+            <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
+            <p><strong>Rol:</strong> ${u.rol}</p>
 
-        await supabaseAdmin.from("usuarios")
-          .delete()
-          .eq("id", id);
+            <button onclick="editarUsuario('${u.id}')">Editar</button>
+            <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
+            <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+          </div>
+        `;
+      });
+    };
 
-        cargarUsuariosAdmin();
-      };
+    editarUsuario = async function (id) {
+      const nombre = prompt("Nuevo nombre:");
+      const telefono = prompt("Nuevo teléfono:");
+      if (!nombre) return;
 
-      /* ============================================================
-         AHORA QUE LAS FUNCIONES EXISTEN → ACTIVAMOS EL BOTÓN
-         ============================================================ */
-      document.getElementById("btn-actualizar-usuarios")
-        .addEventListener("click", cargarUsuariosAdmin);
+      await supabaseAdmin.from("usuarios")
+        .update({ nombre, telefono })
+        .eq("id", id);
 
-    }; // FIN script.onload
+      cargarUsuariosAdmin();
+    };
 
-    document.body.appendChild(script);
-  }
+    cambiarRol = async function (id) {
+      const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
+      if (!nuevoRol) return;
+
+      await supabaseAdmin.from("usuarios")
+        .update({ rol: nuevoRol })
+        .eq("id", id);
+
+      cargarUsuariosAdmin();
+    };
+
+    borrarUsuario = async function (id) {
+      if (!confirm("¿Eliminar usuario?")) return;
+
+      await supabaseAdmin.from("usuarios")
+        .delete()
+        .eq("id", id);
+
+      cargarUsuariosAdmin();
+    };
+
+    /* ============================================================
+       AHORA QUE LAS FUNCIONES EXISTEN → ACTIVAMOS EL BOTÓN
+       ============================================================ */
+    document.getElementById("btn-actualizar-usuarios")
+      .addEventListener("click", cargarUsuariosAdmin);
+
+  };
+
+  document.body.appendChild(script);
 });
 </script>
+
 
 
 <!-- =============================== -->
