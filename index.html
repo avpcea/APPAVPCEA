@@ -518,10 +518,20 @@ async function asegurarUsuario() {
 }
 </script>
 
-<!-- ============================ -->
-<!--  3. Carga dinámica ADMIN     -->
-<!-- ============================ -->
 <script>
+/* ============================================================
+   STUBS DE SEGURIDAD
+   (Garantizan que la app no se rompa si supabase-admin.js falla)
+   ============================================================ */
+function cargarUsuariosAdmin() {}
+function cargarListadoAdmin() {}
+function editarUsuario() {}
+function cambiarRol() {}
+function borrarUsuario() {}
+
+/* ============================================================
+   CARGA DINÁMICA DEL PANEL ADMIN
+   ============================================================ */
 esAdmin().then(admin => {
   if (admin) {
     document.getElementById("admin-btn").style.display = "block";
@@ -531,10 +541,10 @@ esAdmin().then(admin => {
 
     script.onload = () => {
 
-      // ===============================
-      //   LISTADO DE ELEMENTOS
-      // ===============================
-      async function cargarListadoAdmin() {
+      /* ===============================
+         LISTADO DE ELEMENTOS
+         =============================== */
+      cargarListadoAdmin = async function () {
         const cont = document.getElementById("admin-listado");
         if (!cont) return;
 
@@ -574,12 +584,12 @@ esAdmin().then(admin => {
             cargarListadoAdmin();
           });
         });
-      }
+      };
 
-      // ===============================
-      //   GESTIÓN DE USUARIOS
-      // ===============================
-      async function cargarUsuariosAdmin() {
+      /* ===============================
+         GESTIÓN DE USUARIOS
+         =============================== */
+      cargarUsuariosAdmin = async function () {
         const cont = document.getElementById("admin-usuarios");
         cont.innerHTML = "<p>Cargando usuarios...</p>";
 
@@ -602,9 +612,9 @@ esAdmin().then(admin => {
             </div>
           `;
         });
-      }
+      };
 
-      async function editarUsuario(id) {
+      editarUsuario = async function (id) {
         const nombre = prompt("Nuevo nombre:");
         const telefono = prompt("Nuevo teléfono:");
         if (!nombre) return;
@@ -614,9 +624,9 @@ esAdmin().then(admin => {
           .eq("id", id);
 
         cargarUsuariosAdmin();
-      }
+      };
 
-      async function cambiarRol(id) {
+      cambiarRol = async function (id) {
         const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
         if (!nuevoRol) return;
 
@@ -625,9 +635,9 @@ esAdmin().then(admin => {
           .eq("id", id);
 
         cargarUsuariosAdmin();
-      }
+      };
 
-      async function borrarUsuario(id) {
+      borrarUsuario = async function (id) {
         if (!confirm("¿Eliminar usuario?")) return;
 
         await supabaseAdmin.from("usuarios")
@@ -635,17 +645,21 @@ esAdmin().then(admin => {
           .eq("id", id);
 
         cargarUsuariosAdmin();
-      }
+      };
 
-document.getElementById("btn-actualizar-usuarios").addEventListener("click", cargarUsuariosAdmin);
+      /* ============================================================
+         AHORA QUE LAS FUNCIONES EXISTEN → ACTIVAMOS EL BOTÓN
+         ============================================================ */
+      document.getElementById("btn-actualizar-usuarios")
+        .addEventListener("click", cargarUsuariosAdmin);
 
-    
-    }; // cierre script.onload
+    }; // FIN script.onload
 
     document.body.appendChild(script);
   }
 });
 </script>
+
 
 <!-- =============================== -->
 <!--   CREACIÓN DE EVENTOS           -->
