@@ -1,26 +1,33 @@
-const CACHE_NAME = "avpcea-cache-v2";
+// ============================================================
+// SERVICE WORKER LIMPIO PARA GITHUB PAGES
+// ============================================================
+
+const CACHE_NAME = "avpcea-cache-v1";
+
 const URLS_TO_CACHE = [
-  "/APPAVPCEA/",
-  "/APPAVPCEA/index.html",
-  "/APPAVPCEA/manifest.json"
-  "/APPAVPCEA/styles.css"
+  "./",               // index.html
+  "./styles.css",     // si existe
+  "./app.js",         // si existe
 ];
 
-self.addEventListener("install", event => {
-  self.skipWaiting();
+// Instalación
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(URLS_TO_CACHE).catch(() => {
+        console.warn("No se pudieron cachear algunos archivos.");
+      });
+    })
   );
 });
 
-self.addEventListener("activate", event => {
-  self.clients.claim();
-  const cacheWhitelist = [CACHE_NAME];
+// Activación
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then((keys) =>
       Promise.all(
-        keys.map(key => {
-          if (!cacheWhitelist.includes(key)) {
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -29,8 +36,17 @@ self.addEventListener("activate", event => {
   );
 });
 
-self.addEventListener("fetch", event => {
+// Network-first con fallback a caché
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, clone);
+        });
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
