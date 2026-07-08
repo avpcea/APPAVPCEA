@@ -15,57 +15,13 @@
 
   <!-- SUPABASE -->
   <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script> -->
-  <!-- <script src="supabase.js"></script> -->
-  <!-- <script> -->
-  <!-- const supabase = window.supabase.createClient( -->
-  <!--   "https://hptnaoliiychgkxsaksy.supabase.co", -->
-  <!--   "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a" -->
-  <!-- ); -->
-  <!--  </script> -->
-
-
-
-
-
-
-
-
-
-  
-<!-- 1. Supabase CDN -->
-<script src="supabase.js"></script>
-
-<script>
-alert("SUPABASE: ¿Este mensaje aparece?");
-console.log("SUPABASE: ¿Este mensaje aparece?");
-</script>
-
-<!-- 2. Crear cliente -->
-<script>
-alert("SUPABASE OBJETO: " + (window.supabase ? "OK" : "NO EXISTE"));
-console.log("SUPABASE OBJETO:", window.supabase);
-
-const supabase = window.supabase.createClient(
-  "https://hptnaoliiychgkxsaksy.supabase.co",
-  "sb-publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
-);
-
-alert("SUPABASE: Cliente creado correctamente");
-console.log("SUPABASE: Cliente creado correctamente");
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-  
+  <script src="supabase.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://hptnaoliiychgkxsaksy.supabase.co",
+      "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
+    );
+  </script>
 
 </head>
 
@@ -323,25 +279,9 @@ async function estaSuscrito(tipo, evento_id) {
 // =============================== -->
 //  ADMINISTRACIÓN SUSCRIPCIONES   -->
 // =============================== -->
-
-
-
-
-
-
-
-
+  
   alert("ADMIN: Intentando cargar supabase-admin.js");
 
-
-
-
-
-
-
-
-
-  
 async function toggleSuscripcion(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo, evento_id);
@@ -419,7 +359,7 @@ async function toggleSuscripcion(tipo, evento_id) {
 <!-- =============================== -->
 <script>
 async function cerrarEvento(tabla, evento_id, fecha_fin) {
-  const { data: evento } = await supabaseAdmin
+  const { data: evento } = await 
     .from(tabla)
     .select("fecha_inicio")
     .eq("id", evento_id)
@@ -495,9 +435,6 @@ async function esAdmin() {
 <!--  SPA: CAMBIO DE PANTALLAS -->
 <!-- ========================= -->
 <script>
-
-  //alert("SPA: initApp() se está ejecutando");
-
 function showScreen(name) {
   if (name === "preventivos") cargarPreventivos();
   if (name === "operativos") cargarOperativos();
@@ -614,9 +551,18 @@ esAdmin().then(admin => {
   if (!admin) return;
 
   document.getElementById("admin-btn").style.display = "block";
-
+  
+alert("ADMIN: El archivo supabase-admin.js se está ejecutando");
+  
   const script = document.createElement("script");
   script.src = "supabase-admin.js";
+
+
+
+alert("ADMIN SUPABASE: Cliente admin creado");
+
+
+
 
   alert("SUPABASE: Cliente creado correctamente");
   alert("ADMIN: Intentando cargar supabase-admin.js");
@@ -704,7 +650,7 @@ esAdmin().then(admin => {
       const telefono = prompt("Nuevo teléfono:");
       if (!nombre) return;
 
-      await supabaseAdmin.from("usuarios")
+      await .from("usuarios")
         .update({ nombre, telefono })
         .eq("id", id);
 
@@ -715,7 +661,7 @@ esAdmin().then(admin => {
       const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
       if (!nuevoRol) return;
 
-      await supabaseAdmin.from("usuarios")
+      await .from("usuarios")
         .update({ rol: nuevoRol })
         .eq("id", id);
 
@@ -725,7 +671,7 @@ esAdmin().then(admin => {
     borrarUsuario = async function (id) {
       if (!confirm("¿Eliminar usuario?")) return;
 
-      await supabaseAdmin.from("usuarios")
+      await .from("usuarios")
         .delete()
         .eq("id", id);
 
@@ -751,7 +697,7 @@ esAdmin().then(admin => {
 <!-- =============================== -->
 <script>
 document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-  await supabaseAdmin.from("operativos").insert({
+  await .from("operativos").insert({
     titulo: document.getElementById("op-titulo").value,
     descripcion: document.getElementById("op-descripcion").value
   });
@@ -759,7 +705,7 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
 });
 
 document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-  await supabaseAdmin.from("preventivos").insert({
+  await .from("preventivos").insert({
     titulo: document.getElementById("pr-titulo").value,
     descripcion: document.getElementById("pr-descripcion").value
   });
@@ -767,7 +713,7 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
 });
 
 document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-  await supabaseAdmin.from("emergencias").insert({
+  await .from("emergencias").insert({
     titulo: document.getElementById("em-titulo").value,
     descripcion: document.getElementById("em-descripcion").value
   });
