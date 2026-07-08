@@ -15,44 +15,75 @@
 
   <!-- SUPABASE -->
   <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script> -->
-  <script src="supabase.js"></script>
-  <script>
-    const supabase = window.supabase.createClient(
-      "https://hptnaoliiychgkxsaksy.supabase.co",
-      "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
-    );
-  </script>
+  <!-- <script src="supabase.js"></script> -->
+  <!-- <script> -->
+    //const supabase = window.supabase.createClient(
+    //  "https://hptnaoliiychgkxsaksy.supabase.co",
+    //  "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
+   // );
+ <!--  </script> -->
+
+
+
+
+
+
+
+
+
+  
+<!-- 1. Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+
+<script>
+alert("SUPABASE: ¿Este mensaje aparece?");
+console.log("SUPABASE: ¿Este mensaje aparece?");
+</script>
+
+<!-- 2. Crear cliente -->
+<script>
+alert("SUPABASE OBJETO: " + (window.supabase ? "OK" : "NO EXISTE"));
+console.log("SUPABASE OBJETO:", window.supabase);
+
+const supabase = window.supabase.createClient(
+  "https://hptnaoliiychgkxsaksy.supabase.co",
+  "sb-publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
+);
+
+alert("SUPABASE: Cliente creado correctamente");
+console.log("SUPABASE: Cliente creado correctamente");
+</script>
+
+<!-- 3. Tu app -->
+<script src="app.js"></script>
+
+
+
+
+
+
+
+
+
+
+  
+
 </head>
 
 <body>
 
 
+  <script>
+    //alert("INDEX: El index.html se está ejecutando");
+  </script>
 
 
-
-
-
-
-
-  
-<script>
-alert("INDEX: El index.html se está ejecutando");
-</script>
-
-
-
-
-
-
-
-
-
-  
   <script>
     window.onerror = function(msg, url, line) {
       alert("ERROR: " + msg + "\nLinea: " + line);
     };
   </script>
+
 
 <!-- TOKEN DE AUTORIZACIÓN -->
 <script>
@@ -466,23 +497,8 @@ async function esAdmin() {
 <!-- ========================= -->
 <script>
 
+  //alert("SPA: initApp() se está ejecutando");
 
-
-
-
-
-
-  alert("SPA: initApp() se está ejecutando");
-
-
-
-
-
-
-
-
-
-  
 function showScreen(name) {
   if (name === "preventivos") cargarPreventivos();
   if (name === "operativos") cargarOperativos();
@@ -589,25 +605,8 @@ function editarUsuario() {}
 function cambiarRol() {}
 function borrarUsuario() {}
 
-
-
-
-
-
-
-
-
   alert("APP: El script principal se está ejecutando");
 
-
-
-
-
-
-
-
-
-  
 
 /* ============================================================
    CARGA DINÁMICA DEL PANEL ADMIN
@@ -620,47 +619,15 @@ esAdmin().then(admin => {
   const script = document.createElement("script");
   script.src = "supabase-admin.js";
 
-
-
-
-
-
-
-
-
   alert("SUPABASE: Cliente creado correctamente");
   alert("ADMIN: Intentando cargar supabase-admin.js");
 
 
-
-
-
-
-
-
-  
-
   script.onload = () => {
-
-
-
-
-
-
-
 
 
      alert("ADMIN: supabase-admin.js cargado correctamente");
 
-
-
-
-
-
-
-
-
-    
 
     /* ============================================================
        A PARTIR DE AQUÍ LAS FUNCIONES YA EXISTEN
