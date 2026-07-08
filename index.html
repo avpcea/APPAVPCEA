@@ -26,6 +26,28 @@
 
 <body>
 
+
+
+
+
+
+
+
+
+  
+<script>
+alert("INDEX: El index.html se está ejecutando");
+</script>
+
+
+
+
+
+
+
+
+
+  
   <script>
     window.onerror = function(msg, url, line) {
       alert("ERROR: " + msg + "\nLinea: " + line);
@@ -271,6 +293,25 @@ async function estaSuscrito(tipo, evento_id) {
 // =============================== -->
 //  ADMINISTRACIÓN SUSCRIPCIONES   -->
 // =============================== -->
+
+
+
+
+
+
+
+
+  alert("ADMIN: Intentando cargar supabase-admin.js");
+
+
+
+
+
+
+
+
+
+  
 async function toggleSuscripcion(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo, evento_id);
@@ -423,6 +464,24 @@ async function esAdmin() {
 <!-- ========================= -->
 <!--   SPA: CAMBIO DE PANTALLAS -->
 <!-- ========================= -->
+
+
+
+
+
+
+
+  alert("SPA: initApp() se está ejecutando");
+
+
+
+
+
+
+
+
+
+  
 <script>
 function showScreen(name) {
   if (name === "preventivos") cargarPreventivos();
@@ -520,6 +579,26 @@ async function asegurarUsuario() {
 </script>
 
 <script>
+
+
+
+
+
+
+
+
+
+  alert("APP: El script principal se está ejecutando");
+
+
+
+
+
+
+
+
+
+  
 /* ============================================================
    STUBS DE SEGURIDAD
    (Garantizan que la app no se rompa si supabase-admin.js falla)
@@ -541,7 +620,47 @@ esAdmin().then(admin => {
   const script = document.createElement("script");
   script.src = "supabase-admin.js";
 
+
+
+
+
+
+
+
+
+  alert("SUPABASE: Cliente creado correctamente");
+  alert("ADMIN: Intentando cargar supabase-admin.js");
+
+
+
+
+
+
+
+
+  
+
   script.onload = () => {
+
+
+
+
+
+
+
+
+
+     alert("ADMIN: supabase-admin.js cargado correctamente");
+
+
+
+
+
+
+
+
+
+    
 
     /* ============================================================
        A PARTIR DE AQUÍ LAS FUNCIONES YA EXISTEN
