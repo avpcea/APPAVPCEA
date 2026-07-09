@@ -8,6 +8,32 @@ alert("ADMIN: supabase-admin.js se está ejecutando");
 const BASE_FN = "https://hptnaoliiychgkxsaksy.supabase.co/functions/v1";
 
 // ============================================================
+// CREAR USUARIO
+// ============================================================
+
+async function crearUsuario(values) {
+  await fetch(`${BASE_FN}/admin-create-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values)
+  });
+
+  cargarUsuariosAdmin();
+}
+
+// ============================================================
+// BOTON CREAR USUARIO
+// ============================================================
+
+document.getElementById("btn-crear-usuario").addEventListener("click", async () => {
+  const nombre = document.getElementById("usr-nombre").value;
+  const telefono = document.getElementById("usr-telefono").value;
+  const rol = document.getElementById("usr-rol").value;
+
+  crearUsuario({ nombre, telefono, rol });
+});
+
+// ============================================================
 // LISTAR USUARIOS
 // ============================================================
 
@@ -145,3 +171,42 @@ async function borrarElemento(id, tipo) {
 
   cargarListadoAdmin();
 }
+
+// ============================================================
+// CREAR ELEMENTO
+// ============================================================
+
+async function crearElemento(tipo, values) {
+  await fetch(`${BASE_FN}/admin-create-element`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tipo, values })
+  });
+
+  cargarListadoAdmin();
+}
+
+// ============================================================
+// BOTONES ELEMENTO
+// ============================================================
+
+document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+  crearElemento("operativos", {
+    titulo: document.getElementById("op-titulo").value,
+    descripcion: document.getElementById("op-descripcion").value
+  });
+});
+
+document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+  crearElemento("preventivo", {
+    titulo: document.getElementById("op-titulo").value,
+    descripcion: document.getElementById("op-descripcion").value
+  });
+});
+
+document.getElementById("btn-crear-emergencias").addEventListener("click", async () => {
+  crearElemento("emergencias", {
+    titulo: document.getElementById("op-titulo").value,
+    descripcion: document.getElementById("op-descripcion").value
+  });
+});
