@@ -1,73 +1,26 @@
 // ============================================================
-// CLIENTE ADMIN (usa la service_role_key)
+// ADMIN: Archivo supabase-admin.js adaptado a Edge Functions
 // ============================================================
 
-const supabaseAdmin = window.supabase.createClient(
-  "https://hptnaoliiychgkxsaksy.supabase.co",
-  "service_role_key_aquí"   // ⚠️ IMPORTANTE: pon tu clave de servicio real
-);
+alert("ADMIN: supabase-admin.js se está ejecutando");
+
+// URL base de tus Edge Functions
+const BASE_FN = "https://hptnaoliiychgkxsaksy.supabase.co/functions/v1";
 
 // ============================================================
-// LISTADO DE ELEMENTOS (operativos, preventivos, emergencias)
-// ============================================================
-
-async function cargarListadoAdmin() {
-  const cont = document.getElementById("admin-listado");
-  if (!cont) return;
-
-  cont.innerHTML = "<p>Cargando elementos...</p>";
-
-  const [op, pr, em] = await Promise.all([
-    supabaseAdmin.from("operativos").select("*"),
-    supabaseAdmin.from("preventivos").select("*"),
-    supabaseAdmin.from("emergencias").select("*")
-  ]);
-
-  cont.innerHTML = "";
-
-  const render = (lista, tipo) => {
-    if (!lista.data) return;
-    lista.data.forEach(item => {
-      const div = document.createElement("div");
-      div.classList.add("card");
-      div.innerHTML = `
-        <strong>${tipo}:</strong> ${item.titulo}<br>
-        <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-      `;
-      cont.appendChild(div);
-    });
-  };
-
-  render(op, "operativos");
-  render(pr, "preventivos");
-  render(em, "emergencias");
-
-  document.querySelectorAll(".btn-borrar").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      const tipo = btn.dataset.tipo;
-
-      await supabaseAdmin.from(tipo).delete().eq("id", id);
-      cargarListadoAdmin();
-    });
-  });
-}
-
-// ============================================================
-// GESTIÓN DE USUARIOS
+// LISTAR USUARIOS
 // ============================================================
 
 async function cargarUsuariosAdmin() {
+  alert("ADMIN: cargando usuarios desde Edge Function");
+
+  const res = await fetch(`${BASE_FN}/admin-list-users`);
+  const json = await res.json();
+
   const cont = document.getElementById("admin-usuarios");
-  cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-  const { data: usuarios } = await supabaseAdmin
-    .from("usuarios")
-    .select("*");
-
   cont.innerHTML = "";
 
-  usuarios.forEach(u => {
+  json.data.forEach(u => {
     cont.innerHTML += `
       <div class="card">
         <h4>${u.nombre}</h4>
@@ -80,6 +33,8 @@ async function cargarUsuariosAdmin() {
       </div>
     `;
   });
+
+  alert("ADMIN: usuarios cargados");
 }
 
 // ============================================================
@@ -91,9 +46,16 @@ async function editarUsuario(id) {
   const telefono = prompt("Nuevo teléfono:");
   if (!nombre) return;
 
-  await supabaseAdmin.from("usuarios")
-    .update({ nombre, telefono })
-    .eq("id", id);
+  alert("ADMIN: enviando actualización de usuario");
+
+  await fetch(`${BASE_FN}/admin-update-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id,
+      values: { nombre, telefono }
+    })
+  });
 
   cargarUsuariosAdmin();
 }
@@ -106,9 +68,16 @@ async function cambiarRol(id) {
   const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
   if (!nuevoRol) return;
 
-  await supabaseAdmin.from("usuarios")
-    .update({ rol: nuevoRol })
-    .eq("id", id);
+  alert("ADMIN: cambiando rol");
+
+  await fetch(`${BASE_FN}/admin-update-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id,
+      values: { rol: nuevoRol }
+    })
+  });
 
   cargarUsuariosAdmin();
 }
@@ -120,9 +89,59 @@ async function cambiarRol(id) {
 async function borrarUsuario(id) {
   if (!confirm("¿Eliminar usuario?")) return;
 
-  await supabaseAdmin.from("usuarios")
-    .delete()
-    .eq("id", id);
+  alert("ADMIN: borrando usuario");
+
+  await fetch(`${BASE_FN}/admin-delete-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id })
+  });
 
   cargarUsuariosAdmin();
+}
+
+// ============================================================
+// LISTAR ELEMENTOS (operativos, preventivos, emergencias)
+// ============================================================
+
+async function cargarListadoAdmin() {
+  alert("ADMIN: cargando listado de elementos");
+
+  const cont = document.getElementById("admin-listado");
+  cont.innerHTML = "<p>Cargando...</p>";
+
+  const res = await fetch(`${BASE_FN}/admin-list-elements`);
+  const json = await res.json();
+
+  cont.innerHTML = "";
+
+  json.data.forEach(item => {
+    const div = document.createElement("div");
+    div.classList.add("card");
+    div.innerHTML = `
+      <strong>${item.tipo}:</strong> ${item.titulo}<br>
+      <button onclick="borrarElemento('${item.id}', '${item.tipo}')">Borrar</button>
+    `;
+    cont.appendChild(div);
+  });
+
+  alert("ADMIN: elementos cargados");
+}
+
+// ============================================================
+// BORRAR ELEMENTO
+// ============================================================
+
+async function borrarElemento(id, tipo) {
+  if (!confirm("¿Eliminar elemento?")) return;
+
+  alert("ADMIN: borrando elemento");
+
+  await fetch(`${BASE_FN}/admin-delete-element`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, tipo })
+  });
+
+  cargarListadoAdmin();
 }
