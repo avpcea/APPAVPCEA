@@ -1,13 +1,16 @@
 // ============================================================
-// SERVICE WORKER LIMPIO PARA GITHUB PAGES
+// SERVICE WORKER PARA GITHUB PAGES + SPA + SUPABASE
 // ============================================================
 
-const CACHE_NAME = "avpcea-cache-v1";
+const CACHE_NAME = "avpcea-cache-v2";
 
 const URLS_TO_CACHE = [
-  "./",               // index.html
-  "./styles.css",     // si existe
-  "./app.js",         // si existe
+  "./",                     // index.html
+  "./styles.css",
+  "./manifest.json",
+  "./supabase.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
 // Instalación
@@ -36,17 +39,30 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Network-first con fallback a caché
+// Estrategia: Cache-first SOLO para archivos estáticos
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // No interceptar llamadas a Supabase ni Edge Functions
+  if (req.url.includes("supabase.co")) return;
+  if (req.url.includes("/functions/v1/")) return;
+
+  // Solo interceptar archivos estáticos
+  if (req.method !== "GET") return;
+
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, clone);
-        });
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(req)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(req, clone);
+          });
+          return response;
+        })
+        .catch(() => caches.match("./"));
+    })
   );
 });
