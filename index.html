@@ -29,11 +29,6 @@
 
 
   <script>
-    //alert("INDEX: El index.html se está ejecutando");
-  </script>
-
-
-  <script>
     window.onerror = function(msg, url, line) {
       alert("ERROR: " + msg + "\nLinea: " + line);
     };
@@ -279,9 +274,6 @@ async function estaSuscrito(tipo, evento_id) {
 // =============================== -->
 //  ADMINISTRACIÓN SUSCRIPCIONES   -->
 // =============================== -->
-  
-  alert("ADMIN: Intentando cargar supabase-admin.js");
-
 async function toggleSuscripcion(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo, evento_id);
@@ -540,10 +532,6 @@ function cargarListadoAdmin() {}
 function editarUsuario() {}
 function cambiarRol() {}
 function borrarUsuario() {}
-
-  alert("APP: El script principal se está ejecutando");
-
-
 /* ============================================================
    CARGA DINÁMICA DEL PANEL ADMIN
    ============================================================ */
@@ -559,13 +547,7 @@ alert("ADMIN: El archivo supabase-admin.js se está ejecutando");
 
 
 
-alert("ADMIN SUPABASE: Cliente admin creado");
-
-
-
-
   alert("SUPABASE: Cliente creado correctamente");
-  alert("ADMIN: Intentando cargar supabase-admin.js");
 
 
   script.onload = () => {
