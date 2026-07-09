@@ -14,26 +14,22 @@
   <title>APP AVPCEA</title>
 
   <!-- SUPABASE -->
-  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script> -->
   <script src="supabase.js"></script>
   <script>
     const supabase = window.supabase.createClient(
       "https://hptnaoliiychgkxsaksy.supabase.co",
-      "sb_publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
+      "sb-publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
     );
   </script>
-
 </head>
 
 <body>
 
-
-  <script>
-    window.onerror = function(msg, url, line) {
-      alert("ERROR: " + msg + "\nLinea: " + line);
-    };
-  </script>
-
+<script>
+window.onerror = function(msg, url, line) {
+  alert("ERROR: " + msg + "\nLinea: " + line);
+};
+</script>
 
 <!-- TOKEN DE AUTORIZACIÓN -->
 <script>
@@ -153,7 +149,7 @@ if (tokenGuardado === TOKEN_SECRETO) {
     <button class="nav-btn active" data-screen="operativos">Operativos</button>
     <button class="nav-btn" data-screen="preventivos">Preventivos</button>
     <button class="nav-btn" data-screen="emergencias">Emergencias</button>
-    <button id="admin-btn" class="nav-btn" data-screen="admin">Administración</button>
+    <button id="admin-btn" class="nav-btn" data-screen="admin" style="display:none;">Administración</button>
   </nav>
 
 </div>
@@ -271,9 +267,6 @@ async function estaSuscrito(tipo, evento_id) {
   return data ? true : false;
 }
 
-// =============================== -->
-//  ADMINISTRACIÓN SUSCRIPCIONES   -->
-// =============================== -->
 async function toggleSuscripcion(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo, evento_id);
@@ -346,51 +339,6 @@ async function toggleSuscripcion(tipo, evento_id) {
 }
 </script>
 
-<!-- =============================== -->
-<!--  ADMINISTRACIÓN CERRAR EVENTO  -->
-<!-- =============================== -->
-<script>
-async function cerrarEvento(tabla, evento_id, fecha_fin) {
-  const { data: evento } = await 
-    .from(tabla)
-    .select("fecha_inicio")
-    .eq("id", evento_id)
-    .maybeSingle();
-
-  const inicio = new Date(evento.fecha_inicio);
-  const fin = new Date(fecha_fin);
-
-  const duracion_horas = (fin - inicio) / (1000 * 60 * 60);
-
-  await supabaseAdmin
-    .from(tabla)
-    .update({
-      fecha_fin,
-      duracion_horas
-    })
-    .eq("id", evento_id);
-
-  const { data: suscritos } = await supabaseAdmin
-    .from("suscripciones")
-    .select("usuario_id, tipo")
-    .eq("evento_id", String(evento_id));
-
-  const año = new Date().getFullYear();
-
-  for (const s of suscritos) {
-    await supabaseAdmin
-      .from("horas")
-      .update({ horas: duracion_horas })
-      .eq("usuario_id", s.usuario_id)
-      .eq("evento_id", String(evento_id))
-      .eq("tipo", s.tipo)
-      .eq("año", año);
-  }
-
-  alert("Evento cerrado y horas recalculadas.");
-}
-</script>
-
 <!-- ========================= -->
 <!--  FUNCIONES DE ROLES       -->
 <!-- ========================= -->
@@ -459,13 +407,6 @@ function showScreen(name) {
 }
 </script>
 
-<!-- ========================= -->
-<!--   ADMIN: LISTADO VACÍO    -->
-<!-- ========================= -->
-<script>
-function cargarListadoAdmin() {}
-</script>
-
 <!-- ============================ -->
 <!--  1. Generar usuario_id       -->
 <!-- ============================ -->
@@ -522,187 +463,6 @@ async function asegurarUsuario() {
 }
 </script>
 
-<script>
-/* ============================================================
-   STUBS DE SEGURIDAD
-   (Garantizan que la app no se rompa si supabase-admin.js falla)
-   ============================================================ */
-function cargarUsuariosAdmin() {}
-function cargarListadoAdmin() {}
-function editarUsuario() {}
-function cambiarRol() {}
-function borrarUsuario() {}
-/* ============================================================
-   CARGA DINÁMICA DEL PANEL ADMIN
-   ============================================================ */
-esAdmin().then(admin => {
-  if (!admin) return;
-
-  document.getElementById("admin-btn").style.display = "block";
-  
-alert("ADMIN: El archivo supabase-admin.js se está ejecutando");
-  
-  const script = document.createElement("script");
-  script.src = "supabase-admin.js";
-
-
-
-  alert("SUPABASE: Cliente creado correctamente");
-
-
-  script.onload = () => {
-
-
-     alert("ADMIN: supabase-admin.js cargado correctamente");
-
-
-    /* ============================================================
-       A PARTIR DE AQUÍ LAS FUNCIONES YA EXISTEN
-       ============================================================ */
-
-    cargarListadoAdmin = async function () {
-      const cont = document.getElementById("admin-listado");
-      if (!cont) return;
-
-      cont.innerHTML = "<p>Cargando elementos...</p>";
-
-      const [op, pr, em] = await Promise.all([
-        supabaseAdmin.from("operativos").select("*"),
-        supabaseAdmin.from("preventivos").select("*"),
-        supabaseAdmin.from("emergencias").select("*")
-      ]);
-
-      cont.innerHTML = "";
-
-      const render = (lista, tipo) => {
-        if (!lista.data) return;
-        lista.data.forEach(item => {
-          const div = document.createElement("div");
-          div.classList.add("card");
-          div.innerHTML = `
-            <strong>${tipo}:</strong> ${item.titulo}<br>
-            <button data-id="${item.id}" data-tipo="${tipo}" class="btn-borrar">Borrar</button>
-          `;
-          cont.appendChild(div);
-        });
-      };
-
-      render(op, "operativos");
-      render(pr, "preventivos");
-      render(em, "emergencias");
-
-      document.querySelectorAll(".btn-borrar").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.dataset.id;
-          const tipo = btn.dataset.tipo;
-
-          await supabaseAdmin.from(tipo).delete().eq("id", id);
-          cargarListadoAdmin();
-        });
-      });
-    };
-
-    cargarUsuariosAdmin = async function () {
-      const cont = document.getElementById("admin-usuarios");
-      cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-      const { data: usuarios } = await supabaseAdmin
-        .from("usuarios")
-        .select("*");
-
-      cont.innerHTML = "";
-
-      usuarios.forEach(u => {
-        cont.innerHTML += `
-          <div class="card">
-            <h4>${u.nombre}</h4>
-            <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-            <p><strong>Rol:</strong> ${u.rol}</p>
-
-            <button onclick="editarUsuario('${u.id}')">Editar</button>
-            <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-            <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
-          </div>
-        `;
-      });
-    };
-
-    editarUsuario = async function (id) {
-      const nombre = prompt("Nuevo nombre:");
-      const telefono = prompt("Nuevo teléfono:");
-      if (!nombre) return;
-
-      await .from("usuarios")
-        .update({ nombre, telefono })
-        .eq("id", id);
-
-      cargarUsuariosAdmin();
-    };
-
-    cambiarRol = async function (id) {
-      const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-      if (!nuevoRol) return;
-
-      await .from("usuarios")
-        .update({ rol: nuevoRol })
-        .eq("id", id);
-
-      cargarUsuariosAdmin();
-    };
-
-    borrarUsuario = async function (id) {
-      if (!confirm("¿Eliminar usuario?")) return;
-
-      await .from("usuarios")
-        .delete()
-        .eq("id", id);
-
-      cargarUsuariosAdmin();
-    };
-
-    /* ============================================================
-       AHORA QUE LAS FUNCIONES EXISTEN → ACTIVAMOS EL BOTÓN
-       ============================================================ */
-    document.getElementById("btn-actualizar-usuarios")
-      .addEventListener("click", cargarUsuariosAdmin);
-
-  };
-
-  document.body.appendChild(script);
-});
-</script>
-
-
-
-<!-- =============================== -->
-<!--   CREACIÓN DE EVENTOS           -->
-<!-- =============================== -->
-<script>
-document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-  await .from("operativos").insert({
-    titulo: document.getElementById("op-titulo").value,
-    descripcion: document.getElementById("op-descripcion").value
-  });
-  cargarListadoAdmin();
-});
-
-document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-  await .from("preventivos").insert({
-    titulo: document.getElementById("pr-titulo").value,
-    descripcion: document.getElementById("pr-descripcion").value
-  });
-  cargarListadoAdmin();
-});
-
-document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-  await .from("emergencias").insert({
-    titulo: document.getElementById("em-titulo").value,
-    descripcion: document.getElementById("em-descripcion").value
-  });
-  cargarListadoAdmin();
-});
-</script>
-
 <!-- ============================ -->
 <!-- 6. BOTÓN ACCEDER (CORRECTO)  -->
 <!-- ============================ -->
@@ -735,6 +495,21 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 </script>
 
 <!-- ========================= -->
+<!--  CARGA DINÁMICA ADMIN     -->
+<!-- ========================= -->
+<script>
+esAdmin().then(admin => {
+  if (!admin) return;
+
+  document.getElementById("admin-btn").style.display = "block";
+
+  const script = document.createElement("script");
+  script.src = "supabase-admin.js";
+  document.body.appendChild(script);
+});
+</script>
+
+<!-- ========================= -->
 <!--  SERVICE WORKER           -->
 <!-- ========================= -->
 <script>
@@ -754,3 +529,4 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
