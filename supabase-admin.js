@@ -210,3 +210,16 @@ document.getElementById("btn-crear-emergencias").addEventListener("click", async
     descripcion: document.getElementById("op-descripcion").value
   });
 });
+
+// ============================================================
+// CREAR HORAS
+// ============================================================
+
+const { data: evento } = await supabase
+  .from(tabla)
+  .select("duracion_horas")
+  .eq("id", evento_id)
+  .maybeSingle();
+
+const horas = evento?.duracion_horas || 0;
+const año = new Date().getFullYear();
