@@ -299,14 +299,17 @@ async function toggleSuscripcion(tipo, evento_id) {
       .eq("id", evento_id)
       .maybeSingle();
 
-    const horas = evento?.duracion_horas || 0;
-    const año = new Date().getFullYear();
-
-    const { error: horasError } = await supabase
-      .from("horas")
-      .insert([
-        { usuario_id, evento_id: String(evento_id), tipo, horas, año }
-      ]);
+    await fetch(`${BASE_FN}/admin-create-horas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        usuario_id,
+        evento_id: String(evento_id),
+        tipo,
+        horas,
+        año
+      })
+    });
 
     if (horasError) {
       alert("ERROR al guardar horas: " + horasError.message);
