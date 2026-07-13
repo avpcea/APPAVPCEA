@@ -281,11 +281,15 @@ async function toggleSuscripcion(tipo, evento_id) {
   }
 
   if (!suscrito) {
-    const { error: subError } = await supabase
-      .from("suscripciones")
-      .insert([
-        { usuario_id, tipo, evento_id: String(evento_id) }
-      ]);
+    await fetch(`${BASE_FN}/admin-create-suscripcion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        usuario_id,
+        evento_id,
+        fecha: new Date().toISOString()
+      })
+    });
 
     if (subError) {
       alert("ERROR al suscribirse: " + subError.message);
