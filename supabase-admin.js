@@ -87,7 +87,7 @@ async function editarUsuario(id) {
 }
 
 // ============================================================
-// CAMBIAR ROL
+// CAMBIAR ROL USUARIO
 // ============================================================
 
 async function cambiarRol(id) {
@@ -223,3 +223,17 @@ const { data: evento } = await supabase
 
 const horas = evento?.duracion_horas || 0;
 const año = new Date().getFullYear();
+
+// ============================================================
+// CREAR SUSCRIPCIONES
+// ============================================================
+
+async function crearSuscripcion(values) {
+  await fetch(`${BASE_FN}/admin-create-suscripcion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values)
+  });
+
+  cargarSuscripcionesAdmin();
+}
