@@ -14,7 +14,11 @@
   <title>APP AVPCEA</title>
 
   <!-- SUPABASE -->
-  <script type="module" src="supabase.js"></script>
+  <!-- <script type="module" src="supabase.js"></script> -->
+  <script type="module">
+    import { supabase } from "./supabase.js";
+  </script>
+
   <script>
     const supabase = window.supabase.createClient(
       "https://hptnaoliiychgkxsaksy.supabase.co",
