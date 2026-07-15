@@ -1,4 +1,7 @@
-document.getElementById("app-container").style.display = "block";
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("app-container").style.display = "block";
+});
+
 
 // ===============================
 // SUPABASE CLIENTE
