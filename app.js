@@ -1,3 +1,5 @@
+document.getElementById("app-container").style.display = "block";
+
 // ===============================
 // SUPABASE CLIENTE
 // ===============================
