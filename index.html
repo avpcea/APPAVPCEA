@@ -13,18 +13,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>APP AVPCEA</title>
 
-  <!-- SUPABASE -->
-  <!-- <script type="module" src="supabase.js"></script> -->
+  <!-- SUPABASE: TODO DENTRO DEL INDEX.HTML -->
   <script type="module">
-    import { supabase } from "./supabase.js";
-  </script>
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  <script>
-    const supabase = window.supabase.createClient(
+    window.supabase = createClient(
       "https://hptnaoliiychgkxsaksy.supabase.co",
       "sb-publishable_yr41XhMZMxDXwyuJZRolVw_6o05FP8a"
     );
+
+    window.BASE_FN = "https://hptnaoliiychgkxsaksy.supabase.co/functions/v1";
   </script>
+
 </head>
 
 <body>
@@ -268,7 +268,7 @@ async function estaSuscrito(tipo, evento_id) {
     .eq("evento_id", evento_id)
     .maybeSingle();
 
-  return data ? true : false;
+  return !!data;
 }
 
 async function toggleSuscripcion(tipo, evento_id) {
@@ -295,17 +295,14 @@ async function toggleSuscripcion(tipo, evento_id) {
       })
     });
 
-    if (subError) {
-      alert("ERROR al suscribirse: " + subError.message);
-      console.error(subError);
-      return;
-    }
-
     const { data: evento } = await supabase
       .from(tabla)
       .select("duracion_horas")
       .eq("id", evento_id)
       .maybeSingle();
+
+    const horas = evento?.duracion_horas || 0;
+    const año = new Date().getFullYear();
 
     await fetch(`${BASE_FN}/admin-create-horas`, {
       method: "POST",
@@ -318,12 +315,6 @@ async function toggleSuscripcion(tipo, evento_id) {
         año
       })
     });
-
-    if (horasError) {
-      alert("ERROR al guardar horas: " + horasError.message);
-      console.error(horasError);
-      return;
-    }
 
     alert("Suscripción realizada.");
   } else {
