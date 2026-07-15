@@ -29,14 +29,13 @@
 
 <body>
 
-<script>
+<script type="module">
 window.onerror = function(msg, url, line) {
   alert("ERROR: " + msg + "\nLinea: " + line);
 };
 </script>
 
-<!-- TOKEN DE AUTORIZACIÓN -->
-<script>
+<script type="module">
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
 
@@ -162,7 +161,7 @@ if (tokenGuardado === TOKEN_SECRETO) {
 <!-- ========================= -->
 <!--  CARGA PREVENTIVOS        -->
 <!-- ========================= -->
-<script>
+<script type="module">
 async function cargarPreventivos() {
   const cont = document.getElementById("lista-preventivos");
   cont.innerHTML = "<p>Cargando preventivos...</p>";
@@ -201,7 +200,7 @@ async function cargarPreventivos() {
 <!-- =============================== -->
 <!--  CARGA OPERATIVOS               -->
 <!-- =============================== -->
-<script>
+<script type="module">
 async function cargarOperativos() {
   const cont = document.getElementById("lista-operativos");
   cont.innerHTML = "<p>Cargando operativos...</p>";
@@ -240,7 +239,7 @@ async function cargarOperativos() {
 <!-- =============================== -->
 <!--  CARGA EMERGENCIAS              -->
 <!-- =============================== -->
-<script>
+<script type="module">
 async function cargarEmergencias() {
   const cont = document.getElementById("lista-emergencias");
 
@@ -256,7 +255,7 @@ async function cargarEmergencias() {
 <!-- ================ -->
 <!--  SUSCRIPCIONES   -->
 <!-- ================ -->
-<script>
+<script type="module">
 async function estaSuscrito(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
 
@@ -412,7 +411,7 @@ function showScreen(name) {
 <!-- ============================ -->
 <!--  1. Generar usuario_id       -->
 <!-- ============================ -->
-<script>
+<script type="module">
 let usuario_id = localStorage.getItem("usuario_id");
 
 if (!usuario_id || usuario_id.trim() === "") {
@@ -424,7 +423,7 @@ if (!usuario_id || usuario_id.trim() === "") {
 <!-- ============================ -->
 <!--  2. asegurarUsuario()        -->
 <!-- ============================ -->
-<script>
+<script type="module">
 async function asegurarUsuario() {
   const usuario_id = localStorage.getItem("usuario_id");
 
@@ -466,9 +465,9 @@ async function asegurarUsuario() {
 </script>
 
 <!-- ============================ -->
-<!-- 6. BOTÓN ACCEDER (CORRECTO)  -->
+<!-- 6. BOTÓN ACCEDER             -->
 <!-- ============================ -->
-<script>
+<script type="module">
 document.getElementById("btn-acceder").addEventListener("click", async () => {
 
   document.getElementById("welcome-screen").style.display = "none";
@@ -487,7 +486,7 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
 <!-- ============================ -->
 <!-- 7. NAVEGACIÓN INFERIOR       -->
 <!-- ============================ -->
-<script>
+<script type="module">
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const screen = btn.dataset.screen;
@@ -499,7 +498,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 <!-- ========================= -->
 <!--  CARGA DINÁMICA ADMIN     -->
 <!-- ========================= -->
-<script>
+<script type="module">
 esAdmin().then(admin => {
   if (!admin) return;
 
@@ -514,7 +513,7 @@ esAdmin().then(admin => {
 <!-- ========================= -->
 <!--  SERVICE WORKER           -->
 <!-- ========================= -->
-<script>
+<script type="module">
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js").then(reg => {
     reg.onupdatefound = () => {
