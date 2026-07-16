@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("app-container").style.display = "block";
+  document.getElementById("btn-acceder").addEventListener("click", async () => {
+    showScreen("operativos");
+  });
 });
 
 
