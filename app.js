@@ -93,6 +93,7 @@ export async function asegurarUsuario() {
 // ===============================
 export async function cargarPreventivos() {
   const cont = document.getElementById("lista-preventivos");
+  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
   cont.innerHTML = "<p>Cargando preventivos...</p>";
 
   const { data: preventivos, error } = await supabase
@@ -131,6 +132,7 @@ export async function cargarPreventivos() {
 // ===============================
 export async function cargarOperativos() {
   const cont = document.getElementById("lista-operativos");
+  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
   cont.innerHTML = "<p>Cargando operativos...</p>";
 
   const { data: operativos, error } = await supabase
@@ -169,6 +171,7 @@ export async function cargarOperativos() {
 // ===============================
 export async function cargarEmergencias() {
   const cont = document.getElementById("lista-emergencias");
+  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
 
   cont.innerHTML = `
     <div class="card">
@@ -346,7 +349,6 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
 
   await asegurarUsuario();
   showScreen("operativos");
-  cargarOperativos();
 });
 
 
