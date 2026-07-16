@@ -56,6 +56,13 @@ body {
   font-size: 18px;
 }
 
+.welcome-logo {
+  width: 50%;
+  max-width: 200px;
+  display: block;
+  margin: 0 auto 20px auto;
+}
+
 /* ===============================
    CONTENEDOR PRINCIPAL
 =============================== */
