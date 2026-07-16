@@ -1,10 +1,10 @@
 document.getElementById("app-container").style.display = "block";
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("btn-acceder").addEventListener("click", async () => {
-    showScreen("operativos");
-  });
-});
+//document.addEventListener("DOMContentLoaded", () => {
+//  document.getElementById("btn-acceder").addEventListener("click", async () => {
+//    showScreen("operativos");
+//  });
+//});
 
 // ===============================
 // SUPABASE CLIENTE
