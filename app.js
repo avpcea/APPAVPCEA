@@ -1,21 +1,19 @@
-document.getElementById("app-container").style.display = "block";
-
-//document.addEventListener("DOMContentLoaded", () => {
-//  document.getElementById("btn-acceder").addEventListener("click", async () => {
-//    showScreen("operativos");
-//  });
-//});
-
 // ===============================
 // SUPABASE CLIENTE
 // ===============================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = "https://hptnaoliiychgkxsaksy.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524"; // <-- IMPORTANTE
+const SUPABASE_ANON_KEY = "TU_ANON_KEY_REAL_AQUI";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
+
+
+// ===============================
+// MOSTRAR APP (evita pantalla en blanco)
+// ===============================
+document.getElementById("app-container").style.display = "block";
 
 
 // ===============================
@@ -92,50 +90,23 @@ export async function asegurarUsuario() {
 
 
 // ===============================
-// CARGA PREVENTIVOS
+// SISTEMA ANTI-DUPLICADOS
 // ===============================
-export async function cargarPreventivos() {
-  const cont = document.getElementById("lista-preventivos");
-  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
-  cont.innerHTML = "<p>Cargando preventivos...</p>";
-
-  const { data: preventivos, error } = await supabase
-    .from("preventivos")
-    .select("*")
-    .order("fecha", { ascending: true });
-
-  if (error) {
-    cont.innerHTML = "<p>Error al cargar preventivos.</p>";
-    return;
-  }
-
-  cont.innerHTML = "";
-
-  for (const p of preventivos) {
-    const suscrito = await estaSuscrito("NRP", p.id);
-
-    cont.innerHTML += `
-      <div class="card">
-        <h3>${p.titulo}</h3>
-        <p><strong>Fecha:</strong> ${p.fecha}</p>
-        <p><strong>Lugar:</strong> ${p.lugar}</p>
-        <p>${p.descripcion || ""}</p>
-
-        <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
-          ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-        </button>
-      </div>
-    `;
-  }
-}
+const cargando = {
+  operativos: false,
+  preventivos: false,
+  emergencias: false
+};
 
 
 // ===============================
 // CARGA OPERATIVOS
 // ===============================
 export async function cargarOperativos() {
+  if (cargando.operativos) return;
+  cargando.operativos = true;
+
   const cont = document.getElementById("lista-operativos");
-  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
   cont.innerHTML = "<p>Cargando operativos...</p>";
 
   const { data: operativos, error } = await supabase
@@ -145,6 +116,7 @@ export async function cargarOperativos() {
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar operativos.</p>";
+    cargando.operativos = false;
     return;
   }
 
@@ -166,6 +138,52 @@ export async function cargarOperativos() {
       </div>
     `;
   }
+
+  cargando.operativos = false;
+}
+
+
+// ===============================
+// CARGA PREVENTIVOS
+// ===============================
+export async function cargarPreventivos() {
+  if (cargando.preventivos) return;
+  cargando.preventivos = true;
+
+  const cont = document.getElementById("lista-preventivos");
+  cont.innerHTML = "<p>Cargando preventivos...</p>";
+
+  const { data: preventivos, error } = await supabase
+    .from("preventivos")
+    .select("*")
+    .order("fecha", { ascending: true });
+
+  if (error) {
+    cont.innerHTML = "<p>Error al cargar preventivos.</p>";
+    cargando.preventivos = false;
+    return;
+  }
+
+  cont.innerHTML = "";
+
+  for (const p of preventivos) {
+    const suscrito = await estaSuscrito("NRP", p.id);
+
+    cont.innerHTML += `
+      <div class="card">
+        <h3>${p.titulo}</h3>
+        <p><strong>Fecha:</strong> ${p.fecha}</p>
+        <p><strong>Lugar:</strong> ${p.lugar}</p>
+        <p>${p.descripcion || ""}</p>
+
+        <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
+          ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
+        </button>
+      </div>
+    `;
+  }
+
+  cargando.preventivos = false;
 }
 
 
@@ -173,8 +191,10 @@ export async function cargarOperativos() {
 // CARGA EMERGENCIAS
 // ===============================
 export async function cargarEmergencias() {
+  if (cargando.emergencias) return;
+  cargando.emergencias = true;
+
   const cont = document.getElementById("lista-emergencias");
-  cont.innerHTML = ""; // limpiar SIEMPRE antes de empezar
 
   cont.innerHTML = `
     <div class="card">
@@ -182,6 +202,8 @@ export async function cargarEmergencias() {
       <p>Actualmente no hay emergencias registradas.</p>
     </div>
   `;
+
+  cargando.emergencias = false;
 }
 
 
@@ -342,6 +364,7 @@ export function showScreen(name) {
 // BOTÓN ACCEDER
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
+
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("welcome-header").style.display = "none";
 
