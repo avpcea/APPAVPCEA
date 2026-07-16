@@ -1,11 +1,10 @@
 {
-  "name": "APP AVPCEA",
+  "name": "AVPCEA",
   "short_name": "AVPCEA",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0d6efd",
+  "theme_color": "#0077ff",
   "icons": [
     {
       "src": "icons/icon-192.png",
