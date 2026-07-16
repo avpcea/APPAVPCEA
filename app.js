@@ -1,9 +1,10 @@
+document.getElementById("app-container").style.display = "block";
+
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-acceder").addEventListener("click", async () => {
     showScreen("operativos");
   });
 });
-
 
 // ===============================
 // SUPABASE CLIENTE
@@ -341,7 +342,6 @@ export function showScreen(name) {
 // BOTÓN ACCEDER
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
-
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("welcome-header").style.display = "none";
 
