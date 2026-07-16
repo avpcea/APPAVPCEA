@@ -1,126 +1,97 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AVPCEA</title>
+
+  <!-- Manifest PWA -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- Estilos -->
   <link rel="stylesheet" href="styles.css">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="apple-touch-startup-image" href="icons/icon-512.png">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#0d6efd">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>APP AVPCEA</title>
+
+  <!-- Evita caché agresiva en GitHub Pages -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 </head>
 
 <body>
 
-<div id="app-container" class="app-container" style="display:none;">
-
+  <!-- =============================== -->
   <!-- PANTALLA DE BIENVENIDA -->
-  <div id="welcome-screen" class="screen active">
-    <header id="welcome-header" class="welcome-header">
-      <img src="icons/icon-512.png" class="welcome-hero">
-    </header>
-
-    <div class="card welcome-card">
-      <button id="btn-acceder" class="btn-primary">Acceder</button>
-    </div>
-  </div>
-
-  <!-- CABECERA NORMAL -->
-  <header id="main-header" class="app-header" style="display:none;">
-    <img src="icons/icon-192.png" class="header-logo">
-    <span class="header-title">Protección Civil El Arenal</span>
+  <!-- =============================== -->
+  <header id="welcome-header" class="welcome-header">
+    <h1>AVPCEA</h1>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="app-content">
+  <section id="welcome-screen" class="welcome-screen">
+    <p>Bienvenido a la aplicación AVPCEA.</p>
+    <button id="btn-acceder" class="btn-primary">Acceder</button>
+  </section>
 
-    <div id="app-screens" style="display:none;">
 
-      <div id="screen-operativos" class="screen">
+  <!-- =============================== -->
+  <!-- CONTENEDOR PRINCIPAL DE LA APP -->
+  <!-- =============================== -->
+  <div id="app-container" class="app-container" style="display:none;">
+
+    <!-- HEADER PRINCIPAL -->
+    <header id="main-header" class="main-header" style="display:none;">
+      <h2 class="header-title">Operativos</h2>
+    </header>
+
+    <!-- =============================== -->
+    <!-- PANTALLAS DE LA APP (SPA) -->
+    <!-- =============================== -->
+    <section id="app-screens" style="display:none;">
+
+      <!-- OPERATIVOS -->
+      <div id="screen-operativos" class="screen active">
         <div id="lista-operativos"></div>
       </div>
 
+      <!-- PREVENTIVOS -->
       <div id="screen-preventivos" class="screen">
         <div id="lista-preventivos"></div>
       </div>
 
+      <!-- EMERGENCIAS -->
       <div id="screen-emergencias" class="screen">
         <div id="lista-emergencias"></div>
       </div>
 
-      <div id="admin-screen" class="screen" style="display:none; padding:20px;">
-        <h2>Administración</h2>
-
-        <div class="admin-section">
-          <h3>Crear Operativo</h3>
-          <input id="op-titulo" placeholder="Título">
-          <textarea id="op-descripcion" placeholder="Descripción"></textarea>
-          <button id="btn-crear-operativo">Crear Operativo</button>
-        </div>
-
-        <div class="admin-section">
-          <h3>Crear Preventivo</h3>
-          <input id="pr-titulo" placeholder="Título">
-          <textarea id="pr-descripcion" placeholder="Descripción"></textarea>
-          <button id="btn-crear-preventivo">Crear Preventivo</button>
-        </div>
-
-        <div class="admin-section">
-          <h3>Crear Emergencia</h3>
-          <input id="em-titulo" placeholder="Título">
-          <textarea id="em-descripcion" placeholder="Descripción"></textarea>
-          <button id="btn-crear-emergencia">Crear Emergencia</button>
-        </div>
-
-        <hr>
-
-        <h3>Listado de elementos</h3>
-        <div id="admin-listado"></div>
-
-        <hr>
-
-        <div class="admin-section">
-          <h3>Crear Usuario</h3>
-          <input id="usr-nombre" placeholder="Nombre">
-          <input id="usr-telefono" placeholder="Teléfono">
-          <select id="usr-rol">
-              <option value="usuario">Usuario</option>
-              <option value="admin">Administrador</option>
-              <option value="coordinador">Coordinador</option>
-          </select>
-          <button id="btn-crear-usuario">Crear Usuario</button>
-        </div>
-        
-        <div class="admin-section">
-          <h3>Gestión de Usuarios</h3>
-          <button id="btn-actualizar-usuarios" class="btn-secondary">
-            🔄 Actualizar usuarios
-          </button>
+      <!-- ADMIN -->
+      <div id="screen-admin" class="screen">
+        <div id="admin-screen" style="display:none;">
+          <h3>Panel de Administración</h3>
+          <div id="admin-listado"></div>
           <div id="admin-usuarios"></div>
         </div>
-
       </div>
 
-    </div>
+    </section>
 
-  </main>
 
-  <!-- BARRA INFERIOR -->
-  <nav class="bottom-nav" style="display:none;">
-    <button class="nav-btn active" data-screen="operativos">Operativos</button>
-    <button class="nav-btn" data-screen="preventivos">Preventivos</button>
-    <button class="nav-btn" data-screen="emergencias">Emergencias</button>
-    <button id="admin-btn" class="nav-btn" data-screen="admin" style="display:none;">Administración</button>
-  </nav>
+    <!-- =============================== -->
+    <!-- NAVEGACIÓN INFERIOR -->
+    <!-- =============================== -->
+    <nav class="bottom-nav" style="display:none;">
+      <button class="nav-btn active" data-screen="operativos">Operativos</button>
+      <button class="nav-btn" data-screen="preventivos">Preventivos</button>
+      <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+      <button id="admin-btn" class="nav-btn" data-screen="admin" style="display:none;">Admin</button>
+    </nav>
 
-</div>
+  </div>
 
-<!-- CARGA DE LA APP -->
-<script type="module" src="app.js" defer></script>
+
+  <!-- =============================== -->
+  <!-- SCRIPT PRINCIPAL (OPTIMIZADO) -->
+  <!-- =============================== -->
+  <script type="module" src="app.js" defer></script>
 
 </body>
 </html>
