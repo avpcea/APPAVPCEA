@@ -2,7 +2,7 @@
 // SERVICE WORKER PARA GITHUB PAGES + SPA + SUPABASE
 // ============================================================
 
-const CACHE_NAME = "avpcea-cache-v2";
+const CACHE_NAME = "avpcea-cache-v0";
 
 const URLS_TO_CACHE = [
   "./",                     // index.html
