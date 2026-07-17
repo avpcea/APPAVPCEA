@@ -37,6 +37,17 @@ document.getElementById("app-container").style.display = "block";
 //  }
 //}
 
+
+// ===============================
+// GENERAR usuario_id
+// ===============================
+let usuario_id = localStorage.getItem("usuario_id");
+
+if (!usuario_id || usuario_id.trim() === "") {
+  usuario_id = crypto.randomUUID();
+  localStorage.setItem("usuario_id", usuario_id);
+}
+
 // ===============================
 // TOKEN DE AUTORIZACIÓN
 // ===============================
@@ -84,17 +95,6 @@ if (tokenGuardado === TOKEN_SECRETO) {
 if (!window.AVPCEA_AUTORIZADO) {
   document.body.innerHTML = "<p>Acceso no autorizado.</p>";
   throw new Error("Acceso no autorizado");
-}
-
-
-// ===============================
-// GENERAR usuario_id
-// ===============================
-let usuario_id = localStorage.getItem("usuario_id");
-
-if (!usuario_id || usuario_id.trim() === "") {
-  usuario_id = crypto.randomUUID();
-  localStorage.setItem("usuario_id", usuario_id);
 }
 
 
