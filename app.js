@@ -17,28 +17,6 @@ document.getElementById("app-container").style.display = "block";
 
 
 // ===============================
-// TOKEN DE AUTORIZACIÓN
-// ===============================
-//const TOKEN_SECRETO = "v3";
-//const tokenGuardado = localStorage.getItem("avpcea_token");
-
-//window.AVPCEA_AUTORIZADO = false;
-
-//if (tokenGuardado === TOKEN_SECRETO) {
-//  window.AVPCEA_AUTORIZADO = true;
-//  registrarDispositivo();   // ← ESTA LÍNEA FALTABA
-//} else {
-//  const codigo = prompt("Introduce el código de autorización:");
-//if (codigo === TOKEN_SECRETO) {
-//    localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-//    alert("Dispositivo autorizado.");
-//    window.AVPCEA_AUTORIZADO = true;
-//    registrarDispositivo();   // ← ESTA LÍNEA FALTABA
-//  }
-//}
-
-
-// ===============================
 // GENERAR usuario_id
 // ===============================
 let usuario_id = localStorage.getItem("usuario_id");
@@ -47,6 +25,7 @@ if (!usuario_id || usuario_id.trim() === "") {
   usuario_id = crypto.randomUUID();
   localStorage.setItem("usuario_id", usuario_id);
 }
+
 
 // ===============================
 // TOKEN DE AUTORIZACIÓN
