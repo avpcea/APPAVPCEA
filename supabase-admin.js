@@ -1,239 +1,113 @@
-// ============================================================
-// ADMIN: Archivo supabase-admin.js adaptado a Edge Functions
-// ============================================================
+// supabase-admin.js
 
-alert("ADMIN: supabase-admin.js se está ejecutando");
+import { supabase } from "./app.js";
 
-// URL base de tus Edge Functions
-const BASE_FN = "https://hptnaoliiychgkxsaksy.supabase.co/functions/v1";
+// ===============================
+// CARGAR LISTADO GENERAL (operativos, preventivos, emergencias)
+// ===============================
+export async function cargarListadoAdmin() {
+  const cont = document.getElementById("admin-listado");
+  cont.innerHTML = "<p>Cargando...</p>";
 
-// ============================================================
-// CREAR USUARIO
-// ============================================================
+  const [operativos, preventivos, emergencias] = await Promise.all([
+    supabase.from("operativos").select("*").order("fecha", { ascending: false }),
+    supabase.from("preventivos").select("*").order("fecha", { ascending: false }),
+    supabase.from("emergencias").select("*").order("fecha", { ascending: false })
+  ]);
 
-async function crearUsuario(values) {
-  await fetch(`${BASE_FN}/admin-create-user`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values)
-  });
-
-  cargarUsuariosAdmin();
-}
-
-// ============================================================
-// BOTON CREAR USUARIO
-// ============================================================
-
-document.getElementById("btn-crear-usuario").addEventListener("click", async () => {
-  const nombre = document.getElementById("usr-nombre").value;
-  const telefono = document.getElementById("usr-telefono").value;
-  const rol = document.getElementById("usr-rol").value;
-
-  crearUsuario({ nombre, telefono, rol });
-});
-
-// ============================================================
-// LISTAR USUARIOS
-// ============================================================
-
-async function cargarUsuariosAdmin() {
-  alert("ADMIN: cargando usuarios desde Edge Function");
-
-  const res = await fetch(`${BASE_FN}/admin-list-users`);
-  const json = await res.json();
-
-  const cont = document.getElementById("admin-usuarios");
   cont.innerHTML = "";
 
-  json.data.forEach(u => {
+  cont.innerHTML += `<h3>Operativos</h3>`;
+  operativos.data.forEach(op => {
     cont.innerHTML += `
-      <div class="card">
-        <h4>${u.nombre}</h4>
-        <p><strong>Teléfono:</strong> ${u.telefono || "—"}</p>
-        <p><strong>Rol:</strong> ${u.rol}</p>
-
-        <button onclick="editarUsuario('${u.id}')">Editar</button>
-        <button onclick="cambiarRol('${u.id}')">Cambiar Rol</button>
-        <button onclick="borrarUsuario('${u.id}')" class="btn-danger">Eliminar</button>
+      <div>
+        <strong>${op.titulo}</strong><br>
+        ${op.descripcion || ""}
       </div>
     `;
   });
 
-  alert("ADMIN: usuarios cargados");
-}
-
-// ============================================================
-// EDITAR USUARIO
-// ============================================================
-
-async function editarUsuario(id) {
-  const nombre = prompt("Nuevo nombre:");
-  const telefono = prompt("Nuevo teléfono:");
-  if (!nombre) return;
-
-  alert("ADMIN: enviando actualización de usuario");
-
-  await fetch(`${BASE_FN}/admin-update-user`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      values: { nombre, telefono }
-    })
+  cont.innerHTML += `<h3>Preventivos</h3>`;
+  preventivos.data.forEach(pr => {
+    cont.innerHTML += `
+      <div>
+        <strong>${pr.titulo}</strong><br>
+        ${pr.descripcion || ""}
+      </div>
+    `;
   });
 
-  cargarUsuariosAdmin();
-}
-
-// ============================================================
-// CAMBIAR ROL USUARIO
-// ============================================================
-
-async function cambiarRol(id) {
-  const nuevoRol = prompt("Nuevo rol (usuario/admin/coordinador):");
-  if (!nuevoRol) return;
-
-  alert("ADMIN: cambiando rol");
-
-  await fetch(`${BASE_FN}/admin-update-user`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      values: { rol: nuevoRol }
-    })
+  cont.innerHTML += `<h3>Emergencias</h3>`;
+  emergencias.data.forEach(em => {
+    cont.innerHTML += `
+      <div>
+        <strong>${em.titulo}</strong><br>
+        ${em.descripcion || ""}
+      </div>
+    `;
   });
-
-  cargarUsuariosAdmin();
 }
 
-// ============================================================
-// BORRAR USUARIO
-// ============================================================
+// ===============================
+// CREAR OPERATIVO
+// ===============================
+document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
+  const titulo = document.getElementById("op-titulo").value.trim();
+  const descripcion = document.getElementById("op-descripcion").value.trim();
 
-async function borrarUsuario(id) {
-  if (!confirm("¿Eliminar usuario?")) return;
+  if (!titulo) return alert("Introduce un título.");
 
-  alert("ADMIN: borrando usuario");
+  await supabase.from("operativos").insert([{ titulo, descripcion }]);
+  alert("Operativo creado.");
+  cargarListadoAdmin();
+});
 
-  await fetch(`${BASE_FN}/admin-delete-user`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  });
+// ===============================
+// CREAR PREVENTIVO
+// ===============================
+document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
+  const titulo = document.getElementById("pr-titulo").value.trim();
+  const descripcion = document.getElementById("pr-descripcion").value.trim();
 
-  cargarUsuariosAdmin();
-}
+  if (!titulo) return alert("Introduce un título.");
 
-// ============================================================
-// LISTAR ELEMENTOS (operativos, preventivos, emergencias)
-// ============================================================
+  await supabase.from("preventivos").insert([{ titulo, descripcion }]);
+  alert("Preventivo creado.");
+  cargarListadoAdmin();
+});
 
-async function cargarListadoAdmin() {
-  alert("ADMIN: cargando listado de elementos");
+// ===============================
+// CREAR EMERGENCIA
+// ===============================
+document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
+  const titulo = document.getElementById("em-titulo").value.trim();
+  const descripcion = document.getElementById("em-descripcion").value.trim();
 
-  const cont = document.getElementById("admin-listado");
-  cont.innerHTML = "<p>Cargando...</p>";
+  if (!titulo) return alert("Introduce un título.");
 
-  const res = await fetch(`${BASE_FN}/admin-list-elements`);
-  const json = await res.json();
+  await supabase.from("emergencias").insert([{ titulo, descripcion }]);
+  alert("Emergencia creada.");
+  cargarListadoAdmin();
+});
+
+// ===============================
+// GESTIÓN DE USUARIOS
+// ===============================
+document.getElementById("btn-actualizar-usuarios").addEventListener("click", async () => {
+  const cont = document.getElementById("admin-usuarios");
+  cont.innerHTML = "<p>Cargando usuarios...</p>";
+
+  const { data: usuarios } = await supabase.from("usuarios").select("*");
 
   cont.innerHTML = "";
 
-  json.data.forEach(item => {
-    const div = document.createElement("div");
-    div.classList.add("card");
-    div.innerHTML = `
-      <strong>${item.tipo}:</strong> ${item.titulo}<br>
-      <button onclick="borrarElemento('${item.id}', '${item.tipo}')">Borrar</button>
+  usuarios.forEach(u => {
+    cont.innerHTML += `
+      <div style="background:#eee; padding:10px; margin-bottom:8px; border-radius:6px;">
+        <strong>${u.nombre}</strong><br>
+        Tel: ${u.telefono || "—"}<br>
+        Rol: ${u.rol || "usuario"}
+      </div>
     `;
-    cont.appendChild(div);
-  });
-
-  alert("ADMIN: elementos cargados");
-}
-
-// ============================================================
-// BORRAR ELEMENTO
-// ============================================================
-
-async function borrarElemento(id, tipo) {
-  if (!confirm("¿Eliminar elemento?")) return;
-
-  alert("ADMIN: borrando elemento");
-
-  await fetch(`${BASE_FN}/admin-delete-element`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, tipo })
-  });
-
-  cargarListadoAdmin();
-}
-
-// ============================================================
-// CREAR ELEMENTO
-// ============================================================
-
-async function crearElemento(tipo, values) {
-  await fetch(`${BASE_FN}/admin-create-element`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tipo, values })
-  });
-
-  cargarListadoAdmin();
-}
-
-// ============================================================
-// BOTONES ELEMENTO
-// ============================================================
-
-document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-  crearElemento("operativos", {
-    titulo: document.getElementById("op-titulo").value,
-    descripcion: document.getElementById("op-descripcion").value
   });
 });
-
-document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-  crearElemento("preventivo", {
-    titulo: document.getElementById("op-titulo").value,
-    descripcion: document.getElementById("op-descripcion").value
-  });
-});
-
-document.getElementById("btn-crear-emergencias").addEventListener("click", async () => {
-  crearElemento("emergencias", {
-    titulo: document.getElementById("op-titulo").value,
-    descripcion: document.getElementById("op-descripcion").value
-  });
-});
-
-// ============================================================
-// CREAR HORAS
-// ============================================================
-
-const { data: evento } = await supabase
-  .from(tabla)
-  .select("duracion_horas")
-  .eq("id", evento_id)
-  .maybeSingle();
-
-const horas = evento?.duracion_horas || 0;
-const año = new Date().getFullYear();
-
-// ============================================================
-// CREAR SUSCRIPCIONES
-// ============================================================
-
-async function crearSuscripcion(values) {
-  await fetch(`${BASE_FN}/admin-create-suscripcion`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values)
-  });
-
-  cargarSuscripcionesAdmin();
-}
