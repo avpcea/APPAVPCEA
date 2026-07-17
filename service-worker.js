@@ -34,7 +34,11 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
 
-  // Solo GET
+  // No cachear JS de módulos
+  if (req.url.endsWith(".js")) {
+    return;
+  }
+
   if (req.method !== "GET") return;
 
   event.respondWith(
