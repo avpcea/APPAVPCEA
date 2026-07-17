@@ -19,6 +19,24 @@ document.getElementById("app-container").style.display = "block";
 // ===============================
 // TOKEN DE AUTORIZACIÓN
 // ===============================
+//const TOKEN_SECRETO = "v3";
+//const tokenGuardado = localStorage.getItem("avpcea_token");
+
+//window.AVPCEA_AUTORIZADO = false;
+
+//if (tokenGuardado === TOKEN_SECRETO) {
+//  window.AVPCEA_AUTORIZADO = true;
+//  registrarDispositivo();   // ← ESTA LÍNEA FALTABA
+//} else {
+//  const codigo = prompt("Introduce el código de autorización:");
+//if (codigo === TOKEN_SECRETO) {
+//    localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+//    alert("Dispositivo autorizado.");
+//    window.AVPCEA_AUTORIZADO = true;
+//    registrarDispositivo();   // ← ESTA LÍNEA FALTABA
+//  }
+//}
+
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
 
@@ -26,16 +44,35 @@ window.AVPCEA_AUTORIZADO = false;
 
 if (tokenGuardado === TOKEN_SECRETO) {
   window.AVPCEA_AUTORIZADO = true;
-  registrarDispositivo();   // ← ESTA LÍNEA FALTABA
 } else {
-  const codigo = prompt("Introduce el código de autorización:");
-  if (codigo === TOKEN_SECRETO) {
-    localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-    alert("Dispositivo autorizado.");
-    window.AVPCEA_AUTORIZADO = true;
-    registrarDispositivo();   // ← ESTA LÍNEA FALTABA
+  let autorizado = false;
+
+  while (!autorizado) {
+    const codigo = prompt("Introduce el código de autorización:");
+
+    // Si pulsa Cancelar → prompt devuelve null
+    if (codigo === null) {
+      alert("Acceso denegado. No se ha introducido código.");
+      break;
+    }
+
+    if (codigo === TOKEN_SECRETO) {
+      localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+      alert("Dispositivo autorizado.");
+      window.AVPCEA_AUTORIZADO = true;
+      autorizado = true;
+    } else {
+      alert("Código incorrecto. Inténtalo de nuevo.");
+    }
   }
 }
+
+if (!window.AVPCEA_AUTORIZADO) {
+  // Opcional: puedes mostrar un mensaje en el DOM
+  document.body.innerHTML = "<p>Acceso no autorizado.</p>";
+  throw new Error("Acceso no autorizado"); // corta la ejecución del resto de app.js
+}
+
 
 
 // ===============================
