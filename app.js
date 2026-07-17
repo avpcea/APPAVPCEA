@@ -104,9 +104,23 @@ export async function asegurarUsuario() {
       return;
     }
 
+    // 👉 NUEVO: pedir teléfono
+    const telefono = prompt("Introduce tu número de teléfono:");
+
+    if (!telefono || telefono.trim() === "") {
+      alert("Debes introducir un teléfono para continuar.");
+      return;
+    }
+
     const { error } = await supabase
       .from("usuarios")
-      .insert([{ id: usuario_id, nombre: nombre.trim() }]);
+      .insert([
+        {
+          id: usuario_id,
+          nombre: nombre.trim(),
+          telefono: telefono.trim()   // ← NUEVO
+        }
+      ]);
 
     if (error) {
       alert("ERROR creando usuario: " + error.message);
