@@ -1,6 +1,6 @@
 // service-worker.js
 
-const CACHE_NAME = "avpcea-v1";
+const CACHE_NAME = "AVPCEA-V1";
 const FILES_TO_CACHE = [
   "/",
   "/index.html",
