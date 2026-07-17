@@ -46,7 +46,6 @@ const tokenGuardado = localStorage.getItem("avpcea_token");
 window.AVPCEA_AUTORIZADO = false;
 
 // Recuperar / generar usuario_id
-let usuario_id = localStorage.getItem("usuario_id");
 if (!usuario_id || usuario_id.trim() === "") {
   usuario_id = crypto.randomUUID();
   localStorage.setItem("usuario_id", usuario_id);
