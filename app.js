@@ -26,12 +26,14 @@ window.AVPCEA_AUTORIZADO = false;
 
 if (tokenGuardado === TOKEN_SECRETO) {
   window.AVPCEA_AUTORIZADO = true;
+  registrarDispositivo();   // ← ESTA LÍNEA FALTABA
 } else {
   const codigo = prompt("Introduce el código de autorización:");
   if (codigo === TOKEN_SECRETO) {
     localStorage.setItem("avpcea_token", TOKEN_SECRETO);
     alert("Dispositivo autorizado.");
     window.AVPCEA_AUTORIZADO = true;
+    registrarDispositivo();   // ← ESTA LÍNEA FALTABA
   }
 }
 
