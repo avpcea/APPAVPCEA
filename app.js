@@ -37,20 +37,31 @@ document.getElementById("app-container").style.display = "block";
 //  }
 //}
 
+// ===============================
+// TOKEN DE AUTORIZACIÓN
+// ===============================
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
 
 window.AVPCEA_AUTORIZADO = false;
 
+// Recuperar / generar usuario_id
+let usuario_id = localStorage.getItem("usuario_id");
+if (!usuario_id || usuario_id.trim() === "") {
+  usuario_id = crypto.randomUUID();
+  localStorage.setItem("usuario_id", usuario_id);
+}
+
 if (tokenGuardado === TOKEN_SECRETO) {
   window.AVPCEA_AUTORIZADO = true;
+  // 👉 aquí se registra el dispositivo si aún no existe
+  registrarDispositivo();
 } else {
   let autorizado = false;
 
   while (!autorizado) {
     const codigo = prompt("Introduce el código de autorización:");
 
-    // Si pulsa Cancelar → prompt devuelve null
     if (codigo === null) {
       alert("Acceso denegado. No se ha introducido código.");
       break;
@@ -61,18 +72,20 @@ if (tokenGuardado === TOKEN_SECRETO) {
       alert("Dispositivo autorizado.");
       window.AVPCEA_AUTORIZADO = true;
       autorizado = true;
+
+      // 👉 aquí se registra el dispositivo tras autorizar
+      registrarDispositivo();
     } else {
       alert("Código incorrecto. Inténtalo de nuevo.");
     }
   }
 }
 
+// Si después de todo NO está autorizado, cortamos la app
 if (!window.AVPCEA_AUTORIZADO) {
-  // Opcional: puedes mostrar un mensaje en el DOM
   document.body.innerHTML = "<p>Acceso no autorizado.</p>";
-  throw new Error("Acceso no autorizado"); // corta la ejecución del resto de app.js
+  throw new Error("Acceso no autorizado");
 }
-
 
 
 // ===============================
