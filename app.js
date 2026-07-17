@@ -80,9 +80,99 @@ if (!window.AVPCEA_AUTORIZADO) {
 // ===============================
 // ASEGURAR USUARIO
 // ===============================
-export async function asegurarUsuario() {
-  const usuario_id = localStorage.getItem("usuario_id");
+//export async function asegurarUsuario() {
+//  const usuario_id = localStorage.getItem("usuario_id");
 
+//  const { data } = await supabase
+//    .from("usuarios")
+//    .select("id")
+//    .eq("id", usuario_id)
+//    .maybeSingle();
+
+//  if (!data) {
+//    alert(
+//      "Hola.\n\n" +
+//      "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
+//      "Por favor, introduce tu Nombre y un Apellido.\n\n" +
+//      "Gracias."
+//    );
+
+//    const nombre = prompt("Introduce tu nombre y apellido:");
+
+//    if (!nombre || nombre.trim() === "") {
+//      alert("Debes introducir un nombre y apellido para continuar.");
+//      return;
+//    }
+
+//    // 👉 NUEVO: pedir teléfono
+//    const telefono = prompt("Introduce tu número de teléfono:");
+
+//    if (!telefono || telefono.trim() === "") {
+//      alert("Debes introducir un teléfono para continuar.");
+//      return;
+//    }
+
+//    const { error } = await supabase
+//      .from("usuarios")
+//      .insert([
+//        {
+//          id: usuario_id,
+//          nombre: nombre.trim(),
+//          telefono: telefono.trim()   // ← NUEVO
+//        }
+//      ]);
+
+//    if (error) {
+//      alert("ERROR creando usuario: " + error.message);
+//      console.error(error);
+//      return;
+//    }
+
+//    alert("Usuario registrado correctamente.");
+//  }
+//}
+
+
+export async function asegurarUsuario() {
+  let usuario_id = localStorage.getItem("usuario_id");
+
+  // Pedir datos
+  alert(
+    "Hola.\n\n" +
+    "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
+    "Por favor, introduce tu Nombre y un Apellido.\n\n" +
+    "Gracias."
+  );
+
+  const nombre = prompt("Introduce tu nombre y apellido:");
+  if (!nombre || nombre.trim() === "") {
+    alert("Debes introducir un nombre y apellido para continuar.");
+    return;
+  }
+
+  const telefono = prompt("Introduce tu número de teléfono:");
+  if (!telefono || telefono.trim() === "") {
+    alert("Debes introducir un teléfono para continuar.");
+    return;
+  }
+
+  // 1️⃣ Buscar si ya existe un usuario con ese nombre y teléfono
+  const { data: existente } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("nombre", nombre.trim())
+    .eq("telefono", telefono.trim())
+    .maybeSingle();
+
+  if (existente) {
+    // 2️⃣ Si existe → usar su usuario_id
+    usuario_id = existente.id;
+    localStorage.setItem("usuario_id", usuario_id);
+    alert("Bienvenido de nuevo. Se ha recuperado tu usuario.");
+    return;
+  }
+
+  // 3️⃣ Si no existe → comprobar si ya existe con este usuario_id
   const { data } = await supabase
     .from("usuarios")
     .select("id")
@@ -90,35 +180,14 @@ export async function asegurarUsuario() {
     .maybeSingle();
 
   if (!data) {
-    alert(
-      "Hola.\n\n" +
-      "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
-      "Por favor, introduce tu Nombre y un Apellido.\n\n" +
-      "Gracias."
-    );
-
-    const nombre = prompt("Introduce tu nombre y apellido:");
-
-    if (!nombre || nombre.trim() === "") {
-      alert("Debes introducir un nombre y apellido para continuar.");
-      return;
-    }
-
-    // 👉 NUEVO: pedir teléfono
-    const telefono = prompt("Introduce tu número de teléfono:");
-
-    if (!telefono || telefono.trim() === "") {
-      alert("Debes introducir un teléfono para continuar.");
-      return;
-    }
-
+    // 4️⃣ Crear usuario nuevo
     const { error } = await supabase
       .from("usuarios")
       .insert([
         {
           id: usuario_id,
           nombre: nombre.trim(),
-          telefono: telefono.trim()   // ← NUEVO
+          telefono: telefono.trim()
         }
       ]);
 
