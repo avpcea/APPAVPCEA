@@ -407,7 +407,9 @@ export function showScreen(name) {
   document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
 
   // Mostrar la pantalla seleccionada
-  const screen = document.getElementById("screen-" + name);
+  const screen = document.getElementById(
+    name === "admin" ? "screen-administracion" : "screen-" + name
+  );
   if (screen) screen.classList.add("active");
 
   // Cargar datos de administración si corresponde
