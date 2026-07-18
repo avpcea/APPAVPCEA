@@ -80,59 +80,6 @@ if (!window.AVPCEA_AUTORIZADO) {
 // ===============================
 // ASEGURAR USUARIO
 // ===============================
-//export async function asegurarUsuario() {
-//  const usuario_id = localStorage.getItem("usuario_id");
-
-//  const { data } = await supabase
-//    .from("usuarios")
-//    .select("id")
-//    .eq("id", usuario_id)
-//    .maybeSingle();
-
-//  if (!data) {
-//    alert(
-//      "Hola.\n\n" +
-//      "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
-//      "Por favor, introduce tu Nombre y un Apellido.\n\n" +
-//      "Gracias."
-//    );
-
-//    const nombre = prompt("Introduce tu nombre y apellido:");
-
-//    if (!nombre || nombre.trim() === "") {
-//      alert("Debes introducir un nombre y apellido para continuar.");
-//      return;
-//    }
-
-//    // 👉 NUEVO: pedir teléfono
-//    const telefono = prompt("Introduce tu número de teléfono:");
-
-//    if (!telefono || telefono.trim() === "") {
-//      alert("Debes introducir un teléfono para continuar.");
-//      return;
-//    }
-
-//    const { error } = await supabase
-//      .from("usuarios")
-//      .insert([
-//        {
-//          id: usuario_id,
-//          nombre: nombre.trim(),
-//          telefono: telefono.trim()   // ← NUEVO
-//        }
-//      ]);
-
-//    if (error) {
-//      alert("ERROR creando usuario: " + error.message);
-//      console.error(error);
-//      return;
-//    }
-
-//    alert("Usuario registrado correctamente.");
-//  }
-//}
-
-
 export async function asegurarUsuario() {
   let usuario_id = localStorage.getItem("usuario_id");
 
@@ -456,19 +403,17 @@ export function showScreen(name) {
   const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
   if (btn) btn.classList.add("active");
 
+  // Ocultar todas las pantallas
   document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+
+  // Mostrar la pantalla seleccionada
   const screen = document.getElementById("screen-" + name);
   if (screen) screen.classList.add("active");
 
+  // Cargar datos de administración si corresponde
   if (name === "admin") {
-    document.getElementById("admin-screen").style.display = "block";
-
-    if (typeof cargarListadoAdmin === "function") {
-      cargarListadoAdmin();
-    }
-    if (typeof cargarUsuariosAdmin === "function") {
-      cargarUsuariosAdmin();
-    }
+    if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
+    if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
   }
 }
 
