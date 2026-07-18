@@ -461,7 +461,8 @@ export function showScreen(name) {
   if (screen) screen.classList.add("active");
 
   if (name === "admin") {
-    document.getElementById("admin-screen").style.display = "block";
+//    document.getElementById("admin-screen").style.display = "block";
+    document.getElementById("screen-administracion").style.display = "block";
 
     if (typeof cargarListadoAdmin === "function") {
       cargarListadoAdmin();
