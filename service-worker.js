@@ -34,9 +34,9 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
 
-  // No cachear JS de módulos
+  // No interceptar JS en absoluto
   if (req.url.endsWith(".js")) {
-    return;
+    return fetch(req);
   }
 
   if (req.method !== "GET") return;
