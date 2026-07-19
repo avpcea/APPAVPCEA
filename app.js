@@ -456,10 +456,9 @@ esAdmin().then(admin => {
 
   document.getElementById("admin-btn").style.display = "block";
 
-  const script = document.createElement("script");
-  script.src = "supabase-admin.js";
-  document.body.appendChild(script);
+  import("./supabase-admin.js");
 });
+
 
 
 // ===============================
