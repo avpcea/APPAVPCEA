@@ -36,8 +36,10 @@ self.addEventListener("fetch", event => {
 
   // No interceptar JS en absoluto
   if (req.url.endsWith(".js")) {
-    return fetch(req);
+    event.respondWith(fetch(req));
+    return;
   }
+
 
   if (req.method !== "GET") return;
 
