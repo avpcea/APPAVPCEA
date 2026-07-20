@@ -1,59 +1,74 @@
-// service-worker.js
+// ===============================
+// SERVICE WORKER AVPCEA — V4
+// ===============================
 
-const CACHE_NAME = "AVPCEA-V3";
+const CACHE_NAME = "AVPCEA-V4";
+
+// Archivos estáticos que SÍ se pueden cachear
 const FILES_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/styles.css",
-  "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
 ];
 
-// INSTALACIÓN
+// ===============================
+// INSTALL — Cachea solo archivos seguros
+// ===============================
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
   self.skipWaiting();
 });
 
-// ACTIVACIÓN
+// ===============================
+// ACTIVATE — Limpia versiones antiguas
+// ===============================
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
       )
     )
   );
   self.clients.claim();
 });
 
-// FETCH: CACHE FIRST + NETWORK FALLBACK
+// ===============================
+// FETCH — NO interceptar JS ni Supabase
+// ===============================
 self.addEventListener("fetch", event => {
   const req = event.request;
 
-  // No interceptar JS en absoluto
+  // 1. NO interceptar JS (módulos ES6)
   if (req.url.endsWith(".js")) {
-    event.respondWith(fetch(req));
     return;
   }
 
+  // 2. NO interceptar llamadas a Supabase
+  if (req.url.includes("supabase.co")) {
+    return;
+  }
 
-  if (req.method !== "GET") return;
+  // 3. Solo cachear GET
+  if (req.method !== "GET") {
+    return;
+  }
 
+  // 4. Estrategia cache-first para archivos estáticos
   event.respondWith(
     caches.match(req).then(cached => {
-      if (cached) return cached;
-
-      return fetch(req)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-          return res;
-        })
-        .catch(() => cached);
+      return cached || fetch(req);
     })
   );
 });
