@@ -11,7 +11,7 @@ export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
 
 
 // ===============================
-// MOSTRAR APP (evita pantalla en blanco)
+// MOSTRAR APP
 // ===============================
 document.getElementById("app-container").style.display = "block";
 
@@ -35,7 +35,6 @@ const tokenGuardado = localStorage.getItem("avpcea_token");
 
 window.AVPCEA_AUTORIZADO = false;
 
-// Recuperar / generar usuario_id
 if (!usuario_id || usuario_id.trim() === "") {
   usuario_id = crypto.randomUUID();
   localStorage.setItem("usuario_id", usuario_id);
@@ -43,7 +42,6 @@ if (!usuario_id || usuario_id.trim() === "") {
 
 if (tokenGuardado === TOKEN_SECRETO) {
   window.AVPCEA_AUTORIZADO = true;
-  // 👉 aquí se registra el dispositivo si aún no existe
   registrarDispositivo();
 } else {
   let autorizado = false;
@@ -61,8 +59,6 @@ if (tokenGuardado === TOKEN_SECRETO) {
       alert("Dispositivo autorizado.");
       window.AVPCEA_AUTORIZADO = true;
       autorizado = true;
-
-      // 👉 aquí se registra el dispositivo tras autorizar
       registrarDispositivo();
     } else {
       alert("Código incorrecto. Inténtalo de nuevo.");
@@ -70,7 +66,6 @@ if (tokenGuardado === TOKEN_SECRETO) {
   }
 }
 
-// Si después de todo NO está autorizado, cortamos la app
 if (!window.AVPCEA_AUTORIZADO) {
   document.body.innerHTML = "<p>Acceso no autorizado.</p>";
   throw new Error("Acceso no autorizado");
@@ -83,7 +78,6 @@ if (!window.AVPCEA_AUTORIZADO) {
 export async function asegurarUsuario() {
   let usuario_id = localStorage.getItem("usuario_id");
 
-  // Pedir datos
   alert(
     "Hola.\n\n" +
     "Se va a proceder a crear automáticamente un usuario con el que se calcularán las horas de los eventos en los que se participe.\n\n" +
@@ -103,7 +97,6 @@ export async function asegurarUsuario() {
     return;
   }
 
-  // 1️⃣ Buscar si ya existe un usuario con ese nombre y teléfono
   const { data: existente } = await supabase
     .from("usuarios")
     .select("*")
@@ -112,14 +105,12 @@ export async function asegurarUsuario() {
     .maybeSingle();
 
   if (existente) {
-    // 2️⃣ Si existe → usar su usuario_id
     usuario_id = existente.id;
     localStorage.setItem("usuario_id", usuario_id);
     alert("Bienvenido de nuevo. Se ha recuperado tu usuario.");
     return;
   }
 
-  // 3️⃣ Si no existe → comprobar si ya existe con este usuario_id
   const { data } = await supabase
     .from("usuarios")
     .select("id")
@@ -127,7 +118,6 @@ export async function asegurarUsuario() {
     .maybeSingle();
 
   if (!data) {
-    // 4️⃣ Crear usuario nuevo
     const { error } = await supabase
       .from("usuarios")
       .insert([
@@ -403,16 +393,13 @@ export function showScreen(name) {
   const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
   if (btn) btn.classList.add("active");
 
-  // Ocultar todas las pantallas
   document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
 
-  // Mostrar la pantalla seleccionada
   const screen = document.getElementById(
     name === "admin" ? "screen-administracion" : "screen-" + name
   );
   if (screen) screen.classList.add("active");
 
-  // Cargar datos de administración si corresponde
   if (name === "admin") {
     if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
     if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
@@ -449,33 +436,33 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 
 
 // ===============================
-// CARGA DINÁMICA ADMIN
+// CARGA DINÁMICA ADMIN (IMPORT ABSOLUTO)
 // ===============================
 esAdmin().then(admin => {
   if (!admin) return;
 
   document.getElementById("admin-btn").style.display = "block";
 
-  import("./supabase-admin.js");
+  import("https://avpcea.github.io/APPAVPCEA/supabase-admin.js");
 });
 
 
+// ===============================
+// SERVICE WORKER DESACTIVADO TEMPORALMENTE
+// ===============================
 
-// ===============================
-// SERVICE WORKER
-// ===============================
-//if ("serviceWorker" in navigator) {
-//  navigator.serviceWorker.register("service-worker.js").then(reg => {
-//    reg.onupdatefound = () => {
-//      const newWorker = reg.installing;
-//      newWorker.onstatechange = () => {
-//        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-//          alert("Nueva versión disponible. Recarga la app.");
-//        }
-//      };
-//    };
-//  });
-//}
+// if ("serviceWorker" in navigator) {
+//   navigator.serviceWorker.register("./service-worker.js").then(reg => {
+//     reg.onupdatefound = () => {
+//       const newWorker = reg.installing;
+//       newWorker.onstatechange = () => {
+//         if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+//           alert("Nueva versión disponible. Recarga la app.");
+//         }
+//       };
+//     };
+//   });
+// }
 
 
 // ===============================
