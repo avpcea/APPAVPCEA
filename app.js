@@ -436,7 +436,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 
 
 // ===============================
-// CARGA DINÁMICA ADMIN (IMPORT ABSOLUTO)
+// CARGA DINÁMICA ADMIN (IMPORT ABSOLUTO RECOMENDADO)
 // ===============================
 esAdmin().then(admin => {
   if (!admin) return;
