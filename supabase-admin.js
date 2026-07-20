@@ -1,9 +1,11 @@
-// supabase-admin.js
-
+// ===============================
+// IMPORTAR SUPABASE DESDE app.js
+// ===============================
 import { supabase } from "./app.js";
 
+
 // ===============================
-// CARGAR LISTADO GENERAL (operativos, preventivos, emergencias)
+// LISTADO GENERAL (operativos, preventivos, emergencias)
 // ===============================
 export async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");
@@ -48,6 +50,7 @@ export async function cargarListadoAdmin() {
   });
 }
 
+
 // ===============================
 // CREAR OPERATIVO
 // ===============================
@@ -61,6 +64,7 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
   alert("Operativo creado.");
   cargarListadoAdmin();
 });
+
 
 // ===============================
 // CREAR PREVENTIVO
@@ -76,6 +80,7 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
   cargarListadoAdmin();
 });
 
+
 // ===============================
 // CREAR EMERGENCIA
 // ===============================
@@ -90,10 +95,11 @@ document.getElementById("btn-crear-emergencia").addEventListener("click", async 
   cargarListadoAdmin();
 });
 
+
 // ===============================
-// GESTIÓN DE USUARIOS
+// GESTIÓN DE USUARIOS (FUNCIÓN QUE FALTABA)
 // ===============================
-document.getElementById("btn-actualizar-usuarios").addEventListener("click", async () => {
+export async function cargarUsuariosAdmin() {
   const cont = document.getElementById("admin-usuarios");
   cont.innerHTML = "<p>Cargando usuarios...</p>";
 
@@ -110,4 +116,11 @@ document.getElementById("btn-actualizar-usuarios").addEventListener("click", asy
       </div>
     `;
   });
-});
+}
+
+
+// ===============================
+// EXPONER FUNCIONES AL DOM (NECESARIO PARA showScreen("admin"))
+// ===============================
+window.cargarListadoAdmin = cargarListadoAdmin;
+window.cargarUsuariosAdmin = cargarUsuariosAdmin;
