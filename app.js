@@ -379,27 +379,40 @@ export async function esAdmin() {
 // SPA: CAMBIO DE PANTALLAS
 // ===============================
 export function showScreen(name) {
+  // Cargar datos según pantalla
   if (name === "preventivos") cargarPreventivos();
   if (name === "operativos") cargarOperativos();
   if (name === "emergencias") cargarEmergencias();
 
+  // Título del header
   document.querySelector(".header-title").textContent =
     name === "operativos" ? "Operativos" :
     name === "preventivos" ? "Preventivos" :
     name === "emergencias" ? "Emergencias" :
     name === "admin" ? "Administración" : "";
 
+  // Botones inferiores
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
   if (btn) btn.classList.add("active");
 
-  document.querySelectorAll("#app-screens .screen").forEach(s => s.classList.remove("active"));
+  // Ocultar todas las pantallas
+  document.querySelectorAll("#app-screens .screen").forEach(s => {
+    s.classList.remove("active");
+    s.style.display = "none";   // ⭐ Ocultamos todas
+  });
 
+  // Mostrar la pantalla seleccionada
   const screen = document.getElementById(
     name === "admin" ? "screen-administracion" : "screen-" + name
   );
-  if (screen) screen.classList.add("active");
 
+  if (screen) {
+    screen.classList.add("active");
+    screen.style.display = "block";   // ⭐ ESTA LÍNEA SOLUCIONA TODO
+  }
+
+  // Funciones específicas de administración
   if (name === "admin") {
     if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
     if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
