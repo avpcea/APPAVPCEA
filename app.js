@@ -17,23 +17,14 @@ document.getElementById("app-container").style.display = "block";
 
 
 // ===============================
-// GENERAR usuario_id
-// ===============================
-let usuario_id = localStorage.getItem("usuario_id");
-
-if (!usuario_id || usuario_id.trim() === "") {
-  usuario_id = crypto.randomUUID();
-  localStorage.setItem("usuario_id", usuario_id);
-}
-
-
-// ===============================
 // TOKEN DE AUTORIZACIÓN
 // ===============================
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
 
 window.AVPCEA_AUTORIZADO = false;
+
+let usuario_id = localStorage.getItem("usuario_id");
 
 if (!usuario_id || usuario_id.trim() === "") {
   usuario_id = crypto.randomUUID();
@@ -312,40 +303,34 @@ export async function esAdmin() {
 // SPA: CAMBIO DE PANTALLAS
 // ===============================
 export function showScreen(name) {
-  // Cargar datos según pantalla
   if (name === "preventivos") cargarPreventivos();
   if (name === "operativos") cargarOperativos();
   if (name === "emergencias") cargarEmergencias();
 
-  // Título del header
   document.querySelector(".header-title").textContent =
     name === "operativos" ? "Operativos" :
     name === "preventivos" ? "Preventivos" :
     name === "emergencias" ? "Emergencias" :
     name === "admin" ? "Administración" : "";
 
-  // Botones inferiores
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
   if (btn) btn.classList.add("active");
 
-  // Ocultar todas las pantallas
   document.querySelectorAll("#app-screens .screen").forEach(s => {
     s.classList.remove("active");
-    s.style.display = "none";   // ⭐ Ocultamos todas
+    s.style.display = "none";
   });
 
-  // Mostrar la pantalla seleccionada
   const screen = document.getElementById(
     name === "admin" ? "screen-administracion" : "screen-" + name
   );
 
   if (screen) {
     screen.classList.add("active");
-    screen.style.display = "block";   // ⭐ ESTA LÍNEA SOLUCIONA TODO
+    screen.style.display = "block";
   }
 
-  // Funciones específicas de administración
   if (name === "admin") {
     if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
     if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
@@ -354,9 +339,62 @@ export function showScreen(name) {
 
 
 // ===============================
-// BOTÓN ACCEDER
+// NUEVO FLUJO DE REGISTRO POR TELÉFONO
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
+
+  const telefono = document.getElementById("telefono-bienvenida").value.trim();
+
+  if (!telefono) {
+    alert("Introduce tu teléfono para continuar.");
+    return;
+  }
+
+  const { data: usuarioExistente } = await supabase
+    .from("usuarios")
+    .select("*")
+    .eq("telefono", telefono)
+    .maybeSingle();
+
+  let usuario_id;
+
+  if (usuarioExistente) {
+    usuario_id = usuarioExistente.id;
+    localStorage.setItem("usuario_id", usuario_id);
+  } else {
+    const nombre = prompt("Introduce tu nombre y apellido:");
+    if (!nombre || nombre.trim() === "") {
+      alert("Debes introducir un nombre para continuar.");
+      return;
+    }
+
+    const fecha_cumpleaños = prompt("Introduce tu fecha de cumpleaños (AAAA-MM-DD):");
+    if (!fecha_cumpleaños || fecha_cumpleaños.trim() === "") {
+      alert("Debes introducir tu fecha de cumpleaños.");
+      return;
+    }
+
+    usuario_id = crypto.randomUUID();
+
+    const { error } = await supabase
+      .from("usuarios")
+      .insert([
+        {
+          id: usuario_id,
+          nombre: nombre.trim(),
+          telefono: telefono.trim(),
+          fecha_cumpleaños
+        }
+      ]);
+
+    if (error) {
+      alert("Error creando usuario: " + error.message);
+      return;
+    }
+
+    localStorage.setItem("usuario_id", usuario_id);
+    alert("Usuario registrado correctamente.");
+  }
 
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("welcome-header").style.display = "none";
@@ -365,7 +403,6 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
   document.getElementById("main-header").style.display = "flex";
   document.querySelector(".bottom-nav").style.display = "flex";
 
-  await asegurarUsuario();
   showScreen("operativos");
 });
 
@@ -382,7 +419,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 
 
 // ===============================
-// CARGA DINÁMICA ADMIN (IMPORT ABSOLUTO RECOMENDADO)
+// CARGA DINÁMICA ADMIN
 // ===============================
 esAdmin().then(admin => {
   if (!admin) return;
@@ -394,24 +431,6 @@ esAdmin().then(admin => {
 
 
 // ===============================
-// SERVICE WORKER DESACTIVADO TEMPORALMENTE
-// ===============================
-
-// if ("serviceWorker" in navigator) {
-//   navigator.serviceWorker.register("./service-worker.js").then(reg => {
-//     reg.onupdatefound = () => {
-//       const newWorker = reg.installing;
-//       newWorker.onstatechange = () => {
-//         if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-//           alert("Nueva versión disponible. Recarga la app.");
-//         }
-//       };
-//     };
-//   });
-// }
-
-
-// ===============================
 // EXPONER FUNCIONES AL DOM
 // ===============================
 window.cargarOperativos = cargarOperativos;
@@ -420,6 +439,5 @@ window.cargarEmergencias = cargarEmergencias;
 window.toggleSuscripcion = toggleSuscripcion;
 window.estaSuscrito = estaSuscrito;
 window.showScreen = showScreen;
-window.asegurarUsuario = asegurarUsuario;
 window.esAdmin = esAdmin;
 window.registrarDispositivo = registrarDispositivo;
