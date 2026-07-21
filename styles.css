@@ -51,7 +51,7 @@ html, body {
 
 #telefono-bienvenida {
   display: block;
-  margin: 40px auto;   /* separa y centra */
+  margin: 50px auto 10px auto;   /* separa y centra */
   text-align: center;
   padding: 10px;
   font-size: 18px;
