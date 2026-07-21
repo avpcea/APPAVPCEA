@@ -49,6 +49,19 @@ html, body {
   object-fit: cover;
 }
 
+#telefono-bienvenida {
+  display: block;
+  margin: 20px auto;   /* separa y centra */
+  text-align: center;
+  padding: 10px;
+  font-size: 18px;
+  width: 80%;
+  max-width: 300px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+
 /* ============================
    CABECERA NORMAL
 ============================ */
