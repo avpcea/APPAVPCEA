@@ -368,9 +368,25 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
       return;
     }
 
-    const fecha_cumpleaños = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
-    if (!fecha_cumpleaños || fecha_cumpleaños.trim() === "") {
-      alert("Debes introducir tu fecha de cumpleaños.");
+    let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
+
+    if (!fecha_nacimiento || fecha_nacimiento.trim() === "") {
+      alert("Debes introducir tu fecha de nacimiento.");
+      return;
+    }
+
+    // Validación de formato AAAA-MM-DD
+    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
+
+    if (!regexFecha.test(fecha_nacimiento)) {
+      alert("La fecha debe tener el formato AAAA-MM-DD.");
+      return;
+    }
+
+    // Validación de fecha real
+    const fechaObj = new Date(fecha_nacimiento);
+    if (isNaN(fechaObj.getTime())) {
+      alert("La fecha introducida no es válida.");
       return;
     }
 
@@ -383,7 +399,7 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
           id: usuario_id,
           nombre: nombre.trim(),
           telefono: telefono.trim(),
-          fecha_cumpleaños
+          fecha_nacimiento
         }
       ]);
 
