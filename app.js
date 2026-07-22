@@ -368,7 +368,7 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
       return;
     }
 
-    const fecha_cumpleaños = prompt("Introduce tu fecha de cumpleaños (AAAA-MM-DD):");
+    const fecha_cumpleaños = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
     if (!fecha_cumpleaños || fecha_cumpleaños.trim() === "") {
       alert("Debes introducir tu fecha de cumpleaños.");
       return;
