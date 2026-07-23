@@ -169,13 +169,63 @@ export async function cargarEmergencias() {
   cargando.emergencias = true;
 
   const cont = document.getElementById("lista-emergencias");
+  cont.innerHTML = "<p>Cargando emergencias...</p>";
 
-  cont.innerHTML = `
-    <div class="card">
-      <h3>Sin emergencias activas</h3>
-      <p>Actualmente no hay emergencias registradas.</p>
-    </div>
-  `;
+  // Emergencias activas
+  const { data: emergencias, error } = await supabase
+    .from("emergencias")
+    .select("*")
+    .eq("activa", true)
+    .order("fecha_inicio", { ascending: false });
+
+  if (error) {
+    cont.innerHTML = "<p>Error al cargar emergencias.</p>";
+    cargando.emergencias = false;
+    return;
+  }
+
+  // Si no hay emergencias activas
+  if (!emergencias || emergencias.length === 0) {
+    cont.innerHTML = `
+      <div class="card">
+        <h3>Sin emergencias activas</h3>
+        <p>Actualmente no hay emergencias registradas.</p>
+      </div>
+    `;
+    cargando.emergencias = false;
+    return;
+  }
+
+  // Mostrar emergencias activas
+  cont.innerHTML = "";
+
+  for (const emg of emergencias) {
+
+    // Color según nivel
+    const nivelColor =
+      emg.nivel === "crítico" ? "red" :
+      emg.nivel === "alto" ? "orange" :
+      emg.nivel === "medio" ? "blue" :
+      "green";
+
+    cont.innerHTML += `
+      <div class="card">
+        <h3>${emg.titulo}</h3>
+
+        <p><strong>Nivel:</strong> 
+          <span style="color:${nivelColor}; font-weight:bold;">
+            ${emg.nivel.toUpperCase()}
+          </span>
+        </p>
+
+        <p><strong>Inicio:</strong> ${new Date(emg.fecha_inicio).toLocaleString()}</p>
+
+        <p><strong>Horas asignadas:</strong> ${emg.horas}</p>
+
+        <p><strong>Estado:</strong> Activa</p>
+      </div>
+    `;
+  }
 
   cargando.emergencias = false;
 }
