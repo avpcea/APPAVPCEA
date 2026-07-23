@@ -5,49 +5,123 @@ import { supabase } from "./app.js";
 
 
 // ===============================
-// LISTADO GENERAL (operativos, preventivos, emergencias)
+// LISTADO GENERAL ADMIN
 // ===============================
 export async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");
   cont.innerHTML = "<p>Cargando...</p>";
 
-  const [operativos, preventivos, emergencias] = await Promise.all([
+  // Operativos y preventivos siguen usando "fecha"
+  const [operativos, preventivos] = await Promise.all([
     supabase.from("operativos").select("*").order("fecha", { ascending: false }),
-    supabase.from("preventivos").select("*").order("fecha", { ascending: false }),
-    supabase.from("emergencias").select("*").order("fecha", { ascending: false })
+    supabase.from("preventivos").select("*").order("fecha", { ascending: false })
   ]);
 
   cont.innerHTML = "";
 
+  // ===============================
+  // OPERATIVOS
+  // ===============================
   cont.innerHTML += `<h3>Operativos</h3>`;
-  operativos.data.forEach(op => {
-    cont.innerHTML += `
-      <div>
-        <strong>${op.titulo}</strong><br>
-        ${op.descripcion || ""}
-      </div>
-    `;
-  });
+  if (operativos.data) {
+    operativos.data.forEach(op => {
+      cont.innerHTML += `
+        <div class="card">
+          <strong>${op.titulo}</strong><br>
+          ${op.descripcion || ""}
+        </div>
+      `;
+    });
+  }
 
+  // ===============================
+  // PREVENTIVOS
+  // ===============================
   cont.innerHTML += `<h3>Preventivos</h3>`;
-  preventivos.data.forEach(pr => {
-    cont.innerHTML += `
-      <div>
-        <strong>${pr.titulo}</strong><br>
-        ${pr.descripcion || ""}
-      </div>
-    `;
-  });
+  if (preventivos.data) {
+    preventivos.data.forEach(pr => {
+      cont.innerHTML += `
+        <div class="card">
+          <strong>${pr.titulo}</strong><br>
+          ${pr.descripcion || ""}
+        </div>
+      `;
+    });
+  }
 
+  // ===============================
+  // EMERGENCIAS (NUEVO SISTEMA)
+  // ===============================
   cont.innerHTML += `<h3>Emergencias</h3>`;
-  emergencias.data.forEach(em => {
-    cont.innerHTML += `
-      <div>
-        <strong>${em.titulo}</strong><br>
-        ${em.descripcion || ""}
-      </div>
-    `;
-  });
+  cont.innerHTML += `<div id="admin-emergencias"></div>`;
+
+  cargarEmergenciasAdmin();
+}
+
+
+// ===============================
+// EMERGENCIAS ADMIN (ACTIVAS + FINALIZADAS)
+// ===============================
+async function cargarEmergenciasAdmin() {
+  const cont = document.getElementById("admin-emergencias");
+  cont.innerHTML = "<p>Cargando emergencias...</p>";
+
+  const { data: activas } = await supabase
+    .from("emergencias")
+    .select("*")
+    .eq("activa", true)
+    .order("fecha_inicio", { ascending: false });
+
+  const { data: finalizadas } = await supabase
+    .from("emergencias")
+    .select("*")
+    .eq("activa", false)
+    .order("fecha_fin", { ascending: false });
+
+  cont.innerHTML = "";
+
+  // ACTIVAS
+  cont.innerHTML += `<h4>Emergencias activas</h4>`;
+  if (!activas || activas.length === 0) {
+    cont.innerHTML += `<p>No hay emergencias activas.</p>`;
+  } else {
+    activas.forEach(emg => {
+      cont.innerHTML += `
+        <div class="card">
+          <strong>${emg.titulo}</strong><br>
+          Nivel: ${emg.nivel}<br>
+          Inicio: ${new Date(emg.fecha_inicio).toLocaleString()}<br>
+          Horas: ${emg.horas}<br>
+
+          <button class="btn-danger" onclick="cerrarEmergencia('${emg.id}')">
+            Cerrar emergencia
+          </button>
+        </div>
+      `;
+    });
+  }
+
+  // FINALIZADAS
+  cont.innerHTML += `<h4 style="margin-top:20px;">Emergencias finalizadas</h4>`;
+  if (!finalizadas || finalizadas.length === 0) {
+    cont.innerHTML += `<p>No hay emergencias finalizadas.</p>`;
+  } else {
+    finalizadas.forEach(emg => {
+      cont.innerHTML += `
+        <div class="card">
+          <strong>${emg.titulo}</strong><br>
+          Nivel: ${emg.nivel}<br>
+          Inicio: ${new Date(emg.fecha_inicio).toLocaleString()}<br>
+          Fin: ${new Date(emg.fecha_fin).toLocaleString()}<br>
+          Horas: ${emg.horas}<br>
+
+          <button class="btn-primary" onclick="reabrirEmergencia('${emg.id}')">
+            Reabrir emergencia
+          </button>
+        </div>
+      `;
+    });
+  }
 }
 
 
@@ -82,22 +156,36 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
 
 
 // ===============================
-// CREAR EMERGENCIA
+// CREAR EMERGENCIA (NUEVO SISTEMA)
 // ===============================
 document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
   const titulo = document.getElementById("em-titulo").value.trim();
-  const descripcion = document.getElementById("em-descripcion").value.trim();
+  const nivel = document.getElementById("em-nivel").value;
+  const horas = parseInt(document.getElementById("em-horas").value, 10);
 
   if (!titulo) return alert("Introduce un título.");
+  if (isNaN(horas)) return alert("Introduce horas válidas.");
 
-  await supabase.from("emergencias").insert([{ titulo, descripcion }]);
+  await supabase.from("emergencias").insert([
+    {
+      id: crypto.randomUUID(),
+      titulo,
+      nivel,
+      horas,
+      activa: true,
+      fecha_inicio: new Date().toISOString(),
+      fecha_fin: null,
+      ultima_actualizacion: new Date().toISOString()
+    }
+  ]);
+
   alert("Emergencia creada.");
   cargarListadoAdmin();
 });
 
 
 // ===============================
-// GESTIÓN DE USUARIOS (FUNCIÓN QUE FALTABA)
+// GESTIÓN DE USUARIOS
 // ===============================
 export async function cargarUsuariosAdmin() {
   const cont = document.getElementById("admin-usuarios");
@@ -109,7 +197,7 @@ export async function cargarUsuariosAdmin() {
 
   usuarios.forEach(u => {
     cont.innerHTML += `
-      <div style="background:#eee; padding:10px; margin-bottom:8px; border-radius:6px;">
+      <div class="card">
         <strong>${u.nombre}</strong><br>
         Tel: ${u.telefono || "—"}<br>
         Rol: ${u.rol || "usuario"}
@@ -120,7 +208,8 @@ export async function cargarUsuariosAdmin() {
 
 
 // ===============================
-// EXPONER FUNCIONES AL DOM (NECESARIO PARA showScreen("admin"))
+// EXPONER FUNCIONES AL DOM
 // ===============================
 window.cargarListadoAdmin = cargarListadoAdmin;
 window.cargarUsuariosAdmin = cargarUsuariosAdmin;
+window.cargarEmergenciasAdmin = cargarEmergenciasAdmin;
