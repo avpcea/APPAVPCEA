@@ -252,66 +252,51 @@ export async function toggleSuscripcion(tipo, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo, evento_id);
 
-  const tabla = tipo === "NRP" ? "preventivos" :
-                tipo === "OPR" ? "operativos" :
-                tipo === "EMG" ? "emergencias" : null;
-
-  if (!tabla) {
-    alert("Tipo de evento desconocido.");
-    return;
-  }
+  // NOTA: Para realizar acciones de admin en las Edge Functions blindadas, 
+  // necesitamos pasar nuestro propio ID si actuamos como admin, o un ID autorizado.
+  // Para suscribirse a sí mismo, pasamos el usuario_id como autorizador si el backend lo permite,
+  // o el ID del administrador encargado si se hace desde el panel de gestión.
+  const admin_id = localStorage.getItem("usuario_id"); 
 
   if (!suscrito) {
-    await fetch(`${BASE_FN}/admin-create-suscripcion`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        usuario_id,
-        evento_id,
-        fecha: new Date().toISOString()
-      })
-    });
-
-    const { data: evento } = await supabase
-      .from(tabla)
-      .select("duracion_horas")
-      .eq("id", evento_id)
-      .maybeSingle();
-
-    const horas = evento?.duracion_horas || 0;
-    const año = new Date().getFullYear();
-
-    await fetch(`${BASE_FN}/admin-create-horas`, {
+    // NUEVO: Ahora enviamos el campo 'tipo' (OPR, NRP, EMG) para que la BD no explote
+    const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         usuario_id,
         evento_id: String(evento_id),
-        tipo,
-        horas,
-        año
+        tipo, // <--- Solución al Bug
+        fecha: new Date().toISOString(),
+        admin_id: admin_id // <--- Solución a la Seguridad
       })
     });
 
-    alert("Suscripción realizada.");
+    const resultado = await respuesta.json();
+    if (!respuesta.ok) {
+      alert("Error al suscribirse: " + (resultado.error?.message || resultado.error));
+      return;
+    }
+
+    alert("Suscripción realizada con éxito.");
   } else {
-    await supabase
+    // Cancelar suscripción directamente (o mediante función si activas RLS estricto)
+    const { error } = await supabase
       .from("suscripciones")
       .delete()
       .eq("usuario_id", usuario_id)
       .eq("tipo", tipo)
       .eq("evento_id", String(evento_id));
 
-    await supabase
-      .from("horas")
-      .delete()
-      .eq("usuario_id", usuario_id)
-      .eq("evento_id", String(evento_id))
-      .eq("tipo", tipo);
+    if (error) {
+      alert("Error al cancelar la suscripción: " + error.message);
+      return;
+    }
 
     alert("Suscripción cancelada.");
   }
 
+  // Recargar la pantalla correspondiente
   if (tipo === "NRP") cargarPreventivos();
   if (tipo === "OPR") cargarOperativos();
   if (tipo === "EMG") cargarEmergencias();
