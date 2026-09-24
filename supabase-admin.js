@@ -275,3 +275,80 @@ export async function cargarUsuariosAdmin() {
 window.cargarListadoAdmin = cargarListadoAdmin;
 window.cargarUsuariosAdmin = cargarUsuariosAdmin;
 window.cargarEmergenciasAdmin = cargarEmergenciasAdmin;
+
+
+// ===============================
+// ACCIONES DE GESTIÓN (INTERCONEXIÓN CON EDGE FUNCTIONS)
+// ===============================
+
+/**
+ * Invoca a la nueva Edge Function para cerrar un evento
+ * y computar las horas automáticamente a todos los suscritos.
+ */
+async function ejecutarCierreEvento(eventoId, tipoEvento) {
+  const confirmacion = confirm(`¿Estás seguro de que deseas cerrar este evento (${tipoEvento}) y calcular las horas de los voluntarios?`);
+  if (!confirmacion) return;
+
+  const admin_id = localStorage.getItem("usuario_id");
+
+  try {
+    const response = await fetch(`${BASE_FN}/admin-close-event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        evento_id: eventoId,
+        tipo_evento: tipoEvento, // "preventivos", "operativos" o "emergencias"
+        admin_id: admin_id
+      })
+    });
+
+    const resultado = await response.json();
+
+    if (response.ok) {
+      alert("Éxito: " + resultado.mensaje);
+      cargarListadoAdmin(); // Recarga la interfaz para reflejar los cambios
+    } else {
+      alert("Error al cerrar el evento: " + (resultado.error || "Error desconocido"));
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Error de red al conectar con el servidor.");
+  }
+}
+
+/**
+ * Invoca a la Edge Function blindada para eliminar un evento por completo.
+ */
+async function ejecutarEliminacionElemento(tipoEvento, idElemento) {
+  const confirmacion = confirm(`¡ADVERTENCIA! ¿Estás seguro de que deseas ELIMINAR por completo este registro de ${tipoEvento}? Esto no se puede deshacer.`);
+  if (!confirmacion) return;
+
+  const admin_id = localStorage.getItem("usuario_id");
+
+  try {
+    const response = await fetch(`${BASE_FN}/admin-delete-element`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo: tipoEvento, // "preventivos", "operativos" o "emergencias"
+        id: idElemento,
+        admin_id: admin_id
+      })
+    });
+
+    if (response.ok) {
+      alert("Registro eliminado correctamente de forma segura.");
+      cargarListadoAdmin(); // Recarga la interfaz
+    } else {
+      const resultado = await response.json();
+      alert("Error al eliminar: " + (resultado.error || "Error desconocido"));
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Error de red al intentar eliminar el elemento.");
+  }
+}
+
+// Exponer las funciones al objeto 'window' para que los botones de los strings HTML puedan ejecutarlas
+window.ejecutarCierreEvento = ejecutarCierreEvento;
+window.ejecutarEliminacionElemento = ejecutarEliminacionElemento;
