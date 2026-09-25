@@ -139,21 +139,20 @@ async function cargarEmergenciasAdmin() {
 // ACCIONES UTILIZANDO EDGE FUNCTIONS SEBURAS
 // ===============================
 // ===============================
-// CREAR OPERATIVO (ACTUALIZADO)
+// CREAR OPERATIVO (REVISADO)
 // ===============================
 document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
   const titulo = document.getElementById("op-titulo").value.trim();
-  const descripcion = document.getElementById("op-descripcion").value.trim(); // Observaciones
-  const fechaInicioInput = document.getElementById("op-fecha-inicio").value; // Nueva Hora de inicio
-  const entidad = document.getElementById("op-entidad")?.value.trim() || ""; 
+  const descripcion = document.getElementById("op-descripcion").value.trim(); // Campo Observaciones
+  const fechaInicioInput = document.getElementById("op-fecha-inicio").value;   // Campo Fecha y Hora
   const admin_id = localStorage.getItem("usuario_id");
 
   if (!titulo) return alert("Introduce un título.");
   if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
 
-  // Convertimos el valor del input a un formato ISO nativo
+  // Convertimos el input datetime-local a ISO nativo
   const fechaISO = new Date(fechaInicioInput).toISOString();
-  const fechaSoloDate = fechaISO.split('T')[0]; // Extrae "AAAA-MM-DD"
+  const fechaSoloDate = fechaISO.split('T')[0]; // Extrae "AAAA-MM-DD" para el campo date obligatorio
 
   const response = await fetch(`${BASE_FN}/admin-create-element`, {
     method: "POST",
@@ -163,10 +162,9 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
       admin_id,
       values: {
         titulo,
-        descripcion, // Guardado en observaciones
-        entidad,
-        fecha: fechaSoloDate,       // Campo date obligatorio
-        fecha_inicio: fechaISO,     // Campo timestamp con la hora elegida
+        descripcion,       // Mapea a observaciones
+        fecha: fechaSoloDate,
+        fecha_inicio: fechaISO,
         creado_en: new Date().toISOString()
       }
     })
@@ -174,7 +172,6 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
 
   if (response.ok) {
     alert("Operativo creado correctamente.");
-    // Limpiar campos si es necesario
     document.getElementById("op-titulo").value = "";
     document.getElementById("op-descripcion").value = "";
     document.getElementById("op-fecha-inicio").value = "";
@@ -186,13 +183,12 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
 });
 
 // ===============================
-// CREAR PREVENTIVO (ACTUALIZADO)
+// CREAR PREVENTIVO (REVISADO)
 // ===============================
 document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
   const titulo = document.getElementById("pr-titulo").value.trim();
-  const descripcion = document.getElementById("pr-descripcion").value.trim(); // Observaciones
-  const fechaInicioInput = document.getElementById("pr-fecha-inicio").value; // Nueva Hora de inicio
-  const lugar = document.getElementById("pr-lugar")?.value.trim() || "";
+  const descripcion = document.getElementById("pr-descripcion").value.trim(); // Campo Observaciones
+  const fechaInicioInput = document.getElementById("pr-fecha-inicio").value;   // Campo Fecha y Hora
   const admin_id = localStorage.getItem("usuario_id");
 
   if (!titulo) return alert("Introduce un título.");
@@ -209,8 +205,7 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
       admin_id,
       values: {
         titulo,
-        descripcion, // Guardado en observaciones
-        lugar,
+        descripcion,       // Mapea a observaciones
         fecha: fechaSoloDate,
         fecha_inicio: fechaISO,
         creado_en: new Date().toISOString()
@@ -231,12 +226,12 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
 });
 
 // ===============================
-// CREAR EMERGENCIA (ACTUALIZADO)
+// CREAR EMERGENCIA (REVISADO - SIN OBSERVACIONES)
 // ===============================
 document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
   const titulo = document.getElementById("em-titulo").value.trim();
   const nivel = document.getElementById("em-nivel").value;
-  const fechaInicioInput = document.getElementById("em-fecha-inicio").value; // Nueva Hora de inicio
+  const fechaInicioInput = document.getElementById("em-fecha-inicio").value; // Solo Fecha y Hora
   const admin_id = localStorage.getItem("usuario_id");
 
   if (!titulo) return alert("Introduce un título.");
@@ -254,16 +249,14 @@ document.getElementById("btn-crear-emergencia").addEventListener("click", async 
         titulo,
         nivel,
         activa: true,
-        fecha_inicio: fechaISO, // Asigna la hora elegida en vez de forzar now()
+        fecha_inicio: fechaISO,
         ultima_actualizacion: new Date().toISOString()
-        // NOTA: La tabla 'emergencias' no tiene campo 'descripcion' en tu SQL original.
-        // Si quieres guardar observaciones aquí, avísame para crear un alter table.
       }
     })
   });
 
   if (response.ok) {
-    alert("Emergencia creada correctamente.");
+    alert("Emergencia activada correctamente.");
     document.getElementById("em-titulo").value = "";
     document.getElementById("em-fecha-inicio").value = "";
     cargarListadoAdmin();
