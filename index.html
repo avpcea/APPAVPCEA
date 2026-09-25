@@ -62,13 +62,16 @@
       <div id="screen-administracion" class="screen" style="display:none; padding:20px;">
         <h2>Administración</h2>
 
-        <!-- OPERATIVOS CON NUEVOS CAMPOS -->
+                <!-- OPERATIVOS CON NUEVOS CAMPOS -->
         <div class="admin-section">
           <h3>Crear Operativo</h3>
           <input id="op-titulo" placeholder="Título">
-          <input id="op-entidad" placeholder="Entidad (Ej: Ayuntamiento)">
-          <label style="display:block; margin: 5px 0 2px 0; font-size: 12px; font-weight: bold;">Hora de Inicio:</label>
-          <input id="op-fecha-inicio" type="datetime-local">
+          
+          <!-- NUEVO CAMPO: FECHA Y HORA -->
+          <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Fecha y Hora de Inicio:</label>
+          <input id="op-fecha-inicio" type="datetime-local" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
+          
+          <!-- OBSERVACIONES (MANTIENE TU TEXTAREA ORIGINAL) -->
           <textarea id="op-descripcion" placeholder="Observaciones / Descripción"></textarea>
           <button id="btn-crear-operativo">Crear Operativo</button>
         </div>
@@ -77,27 +80,34 @@
         <div class="admin-section">
           <h3>Crear Preventivo</h3>
           <input id="pr-titulo" placeholder="Título">
-          <input id="pr-lugar" placeholder="Lugar">
-          <label style="display:block; margin: 5px 0 2px 0; font-size: 12px; font-weight: bold;">Hora de Inicio:</label>
-          <input id="pr-fecha-inicio" type="datetime-local">
+          
+          <!-- NUEVO CAMPO: FECHA Y HORA -->
+          <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Fecha y Hora de Inicio:</label>
+          <input id="pr-fecha-inicio" type="datetime-local" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
+          
+          <!-- OBSERVACIONES (MANTIENE TU TEXTAREA ORIGINAL) -->
           <textarea id="pr-descripcion" placeholder="Observaciones / Descripción"></textarea>
           <button id="btn-crear-preventivo">Crear Preventivo</button>
         </div>
 
-        <!-- EMERGENCIA ADAPTADA AL SELECTOR DE NIVEL -->
+        <!-- CREAR EMERGENCIA ADAPTADA -->
         <div class="admin-section">
           <h3>Crear Emergencia</h3>
-          <input id="em-titulo" placeholder="Título de la Emergencia">
-          <label style="display:block; margin: 5px 0 2px 0; font-size: 12px; font-weight: bold;">Nivel de Gravedad:</label>
-          <select id="em-nivel" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc;">
+          <input id="em-titulo" placeholder="Título">
+          
+          <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Nivel de Gravedad:</label>
+          <select id="em-nivel" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
               <option value="bajo">Bajo</option>
               <option value="medio" selected>Medio</option>
               <option value="alto">Alto</option>
               <option value="crítico">Crítico</option>
           </select>
-          <label style="display:block; margin: 5px 0 2px 0; font-size: 12px; font-weight: bold;">Hora de Inicio:</label>
-          <input id="em-fecha-inicio" type="datetime-local">
-          <button id="btn-crear-emergencia" class="btn-danger">Activar Emergencia</button>
+
+          <!-- NUEVO CAMPO: FECHA Y HORA -->
+          <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Fecha y Hora de Inicio:</label>
+          <input id="em-fecha-inicio" type="datetime-local" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
+          
+          <button id="btn-crear-emergencia" class="btn-danger">Crear Emergencia</button>
         </div>
 
         <hr>
