@@ -4,7 +4,7 @@
 import { supabase, BASE_FN } from "./app.js";
 
 // ===============================
-// LISTADO GENERAL ADMIN
+// LISTADO GENERAL ADMIN (ACTUALIZADO)
 // ===============================
 export async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");
@@ -18,23 +18,26 @@ export async function cargarListadoAdmin() {
   cont.innerHTML = "";
 
   // ===============================
-  // OPERATIVOS
+  // OPERATIVOS (CON COLUMNA LUGAR UNIFICADA)
   // ===============================
   cont.innerHTML += `<h3>Operativos</h3>`;
   if (operativos.data && operativos.data.length > 0) {
     operativos.data.forEach(op => {
       const estaCerrado = op.fecha_fin !== null;
       cont.innerHTML += `
-        <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'};">
-          <strong>${op.titulo}</strong><br>
-          ${op.descripcion || "Sin descripción"}<br>
-          <small>Fecha: ${op.fecha} | Horas: ${op.duracion_horas || 0}</small><br>
+        <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+          <strong>Título:</strong> ${op.titulo}<br>
+          <strong>Lugar:</strong> ${op.lugar || "—"}<br>
+          <strong>Fecha:</strong> ${op.fecha}<br>
+          <strong>Observaciones:</strong> ${op.descripcion || "Sin observaciones"}<br>
+          <small style="color: #666;">Horas totales calculadas: ${op.duracion_horas || 0}</small><br>
+          
           ${!estaCerrado ? `
-            <button class="btn-danger" style="margin-top:5px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('\${op.id}', 'operativos')">
+            <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('\${op.id}', 'operativos')">
               Cerrar y Contar Horas
             </button>
-          ` : `<span style="color:green; font-weight:bold; font-size:12px;">✓ Cerrado</span>`}
-          <button class="btn-secondary" style="margin-top:5px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('operativos', '${op.id}')">
+          ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
+          <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('operativos', '${op.id}')">
             Eliminar
           </button>
         </div>
@@ -45,23 +48,26 @@ export async function cargarListadoAdmin() {
   }
 
   // ===============================
-  // PREVENTIVOS
+  // PREVENTIVOS (CON NUEVO ORDEN DE CAMPOS)
   // ===============================
   cont.innerHTML += `<h3>Preventivos</h3>`;
   if (preventivos.data && preventivos.data.length > 0) {
     preventivos.data.forEach(pr => {
       const estaCerrado = pr.fecha_fin !== null;
       cont.innerHTML += `
-        <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'};">
-          <strong>${pr.titulo}</strong><br>
-          ${pr.descripcion || "Sin descripción"}<br>
-          <small>Lugar: ${pr.lugar || "—"} | Horas: ${pr.duracion_horas || 0}</small><br>
+        <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+          <strong>Título:</strong> ${pr.titulo}<br>
+          <strong>Lugar:</strong> ${pr.lugar || "—"}<br>
+          <strong>Fecha:</strong> ${pr.fecha}<br>
+          <strong>Observaciones:</strong> ${pr.descripcion || "Sin observaciones"}<br>
+          <small style="color: #666;">Horas totales calculadas: ${pr.duracion_horas || 0}</small><br>
+          
           ${!estaCerrado ? `
-            <button class="btn-danger" style="margin-top:5px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('\${pr.id}', 'preventivos')">
+            <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('\${pr.id}', 'preventivos')">
               Cerrar y Contar Horas
             </button>
-          ` : `<span style="color:green; font-weight:bold; font-size:12px;">✓ Cerrado</span>`}
-          <button class="btn-secondary" style="margin-top:5px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('preventivos', '${pr.id}')">
+          ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
+          <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('preventivos', '${pr.id}')">
             Eliminar
           </button>
         </div>
