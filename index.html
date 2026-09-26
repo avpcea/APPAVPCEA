@@ -62,30 +62,28 @@
       <div id="screen-administracion" class="screen" style="display:none; padding:20px;">
         <h2>Administración</h2>
 
-                <!-- OPERATIVOS CON NUEVOS CAMPOS -->
+        <!-- OPERATIVOS CON CAMPO LUGAR -->
         <div class="admin-section">
           <h3>Crear Operativo</h3>
           <input id="op-titulo" placeholder="Título">
+          <input id="op-lugar" placeholder="Lugar / Ubicación">
           
-          <!-- NUEVO CAMPO: FECHA Y HORA -->
           <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Fecha y Hora de Inicio:</label>
           <input id="op-fecha-inicio" type="datetime-local" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
           
-          <!-- OBSERVACIONES (MANTIENE TU TEXTAREA ORIGINAL) -->
           <textarea id="op-descripcion" placeholder="Observaciones / Descripción"></textarea>
           <button id="btn-crear-operativo">Crear Operativo</button>
         </div>
 
-        <!-- PREVENTIVOS CON NUEVOS CAMPOS -->
+        <!-- PREVENTIVOS CON CAMPO LUGAR -->
         <div class="admin-section">
           <h3>Crear Preventivo</h3>
           <input id="pr-titulo" placeholder="Título">
+          <input id="pr-lugar" placeholder="Lugar / Ubicación">
           
-          <!-- NUEVO CAMPO: FECHA Y HORA -->
           <label style="display:block; margin: 8px 0 2px 0; font-size: 13px; font-weight: bold; color: #444;">Fecha y Hora de Inicio:</label>
           <input id="pr-fecha-inicio" type="datetime-local" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit;">
           
-          <!-- OBSERVACIONES (MANTIENE TU TEXTAREA ORIGINAL) -->
           <textarea id="pr-descripcion" placeholder="Observaciones / Descripción"></textarea>
           <button id="btn-crear-preventivo">Crear Preventivo</button>
         </div>
