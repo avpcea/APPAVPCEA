@@ -136,23 +136,23 @@ async function cargarEmergenciasAdmin() {
 }
 
 // ===============================
-// ACCIONES UTILIZANDO EDGE FUNCTIONS SEBURAS
+// ACCIONES UTILIZANDO EDGE FUNCTIONS SEGURAS
 // ===============================
 // ===============================
-// CREAR OPERATIVO (REVISADO)
+// CREAR OPERATIVO (UNIFICADO)
 // ===============================
 document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
   const titulo = document.getElementById("op-titulo").value.trim();
-  const descripcion = document.getElementById("op-descripcion").value.trim(); // Campo Observaciones
-  const fechaInicioInput = document.getElementById("op-fecha-inicio").value;   // Campo Fecha y Hora
+  const lugar = document.getElementById("op-lugar").value.trim(); // Captura lugar
+  const descripcion = document.getElementById("op-descripcion").value.trim();
+  const fechaInicioInput = document.getElementById("op-fecha-inicio").value;
   const admin_id = localStorage.getItem("usuario_id");
 
   if (!titulo) return alert("Introduce un título.");
   if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
 
-  // Convertimos el input datetime-local a ISO nativo
   const fechaISO = new Date(fechaInicioInput).toISOString();
-  const fechaSoloDate = fechaISO.split('T')[0]; // Extrae "AAAA-MM-DD" para el campo date obligatorio
+  const fechaSoloDate = fechaISO.split('T')[0];
 
   const response = await fetch(`${BASE_FN}/admin-create-element`, {
     method: "POST",
@@ -162,7 +162,8 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
       admin_id,
       values: {
         titulo,
-        descripcion,       // Mapea a observaciones
+        lugar, // Columna unificada en la base de datos
+        descripcion,
         fecha: fechaSoloDate,
         fecha_inicio: fechaISO,
         creado_en: new Date().toISOString()
@@ -173,6 +174,7 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
   if (response.ok) {
     alert("Operativo creado correctamente.");
     document.getElementById("op-titulo").value = "";
+    document.getElementById("op-lugar").value = "";
     document.getElementById("op-descripcion").value = "";
     document.getElementById("op-fecha-inicio").value = "";
     cargarListadoAdmin();
@@ -183,12 +185,13 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
 });
 
 // ===============================
-// CREAR PREVENTIVO (REVISADO)
+// CREAR PREVENTIVO (UNIFICADO)
 // ===============================
 document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
   const titulo = document.getElementById("pr-titulo").value.trim();
-  const descripcion = document.getElementById("pr-descripcion").value.trim(); // Campo Observaciones
-  const fechaInicioInput = document.getElementById("pr-fecha-inicio").value;   // Campo Fecha y Hora
+  const lugar = document.getElementById("pr-lugar").value.trim(); // Captura lugar
+  const descripcion = document.getElementById("pr-descripcion").value.trim();
+  const fechaInicioInput = document.getElementById("pr-fecha-inicio").value;
   const admin_id = localStorage.getItem("usuario_id");
 
   if (!titulo) return alert("Introduce un título.");
@@ -205,7 +208,8 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
       admin_id,
       values: {
         titulo,
-        descripcion,       // Mapea a observaciones
+        lugar, // Estructura idéntica a operativos
+        descripcion,
         fecha: fechaSoloDate,
         fecha_inicio: fechaISO,
         creado_en: new Date().toISOString()
@@ -216,6 +220,7 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
   if (response.ok) {
     alert("Preventivo creado correctamente.");
     document.getElementById("pr-titulo").value = "";
+    document.getElementById("pr-lugar").value = "";
     document.getElementById("pr-descripcion").value = "";
     document.getElementById("pr-fecha-inicio").value = "";
     cargarListadoAdmin();
