@@ -3,6 +3,7 @@
 // ===============================
 import { supabase, BASE_FN } from "./app.js";
 
+
 // ===============================
 // LISTADO GENERAL ADMIN (ACTUALIZADO)
 // ===============================
@@ -16,6 +17,7 @@ export async function cargarListadoAdmin() {
   ]);
 
   cont.innerHTML = "";
+
 
   // ===============================
   // OPERATIVOS (CON COLUMNA LUGAR UNIFICADA)
@@ -47,6 +49,7 @@ export async function cargarListadoAdmin() {
     cont.innerHTML += `<p>No hay operativos registrados.</p>`;
   }
 
+  
   // ===============================
   // PREVENTIVOS (CON NUEVO ORDEN DE CAMPOS)
   // ===============================
@@ -85,6 +88,7 @@ export async function cargarListadoAdmin() {
 
   cargarEmergenciasAdmin();
 }
+
 
 // ===============================
 // EMERGENCIAS ADMIN (ACTIVAS + FINALIZADAS)
@@ -141,6 +145,7 @@ async function cargarEmergenciasAdmin() {
   }
 }
 
+
 // ===============================
 // ACCIONES UTILIZANDO EDGE FUNCTIONS SEGURAS
 // ===============================
@@ -190,6 +195,7 @@ document.getElementById("btn-crear-operativo").addEventListener("click", async (
   }
 });
 
+
 // ===============================
 // CREAR PREVENTIVO (UNIFICADO)
 // ===============================
@@ -236,6 +242,7 @@ document.getElementById("btn-crear-preventivo").addEventListener("click", async 
   }
 });
 
+
 // ===============================
 // CREAR EMERGENCIA (REVISADO - SIN OBSERVACIONES)
 // ===============================
@@ -277,14 +284,15 @@ document.getElementById("btn-crear-emergencia").addEventListener("click", async 
   }
 });
 
+
 // ===============================
-// GESTIÓN DE USUARIOS (CON JOIN DE ROL)
+// GESTIÓN DE USUARIOS (CON JOIN NATIVO)
 // ===============================
 export async function cargarUsuariosAdmin() {
   const cont = document.getElementById("admin-usuarios");
   cont.innerHTML = "<p>Cargando usuarios...</p>";
 
-  // Hacemos un join pidiendo el id de la tabla dispositivos para pintar el rol real
+  // Hacemos el join nativo gracias a la Foreign Key que añadiste
   const { data: usuarios, error } = await supabase
     .from("usuarios")
     .select(`
@@ -292,20 +300,25 @@ export async function cargarUsuariosAdmin() {
       nombre,
       telefono,
       dispositivos ( rol )
-    `);
+    `)
+    .order("nombre", { ascending: true });
 
   if (error) {
-    cont.innerHTML = "<p>Error al cargar usuarios.</p>";
+    cont.innerHTML = "<p>Error al cargar usuarios de la base de datos.</p>";
+    console.error("Error al cargar usuarios con join:", error);
     return;
   }
 
   cont.innerHTML = "";
 
   usuarios.forEach(u => {
-    // Si el join devuelve datos, extraemos el rol, si no 'normal'
-    const rolAsignado = u.dispositivos?.rol || "normal";
+    // Como 'dispositivos' es una relación 1 a 1, Supabase devuelve un objeto (o array de 1 elemento según la config)
+    // Accedemos de forma segura al rol asignado
+    const dispositivoData = Array.isArray(u.dispositivos) ? u.dispositivos[0] : u.dispositivos;
+    const rolAsignado = dispositivoData?.rol || "usuario";
+    
     cont.innerHTML += `
-      <div class="card">
+      <div class="card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
         <strong>${u.nombre}</strong><br>
         Tel: ${u.telefono || "—"}<br>
         Rol: <span class="badge" style="font-weight:bold; color:${rolAsignado === 'admin' ? 'red' : 'blue'}">${rolAsignado.toUpperCase()}</span>
@@ -313,6 +326,7 @@ export async function cargarUsuariosAdmin() {
     `;
   });
 }
+
 
 // ===============================
 // EXPONER FUNCIONES AL DOM
