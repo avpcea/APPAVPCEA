@@ -102,7 +102,7 @@ export async function cargarOperativos() {
     cont.innerHTML += `
       <div class="card">
         <h3>${op.titulo}</h3>
-        <p><strong>Entidad:</strong> ${op.entidad || "—"}</p>
+        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
         <p><strong>Fecha:</strong> ${op.fecha}</p>
         <p>${op.descripcion || ""}</p>
 
