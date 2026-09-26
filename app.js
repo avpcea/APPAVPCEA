@@ -86,7 +86,7 @@ export async function cargarOperativos() {
   const { data: operativos, error } = await supabase
     .from("operativos")
     .select("*")
-    .order("fecha", { ascending: true });
+    .order("fecha", { descending: true });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar operativos.</p>";
@@ -130,7 +130,7 @@ export async function cargarPreventivos() {
   const { data: preventivos, error } = await supabase
     .from("preventivos")
     .select("*")
-    .order("fecha", { ascending: true });
+    .order("fecha", { descending: true });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar preventivos.</p>";
