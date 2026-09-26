@@ -146,8 +146,8 @@ export async function cargarPreventivos() {
     cont.innerHTML += `
       <div class="card">
         <h3>${p.titulo}</h3>
-        <p><strong>Fecha:</strong> ${p.fecha}</p>
         <p><strong>Lugar:</strong> ${p.lugar}</p>
+        <p><strong>Fecha:</strong> ${p.fecha}</p>
         <p>${p.descripcion || ""}</p>
 
         <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
