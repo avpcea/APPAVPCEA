@@ -74,7 +74,7 @@ const cargando = {
 
 
 // ===============================
-// CARGA OPERATIVOS
+// CARGA OPERATIVOS (ACTUALIZADO: Reciente primero + Lugar unificado)
 // ===============================
 export async function cargarOperativos() {
   if (cargando.operativos) return;
@@ -86,7 +86,7 @@ export async function cargarOperativos() {
   const { data: operativos, error } = await supabase
     .from("operativos")
     .select("*")
-    .order("fecha", { ascending: false });
+    .order("fecha", { ascending: false }); // <-- Tu cambio: Más reciente primero
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar operativos.</p>";
@@ -102,9 +102,9 @@ export async function cargarOperativos() {
     cont.innerHTML += `
       <div class="card">
         <h3>${op.titulo}</h3>
-        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
+        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p> <!-- <-- Columna 'lugar' unificada -->
         <p><strong>Fecha:</strong> ${op.fecha}</p>
-        <p>${op.descripcion || ""}</p>
+        <p>${op.descripcion || "Sin observaciones"}</p>
 
         <button class="btn-primary" onclick="toggleSuscripcion('OPR', ${op.id})">
           ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
@@ -116,9 +116,8 @@ export async function cargarOperativos() {
   cargando.operativos = false;
 }
 
-
 // ===============================
-// CARGA PREVENTIVOS
+// CARGA PREVENTIVOS (ACTUALIZADO: Reciente primero)
 // ===============================
 export async function cargarPreventivos() {
   if (cargando.preventivos) return;
@@ -130,7 +129,7 @@ export async function cargarPreventivos() {
   const { data: preventivos, error } = await supabase
     .from("preventivos")
     .select("*")
-    .order("fecha", { ascending: false });
+    .order("fecha", { ascending: false }); // <-- Tu cambio: Más reciente primero
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar preventivos.</p>";
@@ -146,9 +145,9 @@ export async function cargarPreventivos() {
     cont.innerHTML += `
       <div class="card">
         <h3>${p.titulo}</h3>
-        <p><strong>Lugar:</strong> ${p.lugar}</p>
+        <p><strong>Lugar:</strong> ${p.lugar || "—"}</p>
         <p><strong>Fecha:</strong> ${p.fecha}</p>
-        <p>${p.descripcion || ""}</p>
+        <p>${p.descripcion || "Sin observaciones"}</p>
 
         <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
           ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
