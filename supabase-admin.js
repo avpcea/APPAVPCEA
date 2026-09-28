@@ -1,14 +1,19 @@
-// ===============================
-// IMPORTAR SUPABASE Y CONFIGURACIÓN DESDE app.js
-// ===============================
+// =========================================================================
+// PARTE 1: IMPORTACIONES Y CARGA DINÁMICA DE VISTAS ADMINISTRATIVAS
+// =========================================================================
 import { supabase, BASE_FN } from "./app.js";
 
+// Inicialización segura cuando el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', () => {
+  initAdminEventListeners();
+});
 
 // ===============================
 // LISTADO GENERAL ADMIN (ACTUALIZADO)
 // ===============================
 export async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");
+  if (!cont) return;
   cont.innerHTML = "<p>Cargando listados de administración...</p>";
 
   const [operativos, preventivos] = await Promise.all([
@@ -17,7 +22,6 @@ export async function cargarListadoAdmin() {
   ]);
 
   cont.innerHTML = "";
-
 
   // ===============================
   // OPERATIVOS (CON COLUMNA LUGAR UNIFICADA)
@@ -49,7 +53,6 @@ export async function cargarListadoAdmin() {
     cont.innerHTML += `<p>No hay operativos registrados.</p>`;
   }
 
-  
   // ===============================
   // PREVENTIVOS (CON NUEVO ORDEN DE CAMPOS)
   // ===============================
@@ -89,12 +92,12 @@ export async function cargarListadoAdmin() {
   cargarEmergenciasAdmin();
 }
 
-
 // ===============================
 // EMERGENCIAS ADMIN (ACTIVAS + FINALIZADAS)
 // ===============================
 async function cargarEmergenciasAdmin() {
   const cont = document.getElementById("admin-emergencias");
+  if (!cont) return;
   cont.innerHTML = "<p>Cargando emergencias...</p>";
 
   const [activas, finalizadas] = await Promise.all([
@@ -145,269 +148,217 @@ async function cargarEmergenciasAdmin() {
   }
 }
 
+// =========================================================================
+// PARTE 2: CENTRALIZACIÓN DE LISTENERS (PREVIENE FALLOS DE ELEMENTOS NULOS)
+// =========================================================================
+function initAdminEventListeners() {
+  
+  // 1. CREAR USUARIO (Edge Function Segura)
+  const btnCrearUsuario = document.getElementById("btn-crear-usuario");
+  if (btnCrearUsuario) {
+    btnCrearUsuario.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById("usr-nombre")?.value.trim();
+      const telefono = document.getElementById("usr-telefono")?.value.trim();
+      const rol = document.getElementById("usr-rol")?.value;
 
-// ===============================
-// ACCIONES UTILIZANDO EDGE FUNCTIONS SEGURAS
-// ===============================
-// ===============================
-// CREAR OPERATIVO (UNIFICADO)
-// ===============================
-document.getElementById("btn-crear-operativo").addEventListener("click", async () => {
-  const titulo = document.getElementById("op-titulo").value.trim();
-  const lugar = document.getElementById("op-lugar").value.trim(); // Captura lugar
-  const descripcion = document.getElementById("op-descripcion").value.trim();
-  const fechaInicioInput = document.getElementById("op-fecha-inicio").value;
-  const admin_id = localStorage.getItem("usuario_id");
-
-  if (!titulo) return alert("Introduce un título.");
-  if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
-
-  const fechaISO = new Date(fechaInicioInput).toISOString();
-  const fechaSoloDate = fechaISO.split('T')[0];
-
-  const response = await fetch(`${BASE_FN}/admin-create-element`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tipo: "operativos",
-      admin_id,
-      values: {
-        titulo,
-        lugar, // Columna unificada en la base de datos
-        descripcion,
-        fecha: fechaSoloDate,
-        fecha_inicio: fechaISO,
-        creado_en: new Date().toISOString()
+      if (!nombre || !telefono || !rol) {
+        return alert("Por favor, rellena el nombre, teléfono y rol del usuario.");
       }
-    })
-  });
 
-  if (response.ok) {
-    alert("Operativo creado correctamente.");
-    document.getElementById("op-titulo").value = "";
-    document.getElementById("op-lugar").value = "";
-    document.getElementById("op-descripcion").value = "";
-    document.getElementById("op-fecha-inicio").value = "";
-    cargarListadoAdmin();
-  } else {
-    const err = await response.json();
-    alert("Error: " + err.error);
-  }
-});
+      try {
+        btnCrearUsuario.disabled = true;
+        btnCrearUsuario.innerText = "Creando...";
 
+        const response = await fetch(`${BASE_FN}/admin-create-user`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, telefono, rol })
+        });
 
-// ===============================
-// CREAR PREVENTIVO (UNIFICADO)
-// ===============================
-document.getElementById("btn-crear-preventivo").addEventListener("click", async () => {
-  const titulo = document.getElementById("pr-titulo").value.trim();
-  const lugar = document.getElementById("pr-lugar").value.trim(); // Captura lugar
-  const descripcion = document.getElementById("pr-descripcion").value.trim();
-  const fechaInicioInput = document.getElementById("pr-fecha-inicio").value;
-  const admin_id = localStorage.getItem("usuario_id");
-
-  if (!titulo) return alert("Introduce un título.");
-  if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
-
-  const fechaISO = new Date(fechaInicioInput).toISOString();
-  const fechaSoloDate = fechaISO.split('T')[0];
-
-  const response = await fetch(`${BASE_FN}/admin-create-element`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tipo: "preventivos",
-      admin_id,
-      values: {
-        titulo,
-        lugar, // Estructura idéntica a operativos
-        descripcion,
-        fecha: fechaSoloDate,
-        fecha_inicio: fechaISO,
-        creado_en: new Date().toISOString()
+        if (response.ok) {
+          alert(`Usuario ${nombre} creado correctamente.`);
+          document.getElementById("usr-nombre").value = "";
+          document.getElementById("usr-telefono").value = "";
+          document.getElementById("usr-rol").value = "voluntario";
+          
+          if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+        } else {
+          const err = await response.json();
+          alert("Error: " + (err.error || "No se pudo crear el usuario"));
+        }
+      } catch (error) {
+        console.error("Error al crear usuario:", error);
+        alert("Error de conexión al crear el usuario.");
+      } finally {
+        btnCrearUsuario.disabled = false;
+        btnCrearUsuario.innerText = "Crear Usuario";
       }
-    })
-  });
-
-  if (response.ok) {
-    alert("Preventivo creado correctamente.");
-    document.getElementById("pr-titulo").value = "";
-    document.getElementById("pr-lugar").value = "";
-    document.getElementById("pr-descripcion").value = "";
-    document.getElementById("pr-fecha-inicio").value = "";
-    cargarListadoAdmin();
-  } else {
-    const err = await response.json();
-    alert("Error: " + err.error);
-  }
-});
-
-
-// ===============================
-// CREAR EMERGENCIA (REVISADO - SIN OBSERVACIONES)
-// ===============================
-document.getElementById("btn-crear-emergencia").addEventListener("click", async () => {
-  const titulo = document.getElementById("em-titulo").value.trim();
-  const nivel = document.getElementById("em-nivel").value;
-  const fechaInicioInput = document.getElementById("em-fecha-inicio").value; // Solo Fecha y Hora
-  const admin_id = localStorage.getItem("usuario_id");
-
-  if (!titulo) return alert("Introduce un título.");
-  if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
-
-  const fechaISO = new Date(fechaInicioInput).toISOString();
-
-  const response = await fetch(`${BASE_FN}/admin-create-element`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      tipo: "emergencias",
-      admin_id,
-      values: {
-        titulo,
-        nivel,
-        activa: true,
-        fecha_inicio: fechaISO,
-        ultima_actualizacion: new Date().toISOString()
-      }
-    })
-  });
-
-  if (response.ok) {
-    alert("Emergencia activada correctamente.");
-    document.getElementById("em-titulo").value = "";
-    document.getElementById("em-fecha-inicio").value = "";
-    cargarListadoAdmin();
-  } else {
-    const err = await response.json();
-    alert("Error: " + err.error);
-  }
-});
-
-
-// ===============================
-// GESTIÓN DE USUARIOS (CON JOIN NATIVO)
-// ===============================
-export async function cargarUsuariosAdmin() {
-  const cont = document.getElementById("admin-usuarios");
-  cont.innerHTML = "<p>Cargando usuarios...</p>";
-
-  // Hacemos el join nativo gracias a la Foreign Key que añadiste
-  const { data: usuarios, error } = await supabase
-    .from("usuarios")
-    .select(`
-      id,
-      nombre,
-      telefono,
-      dispositivos ( rol )
-    `)
-    .order("nombre", { ascending: true });
-
-  if (error) {
-    cont.innerHTML = "<p>Error al cargar usuarios de la base de datos.</p>";
-    console.error("Error al cargar usuarios con join:", error);
-    return;
-  }
-
-  cont.innerHTML = "";
-
-  usuarios.forEach(u => {
-    // Como 'dispositivos' es una relación 1 a 1, Supabase devuelve un objeto (o array de 1 elemento según la config)
-    // Accedemos de forma segura al rol asignado
-    const dispositivoData = Array.isArray(u.dispositivos) ? u.dispositivos[0] : u.dispositivos;
-    const rolAsignado = dispositivoData?.rol || "usuario";
-    
-    cont.innerHTML += `
-      <div class="card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #eee; border-radius: 4px;">
-        <strong>${u.nombre}</strong><br>
-        Tel: ${u.telefono || "—"}<br>
-        Rol: <span class="badge" style="font-weight:bold; color:${rolAsignado === 'admin' ? 'red' : 'blue'}">${rolAsignado.toUpperCase()}</span>
-      </div>
-    `;
-  });
-}
-
-
-// ===============================
-// EXPONER FUNCIONES AL DOM
-// ===============================
-window.cargarListadoAdmin = cargarListadoAdmin;
-window.cargarUsuariosAdmin = cargarUsuariosAdmin;
-window.cargarEmergenciasAdmin = cargarEmergenciasAdmin;
-
-
-// ===============================
-// ACCIONES DE GESTIÓN (INTERCONEXIÓN CON EDGE FUNCTIONS)
-// ===============================
-
-/**
- * Invoca a la nueva Edge Function para cerrar un evento
- * y computar las horas automáticamente a todos los suscritos.
- */
-async function ejecutarCierreEvento(eventoId, tipoEvento) {
-  const confirmacion = confirm(`¿Estás seguro de que deseas cerrar este evento (${tipoEvento}) y calcular las horas de los voluntarios?`);
-  if (!confirmacion) return;
-
-  const admin_id = localStorage.getItem("usuario_id");
-
-  try {
-    const response = await fetch(`${BASE_FN}/admin-close-event`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        evento_id: eventoId,
-        tipo_evento: tipoEvento, // "preventivos", "operativos" o "emergencias"
-        admin_id: admin_id
-      })
     });
-
-    const resultado = await response.json();
-
-    if (response.ok) {
-      alert("Éxito: " + resultado.mensaje);
-      cargarListadoAdmin(); // Recarga la interfaz para reflejar los cambios
-    } else {
-      alert("Error al cerrar el evento: " + (resultado.error || "Error desconocido"));
-    }
-  } catch (error) {
-    console.error(error);
-    alert("Error de red al conectar con el servidor.");
   }
-}
 
-/**
- * Invoca a la Edge Function blindada para eliminar un evento por completo.
- */
-async function ejecutarEliminacionElemento(tipoEvento, idElemento) {
-  const confirmacion = confirm(`¡ADVERTENCIA! ¿Estás seguro de que deseas ELIMINAR por completo este registro de ${tipoEvento}? Esto no se puede deshacer.`);
-  if (!confirmacion) return;
+  // 2. CREAR OPERATIVO (Columna Lugar Unificada)
+  const btnCrearOperativo = document.getElementById("btn-crear-operativo");
+  if (btnCrearOperativo) {
+    btnCrearOperativo.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const titulo = document.getElementById("op-titulo")?.value.trim();
+      const lugar = document.getElementById("op-lugar")?.value.trim();
+      const descripcion = document.getElementById("op-descripcion")?.value.trim();
+      const fechaInicioInput = document.getElementById("op-fecha-inicio")?.value;
+      const admin_id = localStorage.getItem("usuario_id");
 
-  const admin_id = localStorage.getItem("usuario_id");
+      if (!titulo) return alert("Introduce un título.");
+      if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
 
-  try {
-    const response = await fetch(`${BASE_FN}/admin-delete-element`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tipo: tipoEvento, // "preventivos", "operativos" o "emergencias"
-        id: idElemento,
-        admin_id: admin_id
-      })
+      try {
+        btnCrearOperativo.disabled = true;
+        const fechaISO = new Date(fechaInicioInput).toISOString();
+        const fechaSoloDate = fechaISO.split('T')[0];
+
+        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo: "operativos",
+            admin_id,
+            values: {
+              titulo,
+              lugar,
+              descripcion,
+              fecha: fechaSoloDate,
+              fecha_inicio: fechaISO,
+              creado_en: new Date().toISOString()
+            }
+          })
+        });
+
+        if (response.ok) {
+          alert("Operativo creado correctamente.");
+          document.getElementById("op-titulo").value = "";
+          document.getElementById("op-lugar").value = "";
+          document.getElementById("op-descripcion").value = "";
+          document.getElementById("op-fecha-inicio").value = "";
+          await cargarListadoAdmin();
+        } else {
+          const err = await response.json();
+          alert("Error: " + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error de red al crear el operativo.");
+      } finally {
+        btnCrearOperativo.disabled = false;
+      }
     });
+  }
 
-    if (response.ok) {
-      alert("Registro eliminado correctamente de forma segura.");
-      cargarListadoAdmin(); // Recarga la interfaz
-    } else {
-      const resultado = await response.json();
-      alert("Error al eliminar: " + (resultado.error || "Error desconocido"));
-    }
-  } catch (error) {
-    console.error(error);
-    alert("Error de red al intentar eliminar el elemento.");
+  // 3. CREAR PREVENTIVO (Columna Lugar Unificada)
+  const btnCrearPreventivo = document.getElementById("btn-crear-preventivo");
+  if (btnCrearPreventivo) {
+    btnCrearPreventivo.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const titulo = document.getElementById("pr-titulo")?.value.trim();
+      const lugar = document.getElementById("pr-lugar")?.value.trim();
+      const descripcion = document.getElementById("pr-descripcion")?.value.trim();
+      const fechaInicioInput = document.getElementById("pr-fecha-inicio")?.value;
+      const admin_id = localStorage.getItem("usuario_id");
+
+      if (!titulo) return alert("Introduce un título.");
+      if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
+
+      try {
+        btnCrearPreventivo.disabled = true;
+        const fechaISO = new Date(fechaInicioInput).toISOString();
+        const fechaSoloDate = fechaISO.split('T')[0];
+
+        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo: "preventivos",
+            admin_id,
+            values: {
+              titulo,
+              lugar,
+              descripcion,
+              fecha: fechaSoloDate,
+              fecha_inicio: fechaISO,
+              creado_en: new Date().toISOString()
+            }
+          })
+        });
+
+        if (response.ok) {
+          alert("Preventivo creado correctamente.");
+          document.getElementById("pr-titulo").value = "";
+          document.getElementById("pr-lugar").value = "";
+          document.getElementById("pr-descripcion").value = "";
+          document.getElementById("pr-fecha-inicio").value = "";
+          await cargarListadoAdmin();
+        } else {
+          const err = await response.json();
+          alert("Error: " + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error de red al crear el preventivo.");
+      } finally {
+        btnCrearPreventivo.disabled = false;
+      }
+    });
+  }
+
+  // 4. CREAR EMERGENCIA (Estructura Simplificada)
+  const btnCrearEmergencia = document.getElementById("btn-crear-emergencia");
+  if (btnCrearEmergencia) {
+    btnCrearEmergencia.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const titulo = document.getElementById("em-titulo")?.value.trim();
+      const nivel = document.getElementById("em-nivel")?.value;
+      const fechaInicioInput = document.getElementById("em-fecha-inicio")?.value;
+      const admin_id = localStorage.getItem("usuario_id");
+
+      if (!titulo) return alert("Introduce un título de la emergencia.");
+      if (!nivel) return alert("Selecciona un nivel de gravedad.");
+      if (!fechaInicioInput) return alert("Introduce la fecha y hora de inicio.");
+
+      try {
+        btnCrearEmergencia.disabled = true;
+        const fechaISO = new Date(fechaInicioInput).toISOString();
+
+        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tipo: "emergencias",
+            admin_id,
+            values: {
+              titulo,
+              nivel,
+              fecha_inicio: fechaISO,
+              activa: true,
+              creado_en: new Date().toISOString()
+            }
+          })
+        });
+
+        if (response.ok) {
+          alert("Emergencia reportada y activa correctamente.");
+          document.getElementById("em-titulo").value = "";
+          document.getElementById("em-nivel").value = "baja";
+          document.getElementById("em-fecha-inicio").value = "";
+          await cargarListadoAdmin();
+        } else {
+          const err = await response.json();
+          alert("Error: " + err.error);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error de red al reportar la emergencia.");
+      } finally {
+        btnCrearEmergencia.disabled = false;
+      }
+    });
   }
 }
-
-// Exponer las funciones al objeto 'window' para que los botones de los strings HTML puedan ejecutarlas
-window.ejecutarCierreEvento = ejecutarCierreEvento;
-window.ejecutarEliminacionElemento = ejecutarEliminacionElemento;
