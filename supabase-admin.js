@@ -3,13 +3,11 @@
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
 async function inicializarAdminCompleto() {
-  console.log("AVPCEA Admin: Forzando carga de componentes...");
   initAdminEventListeners();
   await cargarListadoAdmin();
-  if (typeof cargarUsuariosAdmin === 'function') {
-    await cargarUsuariosAdmin();
-  }
+  await cargarUsuariosAdmin(); // Ejecución directa y limpia
 }
+
 
 // Doble red de seguridad para asegurar la carga en GitHub Pages
 if (document.readyState === 'loading') {
