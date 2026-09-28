@@ -204,8 +204,9 @@ async function cargarEmergenciasAdmin() {
   }
 }
 
+
 // =========================================================================
-// PARTE 2: CAPTURA DE FORMULARIOS HOMOGÉNEOS Y PROCESAMIENTO EDGE FUNCTIONS
+// PARTE 2: CAPTURA DE FORMULARIOS HOMOGÉNEOS CORREGIDA (FECHAS BLINDADAS)
 // =========================================================================
 function initAdminEventListeners() {
   
@@ -218,7 +219,6 @@ function initAdminEventListeners() {
       const telefono = document.getElementById("usr-telefono")?.value.trim();
       const rol = document.getElementById("usr-rol")?.value;
       
-      // Captura opcional de campos de cumpleaños si existen en tu UI (Mes y Día)
       const cumpleMes = document.getElementById("usr-cumple-mes")?.value;
       const cumpleDia = document.getElementById("usr-cumple-dia")?.value;
 
@@ -247,7 +247,6 @@ function initAdminEventListeners() {
           document.getElementById("usr-nombre").value = "";
           document.getElementById("usr-telefono").value = "";
           document.getElementById("usr-rol").value = "voluntario";
-          
           if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
         } else {
           const err = await response.json();
@@ -263,7 +262,7 @@ function initAdminEventListeners() {
     });
   }
 
-  // 2. CREAR OPERATIVO
+  // 2. CREAR OPERATIVO (Corregido split de fecha)
   const btnCrearOperativo = document.getElementById("btn-crear-operativo");
   if (btnCrearOperativo) {
     btnCrearOperativo.addEventListener("click", async (e) => {
@@ -271,16 +270,19 @@ function initAdminEventListeners() {
       const titulo = document.getElementById("op-titulo")?.value.trim();
       const lugar = document.getElementById("op-lugar")?.value.trim();
       const descripcion = document.getElementById("op-descripcion")?.value.trim();
-      // Selector homogeneizado según tu especificación actual
       const fechaInput = document.getElementById("op-fecha")?.value; 
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha/Hora de inicio.");
+      if (!titulo || !fechaInput) {
+        return alert("Introduce Título y Fecha/Hora de inicio del Operativo.");
+      }
 
       try {
         btnCrearOperativo.disabled = true;
+        
+        // Conversión segura de fecha datetime-local a ISO y Date string ordinario
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.split('T')[0];
+        const fechaSoloDate = fechaISO.split('T')[0]; // [0] Extrae estrictamente la cadena YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
@@ -309,14 +311,14 @@ function initAdminEventListeners() {
         }
       } catch (error) {
         console.error(error);
-        alert("Error de red.");
+        alert("Error de red al procesar el operativo.");
       } finally {
         btnCrearOperativo.disabled = false;
       }
     });
   }
 
-  // 3. CREAR PREVENTIVO
+  // 3. CREAR PREVENTIVO (Corregido split de fecha)
   const btnCrearPreventivo = document.getElementById("btn-crear-preventivo");
   if (btnCrearPreventivo) {
     btnCrearPreventivo.addEventListener("click", async (e) => {
@@ -327,12 +329,15 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("prev-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha/Hora de inicio.");
+      if (!titulo || !fechaInput) {
+        return alert("Introduce Título y Fecha/Hora de inicio del Preventivo.");
+      }
 
       try {
         btnCrearPreventivo.disabled = true;
+        
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.split('T')[0];
+        const fechaSoloDate = fechaISO.split('T')[0]; // Extrae estrictamente YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
@@ -361,7 +366,7 @@ function initAdminEventListeners() {
         }
       } catch (error) {
         console.error(error);
-        alert("Error de red.");
+        alert("Error de red al procesar el preventivo.");
       } finally {
         btnCrearPreventivo.disabled = false;
       }
@@ -378,7 +383,9 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("em-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !nivel || !fechaInput) return alert("Rellene todos los campos obligatorios.");
+      if (!titulo || !nivel || !fechaInput) {
+        return alert("Rellene todos los campos obligatorios de la Emergencia.");
+      }
 
       try {
         btnCrearEmergencia.disabled = true;
@@ -410,13 +417,14 @@ function initAdminEventListeners() {
         }
       } catch (error) {
         console.error(error);
-        alert("Error de red.");
+        alert("Error de red al procesar la emergencia.");
       } finally {
         btnCrearEmergencia.disabled = false;
       }
     });
   }
 }
+
 
 // =========================================================================
 // PARTE 3: LISTADO DE USUARIOS ACTIVO (CON CONEXIÓN NATIVA DISPOSITIVOS)
