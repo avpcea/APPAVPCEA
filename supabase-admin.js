@@ -2,20 +2,33 @@
 // PARTE 1: IMPORTACIONES, EXPOSICIÓN GLOBAL Y RENDERIZADO DE CONTENIDOS
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
-
-// Hook de inicialización inmediata al cargar el DOM
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log("AVPCEA Admin: Inicializando interfaz administrativa...");
-  
-  // 1. Vinculamos los interceptores de eventos
+async function inicializarAdminCompleto() {
+  console.log("AVPCEA Admin: Forzando carga de componentes...");
   initAdminEventListeners();
-  
-  // 2. Forzamos la carga inicial automática de los listados para que no aparezcan vacíos
   await cargarListadoAdmin();
   if (typeof cargarUsuariosAdmin === 'function') {
     await cargarUsuariosAdmin();
   }
-});
+}
+
+// Doble red de seguridad para asegurar la carga en GitHub Pages
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', inicializarAdminCompleto);
+} else {
+  inicializarAdminCompleto();
+}
+// Hook de inicialización inmediata al cargar el DOM
+//document.addEventListener('DOMContentLoaded', async () => {
+  
+  // 1. Vinculamos los interceptores de eventos
+//  initAdminEventListeners();
+  
+  // 2. Forzamos la carga inicial automática de los listados para que no aparezcan vacíos
+//  await cargarListadoAdmin();
+//  if (typeof cargarUsuariosAdmin === 'function') {
+//    await cargarUsuariosAdmin();
+//  }
+//});
 
 // COMPONENTE CRÍTICO: Exponer funciones al objeto Window para que los botones 'onclick' nativos funcionen
 window.ejecutarCierreEvento = async function(id, tipo) {
