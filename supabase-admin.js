@@ -419,3 +419,84 @@ function initAdminEventListeners() {
     });
   }
 }
+
+// =========================================================================
+// PARTE 3: LISTADO DE USUARIOS ACTIVO (CON CONEXIÓN NATIVA DISPOSITIVOS)
+// =========================================================================
+export async function cargarUsuariosAdmin() {
+  // Asegúrate de que este ID exista en tu index.html (ej. <div id="admin-usuarios-lista"></div>)
+  const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");
+  if (!cont) {
+    console.warn("AVPCEA Admin: No se encontró el contenedor de la lista de usuarios.");
+    return;
+  }
+  
+  cont.innerHTML = "<p>Cargando voluntarios...</p>";
+
+  try {
+    // Consulta select cruzada nativa gracias a la nueva FK
+    const { data: usuarios, error } = await supabase
+      .from("usuarios")
+      .select(`
+        id,
+        nombre,
+        telefono,
+        dispositivos (
+          rol
+        )
+      `)
+      .order("nombre", { ascending: true }); // Orden alfabético estricto
+
+    if (error) throw error;
+
+    cont.innerHTML = "";
+
+    if (!usuarios || usuarios.length === 0) {
+      cont.innerHTML = "<p>No hay usuarios registrados en el sistema.</p>";
+      return;
+    }
+
+    // Tabla scannable para administración
+    let html = `
+      <table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;">
+        <thead>
+          <tr style="background:#f4f4f4; text-align:left; border-bottom:2px solid #ddd;">
+            <th style="padding:8px;">Nombre</th>
+            <th style="padding:8px;">Teléfono</th>
+            <th style="padding:8px;">Rol Real</th>
+            <th style="padding:8px; text-align:center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    usuarios.forEach(usr => {
+      // Extraemos el rol desde el join nativo de la tabla dispositivos
+      const rolReal = usr.dispositivos?.rol || "Sin dispositivo";
+      
+      html += `
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px; font-weight:bold;">${usr.nombre}</td>
+          <td style="padding:8px;">${usr.telefono || "—"}</td>
+          <td style="padding:8px;">
+            <span class="badge" style="padding:2px 6px; border-radius:4px; font-size:12px; background:${rolReal === 'admin' ? '#ffebeb' : '#ebefff'}; color:${rolReal === 'admin' ? '#cc0000' : '#0022cc'};">
+              ${rolReal.toUpperCase()}
+            </span>
+          </td>
+          <td style="padding:8px; text-align:center;">
+            <button class="btn-secondary" style="padding:2px 6px; font-size:12px; background:#777;" onclick="ejecutarEliminacionElemento('usuarios', '${usr.id}')">
+              Dar de Baja
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    cont.innerHTML = html;
+
+  } catch (err) {
+    console.error("Error al cargar los usuarios de administración:", err);
+    cont.innerHTML = "<p style='color:red;'>Error al cargar el listado de voluntarios.</p>";
+  }
+}
