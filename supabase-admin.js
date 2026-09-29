@@ -1,13 +1,13 @@
 // =========================================================================
-// PARTE 1: IMPORTACIONES, EXPOSICIÓN GLOBAL Y RENDERIZADO DE CONTENIDOS
+// PARTE 1: CONFIGURACIÓN, INICIALIZACIÓN Y RENDERIZADO DE CONTENIDOS
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
+
 async function inicializarAdminCompleto() {
   initAdminEventListeners();
   await cargarListadoAdmin();
-  await cargarUsuariosAdmin(); // Ejecución directa y limpia
+  await cargarUsuariosAdmin();
 }
-
 
 // Doble red de seguridad para asegurar la carga en GitHub Pages
 if (document.readyState === 'loading') {
@@ -15,20 +15,8 @@ if (document.readyState === 'loading') {
 } else {
   inicializarAdminCompleto();
 }
-// Hook de inicialización inmediata al cargar el DOM
-//document.addEventListener('DOMContentLoaded', async () => {
-  
-  // 1. Vinculamos los interceptores de eventos
-//  initAdminEventListeners();
-  
-  // 2. Forzamos la carga inicial automática de los listados para que no aparezcan vacíos
-//  await cargarListadoAdmin();
-//  if (typeof cargarUsuariosAdmin === 'function') {
-//    await cargarUsuariosAdmin();
-//  }
-//});
 
-// COMPONENTE CRÍTICO: Exponer funciones al objeto Window para que los botones 'onclick' nativos funcionen
+// Exposición global limpia de funciones para los botones dinámicos
 window.ejecutarCierreEvento = async function(id, tipo) {
   if (!confirm(`¿Estás seguro de que deseas cerrar este registro de ${tipo}?`)) return;
   try {
@@ -39,7 +27,7 @@ window.ejecutarCierreEvento = async function(id, tipo) {
       body: JSON.stringify({ id, tipo, admin_id, fecha_fin: new Date().toISOString() })
     });
     if (response.ok) {
-      alert("Registro cerrado correctamente y horas contabilizadas.");
+      alert("Registro cerrado correctamente.");
       await cargarListadoAdmin();
     } else {
       const err = await response.json();
@@ -47,7 +35,7 @@ window.ejecutarCierreEvento = async function(id, tipo) {
     }
   } catch (error) {
     console.error(error);
-    alert("Error de red al procesar el cierre.");
+    alert("Error al procesar el cierre.");
   }
 };
 
@@ -56,7 +44,7 @@ window.ejecutarEliminacionElemento = async function(tipo, id) {
   try {
     const { error } = await supabase.from(tipo).delete().eq("id", id);
     if (error) throw error;
-    alert("Registro eliminado con éxito.");
+    alert("Registro eliminado.");
     await cargarListadoAdmin();
   } catch (error) {
     console.error(error);
@@ -86,19 +74,19 @@ export async function cargarListadoAdmin() {
       operativos.data.forEach(op => {
         const estaCerrado = op.fecha_fin !== null;
         cont.innerHTML += `
-          <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+          <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:4px;">
             <strong>Título:</strong> ${op.titulo}<br>
             <strong>Lugar:</strong> ${op.lugar || "—"}<br>
             <strong>Fecha:</strong> ${op.fecha}<br>
             <strong>Observaciones:</strong> ${op.descripcion || "Sin observaciones"}<br>
-            <small style="color: #666;">Horas totales calculadas: ${op.duracion_horas || 0}</small><br>
+            <small style="color: #666;">Horas totales: ${op.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('${op.id}', 'operativos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${op.id}', 'operativos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
-            <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('operativos', '${op.id}')">
+            <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="window.ejecutarEliminacionElemento('operativos', '${op.id}')">
               Eliminar
             </button>
           </div>
@@ -114,19 +102,19 @@ export async function cargarListadoAdmin() {
       preventivos.data.forEach(pr => {
         const estaCerrado = pr.fecha_fin !== null;
         cont.innerHTML += `
-          <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+          <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:4px;">
             <strong>Título:</strong> ${pr.titulo}<br>
             <strong>Lugar:</strong> ${pr.lugar || "—"}<br>
             <strong>Fecha:</strong> ${pr.fecha}<br>
             <strong>Observaciones:</strong> ${pr.descripcion || "Sin observaciones"}<br>
-            <small style="color: #666;">Horas totales calculadas: ${pr.duracion_horas || 0}</small><br>
+            <small style="color: #666;">Horas totales: ${pr.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="ejecutarCierreEvento('${pr.id}', 'preventivos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${pr.id}', 'preventivos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
-            <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('preventivos', '${pr.id}')">
+            <button class="btn-secondary" style="margin-top:8px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="window.ejecutarEliminacionElemento('preventivos', '${pr.id}')">
               Eliminar
             </button>
           </div>
@@ -141,18 +129,16 @@ export async function cargarListadoAdmin() {
     await cargarEmergenciasAdmin();
 
   } catch (err) {
-    console.error("Error al renderizar paneles generales:", err);
-    cont.innerHTML = "<p style='color:red;'>Error al cargar los listados.</p>";
+    console.error(err);
   }
 }
 
 // ===============================
-// EMERGENCIAS ADMIN (ACTIVAS + FINALIZADAS)
+// EMERGENCIAS ADMIN
 // ===============================
 async function cargarEmergenciasAdmin() {
   const cont = document.getElementById("admin-emergencias");
   if (!cont) return;
-  cont.innerHTML = "<p>Cargando emergencias...</p>";
 
   try {
     const [activas, finalizadas] = await Promise.all([
@@ -163,54 +149,90 @@ async function cargarEmergenciasAdmin() {
     cont.innerHTML = "";
 
     cont.innerHTML += `<h4>Emergencias activas</h4>`;
-    if (!activas.data || activas.data.length === 0) {
-      cont.innerHTML += `<p>No hay emergencias activas.</p>`;
-    } else {
+    if (activas.data && activas.data.length > 0) {
       activas.data.forEach(emg => {
         cont.innerHTML += `
           <div class="card" style="margin-bottom:10px; padding:10px; border:1px solid #ffcccc; background:#fff5f5;">
-            <strong>${emg.titulo}</strong><br>
-            Nivel: ${String(emg.nivel).toUpperCase()}<br>
-            Inicio: ${new Date(emg.fecha_inicio).toLocaleString()}<br>
-            <button class="btn-danger" style="margin-top:5px;" onclick="ejecutarCierreEvento('${emg.id}', 'emergencias')">
+            <strong>${emg.titulo}</strong> - Nivel: ${String(emg.nivel).toUpperCase()}<br>
+            <button class="btn-danger" style="margin-top:5px;" onclick="window.ejecutarCierreEvento('${emg.id}', 'emergencias')">
               Cerrar emergencia
             </button>
           </div>
         `;
       });
+    } else {
+      cont.innerHTML += `<p>No hay emergencias activas.</p>`;
     }
 
     cont.innerHTML += `<h4 style="margin-top:20px;">Emergencias finalizadas</h4>`;
-    if (!finalizadas.data || finalizadas.data.length === 0) {
-      cont.innerHTML += `<p>No hay emergencias finalizadas.</p>`;
-    } else {
+    if (finalizadas.data && finalizadas.data.length > 0) {
       finalizadas.data.forEach(emg => {
         cont.innerHTML += `
           <div class="card" style="opacity:0.7; margin-bottom:10px; padding:10px; border:1px solid #ddd;">
-            <strong>${emg.titulo}</strong><br>
-            Nivel: ${String(emg.nivel).toUpperCase()}<br>
-            Inicio: ${new Date(emg.fecha_inicio).toLocaleString()}<br>
-            Fin: ${new Date(emg.fecha_fin).toLocaleString()}<br>
-            <button class="btn-secondary" style="margin-top:5px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="ejecutarEliminacionElemento('emergencias', '${emg.id}')">
+            <strong>${emg.titulo}</strong> - Nivel: ${String(emg.nivel).toUpperCase()}<br>
+            <button class="btn-secondary" style="margin-top:5px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="window.ejecutarEliminacionElemento('emergencias', '${emg.id}')">
               Eliminar registro
             </button>
           </div>
         `;
       });
+    } else {
+      cont.innerHTML += `<p>No hay emergencias finalizadas.</p>`;
     }
   } catch (error) {
-    console.error("Error cargando emergencias:", error);
-    cont.innerHTML = "<p>Error al cargar subsección de emergencias.</p>";
+    console.error(error);
   }
 }
 
+// ===============================
+// LISTADO DE VOLUNTARIOS
+// ===============================
+export async function cargarUsuariosAdmin() {
+  const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");
+  if (!cont) return;
+
+  try {
+    const { data: usuarios, error } = await supabase
+      .from("usuarios")
+      .select("id, nombre, telefono, dispositivos(rol)")
+      .order("nombre", { ascending: true });
+
+    if (error) throw error;
+    cont.innerHTML = "";
+
+    if (!usuarios || usuarios.length === 0) {
+      cont.innerHTML = "<p>No hay usuarios registrados.</p>";
+      return;
+    }
+
+    let html = `<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px;"><tbody>`;
+    usuarios.forEach(usr => {
+      const rolReal = usr.dispositivos?.rol || "Sin dispositivo";
+      html += `
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px; font-weight:bold;">${usr.nombre}</td>
+          <td style="padding:8px;">${rolReal.toUpperCase()}</td>
+          <td style="padding:8px; text-align:center;">
+            <button class="btn-secondary" style="padding:2px 6px; font-size:12px; background:#777;" onclick="window.ejecutarEliminacionElemento('usuarios', '${usr.id}')">
+              Baja
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+    cont.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // =========================================================================
-// PARTE 2: CAPTURA DE FORMULARIOS HOMOGÉNEOS CORREGIDA (FECHAS BLINDADAS)
+// PARTE 2: CENTRALIZACIÓN DE LISTENERS TOTALMENTE LIMPIA Y CORREGIDA
 // =========================================================================
 function initAdminEventListeners() {
   
-  // 1. CREAR USUARIO (Edge Function)
+  // 1. CREAR USUARIO
   const btnCrearUsuario = document.getElementById("btn-crear-usuario");
   if (btnCrearUsuario) {
     btnCrearUsuario.addEventListener("click", async (e) => {
@@ -218,20 +240,15 @@ function initAdminEventListeners() {
       const nombre = document.getElementById("usr-nombre")?.value.trim();
       const telefono = document.getElementById("usr-telefono")?.value.trim();
       const rol = document.getElementById("usr-rol")?.value;
-      
       const cumpleMes = document.getElementById("usr-cumple-mes")?.value;
       const cumpleDia = document.getElementById("usr-cumple-dia")?.value;
 
-      if (!nombre || !telefono || !rol) {
-        return alert("Por favor, rellena el nombre, teléfono y rol del usuario.");
-      }
+      if (!nombre || !telefono || !rol) return alert("Rellena nombre, teléfono y rol.");
 
       try {
         btnCrearUsuario.disabled = true;
-        btnCrearUsuario.innerText = "Creando...";
-
         const payload = { nombre, telefono, rol };
-        if(cumpleMes && cumpleDia) {
+        if (cumpleMes && cumpleDia) {
           payload.cumple_mes = parseInt(cumpleMes);
           payload.cumple_dia = parseInt(cumpleDia);
         }
@@ -243,26 +260,23 @@ function initAdminEventListeners() {
         });
 
         if (response.ok) {
-          alert(`Usuario ${nombre} creado correctamente.`);
+          alert("Usuario creado correctamente.");
           document.getElementById("usr-nombre").value = "";
           document.getElementById("usr-telefono").value = "";
-          document.getElementById("usr-rol").value = "voluntario";
-          if (typeof cargarUsuariosAdmin === 'function') await cargarUsuariosAdmin();
+          await cargarUsuariosAdmin();
         } else {
           const err = await response.json();
-          alert("Error: " + (err.error || "No se pudo crear el usuario"));
+          alert("Error: " + err.error);
         }
       } catch (error) {
-        console.error(error);
-        alert("Error de conexión al crear el usuario.");
+        alert("Error de conexión.");
       } finally {
         btnCrearUsuario.disabled = false;
-        btnCrearUsuario.innerText = "Crear Usuario";
       }
     });
   }
 
-  // 2. CREAR OPERATIVO (Corregido split de fecha)
+  // 2. CREAR OPERATIVO
   const btnCrearOperativo = document.getElementById("btn-crear-operativo");
   if (btnCrearOperativo) {
     btnCrearOperativo.addEventListener("click", async (e) => {
@@ -270,19 +284,15 @@ function initAdminEventListeners() {
       const titulo = document.getElementById("op-titulo")?.value.trim();
       const lugar = document.getElementById("op-lugar")?.value.trim();
       const descripcion = document.getElementById("op-descripcion")?.value.trim();
-      const fechaInput = document.getElementById("op-fecha")?.value; 
+      const fechaInput = document.getElementById("op-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) {
-        return alert("Introduce Título y Fecha/Hora de inicio del Operativo.");
-      }
+      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha.");
 
       try {
         btnCrearOperativo.disabled = true;
-        
-        // Conversión segura de fecha datetime-local a ISO y Date string ordinario
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Extrae exactamente los primeros 10 caracteres (YYYY-MM-DD) como texto plano
+        const fechaSoloDate = fechaISO.substring(0, 10);
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
@@ -290,19 +300,12 @@ function initAdminEventListeners() {
           body: JSON.stringify({
             tipo: "operativos",
             admin_id,
-            values: {
-              titulo,
-              lugar,
-              descripcion,
-              fecha: fechaSoloDate,
-              fecha_inicio: fechaISO,
-              creado_en: new Date().toISOString()
-            }
+            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO, creado_en: new Date().toISOString() }
           })
         });
 
         if (response.ok) {
-          alert("Operativo creado correctamente.");
+          alert("Operativo creado.");
           document.getElementById("form-crear-operativo")?.reset();
           await cargarListadoAdmin();
         } else {
@@ -310,15 +313,14 @@ function initAdminEventListeners() {
           alert("Error: " + err.error);
         }
       } catch (error) {
-        console.error(error);
-        alert("Error de red al procesar el operativo.");
+        alert("Error al procesar.");
       } finally {
         btnCrearOperativo.disabled = false;
       }
     });
   }
 
-  // 3. CREAR PREVENTIVO (Con Log de Diagnóstico)
+  // 3. CREAR PREVENTIVO
   const btnCrearPreventivo = document.getElementById("btn-crear-preventivo");
   if (btnCrearPreventivo) {
     btnCrearPreventivo.addEventListener("click", async (e) => {
@@ -329,38 +331,25 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("prev-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha/Hora de inicio.");
+      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha.");
 
       try {
         btnCrearPreventivo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
         const fechaSoloDate = fechaISO.substring(0, 10);
 
-        // --- OBJETO DE PRUEBA ---
-        const payloadDePrueba = {
-          tipo: "preventivos",
-          admin_id,
-          values: {
-            titulo,
-            lugar,
-            descripcion,
-            fecha: fechaSoloDate,
-            fecha_inicio: fechaISO,
-            creado_en: new Date().toISOString()
-          }
-        };
-
-        // Imprimimos en consola para inspeccionar la estructura exacta
-        console.log("📦 PAYLOAD ENVIADO A EDGE FUNCTION:", JSON.stringify(payloadDePrueba, null, 2));
-
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payloadDePrueba)
+          body: JSON.stringify({
+            tipo: "preventivos",
+            admin_id,
+            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO, creado_en: new Date().toISOString() }
+          })
         });
 
         if (response.ok) {
-          alert("Preventivo creado correctamente.");
+          alert("Preventivo creado.");
           document.getElementById("form-crear-preventivo")?.reset();
           await cargarListadoAdmin();
         } else {
@@ -368,8 +357,7 @@ function initAdminEventListeners() {
           alert("Error: " + err.error);
         }
       } catch (error) {
-        console.error("Error capturado en el catch:", error);
-        alert("Error de red al procesar el preventivo.");
+        alert("Error al procesar.");
       } finally {
         btnCrearPreventivo.disabled = false;
       }
@@ -386,9 +374,7 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("em-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !nivel || !fechaInput) {
-        return alert("Rellene todos los campos obligatorios de la Emergencia.");
-      }
+      if (!titulo || !nivel || !fechaInput) return alert("Rellene todos los campos.");
 
       try {
         btnCrearEmergencia.disabled = true;
@@ -400,18 +386,12 @@ function initAdminEventListeners() {
           body: JSON.stringify({
             tipo: "emergencias",
             admin_id,
-            values: {
-              titulo,
-              nivel,
-              fecha_inicio: fechaISO,
-              activa: true,
-              creado_en: new Date().toISOString()
-            }
+            values: { titulo, nivel, fecha_inicio: fechaISO, activa: true, creado_en: new Date().toISOString() }
           })
         });
 
         if (response.ok) {
-          alert("Emergencia reportada de inmediato.");
+          alert("Emergencia reportada.");
           document.getElementById("form-crear-emergencia")?.reset();
           await cargarListadoAdmin();
         } else {
@@ -419,93 +399,10 @@ function initAdminEventListeners() {
           alert("Error: " + err.error);
         }
       } catch (error) {
-        console.error(error);
-        alert("Error de red al procesar la emergencia.");
+        alert("Error al procesar.");
       } finally {
         btnCrearEmergencia.disabled = false;
       }
     });
-  }
-}
-
-
-// =========================================================================
-// PARTE 3: LISTADO DE USUARIOS ACTIVO (CON CONEXIÓN NATIVA DISPOSITIVOS)
-// =========================================================================
-export async function cargarUsuariosAdmin() {
-  // Asegúrate de que este ID exista en tu index.html (ej. <div id="admin-usuarios-lista"></div>)
-  const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");
-  if (!cont) {
-    console.warn("AVPCEA Admin: No se encontró el contenedor de la lista de usuarios.");
-    return;
-  }
-  
-  cont.innerHTML = "<p>Cargando voluntarios...</p>";
-
-  try {
-    // Consulta select cruzada nativa gracias a la nueva FK
-    const { data: usuarios, error } = await supabase
-      .from("usuarios")
-      .select(`
-        id,
-        nombre,
-        telefono,
-        dispositivos (
-          rol
-        )
-      `)
-      .order("nombre", { ascending: true }); // Orden alfabético estricto
-
-    if (error) throw error;
-
-    cont.innerHTML = "";
-
-    if (!usuarios || usuarios.length === 0) {
-      cont.innerHTML = "<p>No hay usuarios registrados en el sistema.</p>";
-      return;
-    }
-
-    // Tabla scannable para administración
-    let html = `
-      <table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;">
-        <thead>
-          <tr style="background:#f4f4f4; text-align:left; border-bottom:2px solid #ddd;">
-            <th style="padding:8px;">Nombre</th>
-            <th style="padding:8px;">Teléfono</th>
-            <th style="padding:8px;">Rol Real</th>
-            <th style="padding:8px; text-align:center;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    usuarios.forEach(usr => {
-      // Extraemos el rol desde el join nativo de la tabla dispositivos
-      const rolReal = usr.dispositivos?.rol || "Sin dispositivo";
-      
-      html += `
-        <tr style="border-bottom:1px solid #eee;">
-          <td style="padding:8px; font-weight:bold;">${usr.nombre}</td>
-          <td style="padding:8px;">${usr.telefono || "—"}</td>
-          <td style="padding:8px;">
-            <span class="badge" style="padding:2px 6px; border-radius:4px; font-size:12px; background:${rolReal === 'admin' ? '#ffebeb' : '#ebefff'}; color:${rolReal === 'admin' ? '#cc0000' : '#0022cc'};">
-              ${rolReal.toUpperCase()}
-            </span>
-          </td>
-          <td style="padding:8px; text-align:center;">
-            <button class="btn-secondary" style="padding:2px 6px; font-size:12px; background:#777;" onclick="ejecutarEliminacionElemento('usuarios', '${usr.id}')">
-              Dar de Baja
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += `</tbody></table>`;
-    cont.innerHTML = html;
-
-  } catch (err) {
-    console.error("Error al cargar los usuarios de administración:", err);
-    cont.innerHTML = "<p style='color:red;'>Error al cargar el listado de voluntarios.</p>";
   }
 }
