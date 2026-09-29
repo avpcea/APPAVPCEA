@@ -318,7 +318,7 @@ function initAdminEventListeners() {
     });
   }
 
-  // 3. CREAR PREVENTIVO (Corregido split de fecha)
+  // 3. CREAR PREVENTIVO (Con Log de Diagnóstico)
   const btnCrearPreventivo = document.getElementById("btn-crear-preventivo");
   if (btnCrearPreventivo) {
     btnCrearPreventivo.addEventListener("click", async (e) => {
@@ -329,31 +329,34 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("prev-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) {
-        return alert("Introduce Título y Fecha/Hora de inicio del Preventivo.");
-      }
+      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha/Hora de inicio.");
 
       try {
         btnCrearPreventivo.disabled = true;
-        
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Extrae exactamente los primeros 10 caracteres (YYYY-MM-DD) como texto plano
+        const fechaSoloDate = fechaISO.substring(0, 10);
+
+        // --- OBJETO DE PRUEBA ---
+        const payloadDePrueba = {
+          tipo: "preventivos",
+          admin_id,
+          values: {
+            titulo,
+            lugar,
+            descripcion,
+            fecha: fechaSoloDate,
+            fecha_inicio: fechaISO,
+            creado_en: new Date().toISOString()
+          }
+        };
+
+        // Imprimimos en consola para inspeccionar la estructura exacta
+        console.log("📦 PAYLOAD ENVIADO A EDGE FUNCTION:", JSON.stringify(payloadDePrueba, null, 2));
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tipo: "preventivos",
-            admin_id,
-            values: {
-              titulo,
-              lugar,
-              descripcion,
-              fecha: fechaSoloDate,
-              fecha_inicio: fechaISO,
-              creado_en: new Date().toISOString()
-            }
-          })
+          body: JSON.stringify(payloadDePrueba)
         });
 
         if (response.ok) {
@@ -365,7 +368,7 @@ function initAdminEventListeners() {
           alert("Error: " + err.error);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error capturado en el catch:", error);
         alert("Error de red al procesar el preventivo.");
       } finally {
         btnCrearPreventivo.disabled = false;
