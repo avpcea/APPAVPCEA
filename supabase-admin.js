@@ -282,7 +282,7 @@ function initAdminEventListeners() {
         
         // Conversión segura de fecha datetime-local a ISO y Date string ordinario
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.split('T')[0]; // [0] Extrae estrictamente la cadena YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10); // Extrae exactamente los primeros 10 caracteres (YYYY-MM-DD) como texto plano
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
@@ -337,7 +337,7 @@ function initAdminEventListeners() {
         btnCrearPreventivo.disabled = true;
         
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.split('T')[0]; // Extrae estrictamente YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10); // Extrae exactamente los primeros 10 caracteres (YYYY-MM-DD) como texto plano
 
         const response = await fetch(`${BASE_FN}/admin-create-element`, {
           method: "POST",
