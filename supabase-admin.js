@@ -21,7 +21,7 @@ window.ejecutarCierreEvento = async function(id, tipo) {
   if (!confirm(`¿Estás seguro de que deseas cerrar este registro de ${tipo}?`)) return;
   try {
     const admin_id = localStorage.getItem("usuario_id");
-    const response = await fetch(`${BASE_FN}/admin-close-element`, {
+    const response = await fetch(`${BASE_FN}/admin-close-element-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, tipo, admin_id, fecha_fin: new Date().toISOString() })
@@ -253,7 +253,7 @@ function initAdminEventListeners() {
           payload.cumple_dia = parseInt(cumpleDia);
         }
 
-        const response = await fetch(`${BASE_FN}/admin-create-user`, {
+        const response = await fetch(`${BASE_FN}/admin-create-user-ts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -294,7 +294,7 @@ function initAdminEventListeners() {
         const fechaISO = new Date(fechaInput).toISOString();
         const fechaSoloDate = fechaISO.substring(0, 10);
 
-        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+        const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -338,7 +338,7 @@ function initAdminEventListeners() {
         const fechaISO = new Date(fechaInput).toISOString();
         const fechaSoloDate = fechaISO.substring(0, 10);
 
-        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+        const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -380,7 +380,7 @@ function initAdminEventListeners() {
         btnCrearEmergencia.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
 
-        const response = await fetch(`${BASE_FN}/admin-create-element`, {
+        const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
