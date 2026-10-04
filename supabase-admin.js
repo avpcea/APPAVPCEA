@@ -21,6 +21,7 @@ window.ejecutarCierreEvento = async function(id, tipo) {
   if (!confirm(`¿Estás seguro de que deseas cerrar este registro de ${tipo}?`)) return;
   try {
     const admin_id = localStorage.getItem("usuario_id");
+    // REVISA ESTA LÍNEA (Asegúrate de poner -ts al final):
     const response = await fetch(`${BASE_FN}/admin-close-element-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
