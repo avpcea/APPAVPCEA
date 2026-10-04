@@ -1,5 +1,5 @@
 // =========================================================================
-// PARTE 1: CONFIGURACIÓN, INICIALIZACIÓN Y RENDERIZADO DE CONTENIDOS
+// PARTE 1: CONFIGURACIÓN, INTERFAZ DENTRO DE WINDOW Y CIERRE CON FORMULARIO
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
 
@@ -9,26 +9,50 @@ async function inicializarAdminCompleto() {
   await cargarUsuariosAdmin();
 }
 
-// Doble red de seguridad para asegurar la carga en GitHub Pages
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', inicializarAdminCompleto);
 } else {
   inicializarAdminCompleto();
 }
 
-// Exposición global limpia de funciones para los botones dinámicos
+// EXPOSICIÓN GLOBAL EVOLUCIONADA: Cierre interactivo solicitando los datos pendientes
 window.ejecutarCierreEvento = async function(id, tipo) {
-  if (!confirm(`¿Estás seguro de que deseas cerrar este registro de ${tipo}?`)) return;
+  // 1. Solicitamos al usuario la hora de finalización mediante la interfaz nativa
+  const horaFinInput = prompt(
+    `Introduce la fecha y hora de FINALIZACIÓN para este registro de ${tipo} (Formato: AAAA-MM-DD HH:MM). \nDejar en blanco para usar la hora actual:`
+  );
+  
+  if (horaFinInput === null) return; // Si cancela el prompt, abortamos el flujo
+
+  let fechaFinISO;
+  if (horaFinInput.trim() === "") {
+    fechaFinISO = new Date().toISOString();
+  } else {
+    const fechaParseada = new Date(horaFinInput.replace(' ', 'T'));
+    if (isNaN(fechaParseada.getTime())) {
+      alert("Formato de fecha inválido. Por favor, usa el formato: AAAA-MM-DD HH:MM (Ej: 2026-10-24 20:30)");
+      return;
+    }
+    fechaFinISO = fechaParseada.toISOString();
+  }
+
   try {
     const admin_id = localStorage.getItem("usuario_id");
-    // REVISA ESTA LÍNEA (Asegúrate de poner -ts al final):
+    
+    // Enviamos la petición a la Edge Function pasándole explícitamente la fecha_fin introducida
     const response = await fetch(`${BASE_FN}/admin-close-element-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, tipo, admin_id, fecha_fin: new Date().toISOString() })
+      body: JSON.stringify({ 
+        id, 
+        tipo, 
+        admin_id, 
+        fecha_fin: fechaFinISO 
+      })
     });
+
     if (response.ok) {
-      alert("Registro cerrado correctamente.");
+      alert("Registro cerrado correctamente. Las horas han sido procesadas.");
       await cargarListadoAdmin();
     } else {
       const err = await response.json();
@@ -36,7 +60,7 @@ window.ejecutarCierreEvento = async function(id, tipo) {
     }
   } catch (error) {
     console.error(error);
-    alert("Error al procesar el cierre.");
+    alert("Error de red al procesar el cierre.");
   }
 };
 
