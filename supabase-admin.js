@@ -1,5 +1,5 @@
 // =========================================================================
-// PARTE 1: CONFIGURACIÓN, INTERFAZ DENTRO DE WINDOW Y CIERRE CON FORMULARIO
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 1 DE 3)
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
 
@@ -9,20 +9,24 @@ async function inicializarAdminCompleto() {
   await cargarUsuariosAdmin();
 }
 
+// Inicialización defensiva dual según Regla Crítica 3
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', inicializarAdminCompleto);
 } else {
   inicializarAdminCompleto();
 }
 
-// EXPOSICIÓN GLOBAL EVOLUCIONADA: Cierre interactivo solicitando los datos pendientes
+// =========================================================================
+// EXPOSICIÓN GLOBAL: FUNCIONES INTERACTIVAS PARA BOTONES HTML
+// =========================================================================
+
+// Cierre interactivo solicitando los datos pendientes
 window.ejecutarCierreEvento = async function(id, tipo) {
-  // 1. Solicitamos al usuario la hora de finalización mediante la interfaz nativa
   const horaFinInput = prompt(
     `Introduce la fecha y hora de FINALIZACIÓN para este registro de ${tipo} (Formato: AAAA-MM-DD HH:MM). \nDejar en blanco para usar la hora actual:`
   );
   
-  if (horaFinInput === null) return; // Si cancela el prompt, abortamos el flujo
+  if (horaFinInput === null) return; 
 
   let fechaFinISO;
   if (horaFinInput.trim() === "") {
@@ -38,17 +42,12 @@ window.ejecutarCierreEvento = async function(id, tipo) {
 
   try {
     const admin_id = localStorage.getItem("usuario_id");
-    
-    // Enviamos la petición a la Edge Function pasándole explícitamente la fecha_fin introducida
+    const idLimpio = isNaN(Number(id)) ? id : Number(id);
+
     const response = await fetch(`${BASE_FN}/admin-close-element-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        id, 
-        tipo, 
-        admin_id, 
-        fecha_fin: fechaFinISO 
-      })
+      body: JSON.stringify({ id: idLimpio, tipo, admin_id, fecha_fin: fechaFinISO })
     });
 
     if (response.ok) {
@@ -67,7 +66,8 @@ window.ejecutarCierreEvento = async function(id, tipo) {
 window.ejecutarEliminacionElemento = async function(tipo, id) {
   if (!confirm(`¿Estás seguro de eliminar definitivamente este registro de ${tipo}?`)) return;
   try {
-    const { error } = await supabase.from(tipo).delete().eq("id", id);
+    const idLimpio = isNaN(Number(id)) ? id : Number(id);
+    const { error } = await supabase.from(tipo).delete().eq("id", idLimpio);
     if (error) throw error;
     alert("Registro eliminado.");
     await cargarListadoAdmin();
@@ -76,6 +76,9 @@ window.ejecutarEliminacionElemento = async function(tipo, id) {
     alert(`Error al eliminar: ${error.message}`);
   }
 };
+// =========================================================================
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 2 DE 3)
+// =========================================================================
 
 // ===============================
 // LISTADO GENERAL ADMIN
@@ -172,7 +175,6 @@ async function cargarEmergenciasAdmin() {
     ]);
 
     cont.innerHTML = "";
-
     cont.innerHTML += `<h4>Emergencias activas</h4>`;
     if (activas.data && activas.data.length > 0) {
       activas.data.forEach(emg => {
@@ -251,9 +253,8 @@ export async function cargarUsuariosAdmin() {
     console.error(err);
   }
 }
-
 // =========================================================================
-// PARTE 2: CENTRALIZACIÓN DE LISTENERS TOTALMENTE LIMPIA Y CORREGIDA
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3)
 // =========================================================================
 function initAdminEventListeners() {
   
@@ -317,7 +318,7 @@ function initAdminEventListeners() {
       try {
         btnCrearOperativo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10);
+        const fechaSoloDate = fechaISO.substring(0, 10); // Extracción plana YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
@@ -361,7 +362,7 @@ function initAdminEventListeners() {
       try {
         btnCrearPreventivo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10);
+        const fechaSoloDate = fechaISO.substring(0, 10); // Extracción plana YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
