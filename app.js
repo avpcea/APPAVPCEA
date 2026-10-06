@@ -1,29 +1,24 @@
-// ===============================
-// SUPABASE CLIENTE
-// ===============================
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// =========================================================================
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 2)
+// =========================================================================
+import { createClient } from "https://esm.sh";
 
-const SUPABASE_URL = "https://hptnaoliiychgkxsaksy.supabase.co";
+const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
 
-
-// ===============================
-// MOSTRAR APP
-// ===============================
+// Mostrar contenedor principal de la aplicación PWA
 document.getElementById("app-container").style.display = "block";
 
-
 // ===============================
-// TOKEN DE AUTORIZACIÓN
+// CONTROL DE ACCESO Y AUTORIZACIÓN
 // ===============================
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
 
 window.AVPCEA_AUTORIZADO = false;
-
 let usuario_id = localStorage.getItem("usuario_id");
 
 if (!usuario_id || usuario_id.trim() === "") {
@@ -36,15 +31,12 @@ if (tokenGuardado === TOKEN_SECRETO) {
   registrarDispositivo();
 } else {
   let autorizado = false;
-
   while (!autorizado) {
     const codigo = prompt("Introduce el código de autorización:");
-
     if (codigo === null) {
       alert("Acceso denegado. No se ha introducido código.");
       break;
     }
-
     if (codigo === TOKEN_SECRETO) {
       localStorage.setItem("avpcea_token", TOKEN_SECRETO);
       alert("Dispositivo autorizado.");
@@ -62,20 +54,17 @@ if (!window.AVPCEA_AUTORIZADO) {
   throw new Error("Acceso no autorizado");
 }
 
-
-// ===============================
-// SISTEMA ANTI-DUPLICADOS
-// ===============================
+// Sistema de control defensivo anti-duplicados
 const cargando = {
   operativos: false,
   preventivos: false,
   emergencias: false
 };
 
+// ===============================
+// RENDERS PÚBLICOS DE EVENTOS
+// ===============================
 
-// ===============================
-// CARGA OPERATIVOS (ACTUALIZADO: Reciente primero + Lugar unificado)
-// ===============================
 export async function cargarOperativos() {
   if (cargando.operativos) return;
   cargando.operativos = true;
@@ -86,7 +75,7 @@ export async function cargarOperativos() {
   const { data: operativos, error } = await supabase
     .from("operativos")
     .select("*")
-    .order("fecha", { ascending: false }); // <-- Tu cambio: Más reciente primero
+    .order("fecha", { ascending: false });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar operativos.</p>";
@@ -95,30 +84,25 @@ export async function cargarOperativos() {
   }
 
   cont.innerHTML = "";
-
   for (const op of operativos) {
-    const suscrito = await estaSuscrito("OPR", op.id);
+    // Homologado con el nombre exacto de la tabla Postgres
+    const suscrito = await estaSuscrito("operativos", op.id);
 
     cont.innerHTML += `
       <div class="card">
         <h3>${op.titulo}</h3>
-        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p> <!-- <-- Columna 'lugar' unificada -->
+        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
         <p><strong>Fecha:</strong> ${op.fecha}</p>
         <p>${op.descripcion || "Sin observaciones"}</p>
-
-        <button class="btn-primary" onclick="toggleSuscripcion('OPR', ${op.id})">
+        <button class="btn-primary" onclick="window.toggleSuscripcion('operativos', ${op.id})">
           ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
         </button>
       </div>
     `;
   }
-
   cargando.operativos = false;
 }
 
-// ===============================
-// CARGA PREVENTIVOS (ACTUALIZADO: Reciente primero)
-// ===============================
 export async function cargarPreventivos() {
   if (cargando.preventivos) return;
   cargando.preventivos = true;
@@ -129,7 +113,7 @@ export async function cargarPreventivos() {
   const { data: preventivos, error } = await supabase
     .from("preventivos")
     .select("*")
-    .order("fecha", { ascending: false }); // <-- Tu cambio: Más reciente primero
+    .order("fecha", { ascending: false });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar preventivos.</p>";
@@ -138,9 +122,9 @@ export async function cargarPreventivos() {
   }
 
   cont.innerHTML = "";
-
   for (const p of preventivos) {
-    const suscrito = await estaSuscrito("NRP", p.id);
+    // Homologado con el nombre exacto de la tabla Postgres
+    const suscrito = await estaSuscrito("preventivos", p.id);
 
     cont.innerHTML += `
       <div class="card">
@@ -148,17 +132,17 @@ export async function cargarPreventivos() {
         <p><strong>Lugar:</strong> ${p.lugar || "—"}</p>
         <p><strong>Fecha:</strong> ${p.fecha}</p>
         <p>${p.descripcion || "Sin observaciones"}</p>
-
-        <button class="btn-primary" onclick="toggleSuscripcion('NRP', ${p.id})">
+        <button class="btn-primary" onclick="window.toggleSuscripcion('preventivos', ${p.id})">
           ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
         </button>
       </div>
     `;
   }
-
   cargando.preventivos = false;
 }
-
+// =========================================================================
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 DE 2)
+// =========================================================================
 
 // ===============================
 // CARGA EMERGENCIAS
@@ -170,7 +154,6 @@ export async function cargarEmergencias() {
   const cont = document.getElementById("lista-emergencias");
   cont.innerHTML = "<p>Cargando emergencias...</p>";
 
-  // Emergencias activas
   const { data: emergencias, error } = await supabase
     .from("emergencias")
     .select("*")
@@ -183,7 +166,6 @@ export async function cargarEmergencias() {
     return;
   }
 
-  // Si no hay emergencias activas
   if (!emergencias || emergencias.length === 0) {
     cont.innerHTML = `
       <div class="card">
@@ -195,12 +177,8 @@ export async function cargarEmergencias() {
     return;
   }
 
-  // Mostrar emergencias activas
   cont.innerHTML = "";
-
   for (const emg of emergencias) {
-
-    // Color según nivel
     const nivelColor =
       emg.nivel === "crítico" ? "red" :
       emg.nivel === "alto" ? "orange" :
@@ -210,100 +188,85 @@ export async function cargarEmergencias() {
     cont.innerHTML += `
       <div class="card">
         <h3>${emg.titulo}</h3>
-
         <p><strong>Nivel:</strong> 
           <span style="color:${nivelColor}; font-weight:bold;">
             ${emg.nivel.toUpperCase()}
           </span>
         </p>
-
         <p><strong>Inicio:</strong> ${new Date(emg.fecha_inicio).toLocaleString()}</p>
-
-        <p><strong>Horas asignadas:</strong> ${emg.horas}</p>
-
+        <p><strong>Horas asignadas:</strong> ${emg.horas || 0}</p>
         <p><strong>Estado:</strong> Activa</p>
       </div>
     `;
   }
-
   cargando.emergencias = false;
 }
 
-
 // ===============================
-// SUSCRIPCIONES
+// CONTROL DE SUSCRIPCIONES
 // ===============================
-export async function estaSuscrito(tipo, evento_id) {
+export async function estaSuscrito(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
-
   const { data } = await supabase
     .from("suscripciones")
     .select("*")
     .eq("usuario_id", usuario_id)
-    .eq("tipo", tipo)
-    .eq("evento_id", evento_id)
+    .eq("tipo_evento", tipo_evento) // Nombre exacto de la columna en Postgres
+    .eq("evento_id", Number(evento_id)) // Comparación BigInt numérica limpia
     .maybeSingle();
 
   return !!data;
 }
 
-export async function toggleSuscripcion(tipo, evento_id) {
+export async function toggleSuscripcion(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
-  const suscrito = await estaSuscrito(tipo, evento_id);
-
-  // NOTA: Para realizar acciones de admin en las Edge Functions blindadas, 
-  // necesitamos pasar nuestro propio ID si actuamos como admin, o un ID autorizado.
-  // Para suscribirse a sí mismo, pasamos el usuario_id como autorizador si el backend lo permite,
-  // o el ID del administrador encargado si se hace desde el panel de gestión.
+  const suscrito = await estaSuscrito(tipo_evento, evento_id);
   const admin_id = localStorage.getItem("usuario_id"); 
+  const eventoIdNumerico = Number(evento_id);
 
   if (!suscrito) {
-    // NUEVO: Ahora enviamos el campo 'tipo' (OPR, NRP, EMG) para que la BD no explote
-    const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion`, {
+    // Apunta al backend blindado en TypeScript con sufijo -ts
+    const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         usuario_id,
-        evento_id: String(evento_id),
-        tipo, // <--- Solución al Bug
-        fecha: new Date().toISOString(),
-        admin_id: admin_id // <--- Solución a la Seguridad
+        evento_id: eventoIdNumerico, // Enviado como número puro para BigInt
+        tipo: tipo_evento, // Pasa como 'operativos' o 'preventivos'
+        admin_id: admin_id 
       })
     });
 
     const resultado = await respuesta.json();
     if (!respuesta.ok) {
-      alert("Error al suscribirse: " + (resultado.error?.message || resultado.error));
+      alert("Error al suscribirse: " + (resultado.error || "Error desconocido"));
       return;
     }
-
     alert("Suscripción realizada con éxito.");
   } else {
-    // Cancelar suscripción directamente (o mediante función si activas RLS estricto)
+    // Cancelación limpia por cliente Supabase
     const { error } = await supabase
       .from("suscripciones")
       .delete()
       .eq("usuario_id", usuario_id)
-      .eq("tipo", tipo)
-      .eq("evento_id", String(evento_id));
+      .eq("tipo_evento", tipo_evento)
+      .eq("evento_id", eventoIdNumerico);
 
     if (error) {
       alert("Error al cancelar la suscripción: " + error.message);
       return;
     }
-
     alert("Suscripción cancelada.");
   }
 
-  // Recargar la pantalla correspondiente
-  if (tipo === "NRP") cargarPreventivos();
-  if (tipo === "OPR") cargarOperativos();
-  if (tipo === "EMG") cargarEmergencias();
+  // Recarga optimizada de pantallas
+  if (tipo_evento === "preventivos") cargarPreventivos();
+  if (tipo_evento === "operativos") cargarOperativos();
+  if (tipo_evento === "emergencias") cargarEmergencias();
 }
 
-
 // ===============================
-// ROLES
+// GESTIÓN DE DISPOSITIVOS Y ROL
 // ===============================
 export async function registrarDispositivo() {
   const usuario_id = localStorage.getItem("usuario_id");
@@ -322,7 +285,6 @@ export async function registrarDispositivo() {
 
 export async function esAdmin() {
   const usuario_id = localStorage.getItem("usuario_id");
-
   const { data } = await supabase
     .from("dispositivos")
     .select("rol")
@@ -331,7 +293,6 @@ export async function esAdmin() {
 
   return data && data.rol === "admin";
 }
-
 
 // ===============================
 // SPA: CAMBIO DE PANTALLAS
@@ -356,33 +317,25 @@ export function showScreen(name) {
     s.style.display = "none";
   });
 
-  const screen = document.getElementById(
-    name === "admin" ? "screen-administracion" : "screen-" + name
-  );
-
+  const screen = document.getElementById(name === "admin" ? "screen-administracion" : "screen-" + name);
   if (screen) {
     screen.classList.add("active");
     screen.style.display = "block";
   }
 
   if (name === "admin") {
-    if (typeof cargarListadoAdmin === "function") cargarListadoAdmin();
-    if (typeof cargarUsuariosAdmin === "function") cargarUsuariosAdmin();
+    // Inicialización defensiva dual dinámica
+    if (window.cargarListadoAdmin) window.cargarListadoAdmin();
+    if (window.cargarUsuariosAdmin) window.cargarUsuariosAdmin();
   }
 }
-
 
 // ===============================
 // NUEVO FLUJO DE REGISTRO POR TELÉFONO
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
-
   const telefono = document.getElementById("telefono-bienvenida").value.trim();
-
-  if (!telefono) {
-    alert("Introduce tu teléfono para continuar.");
-    return;
-  }
+  if (!telefono) return alert("Introduce tu teléfono para continuar.");
 
   const { data: usuarioExistente } = await supabase
     .from("usuarios")
@@ -397,34 +350,22 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
     localStorage.setItem("usuario_id", usuario_id);
   } else {
     const nombre = prompt("Introduce tu nombre y apellido:");
-    if (!nombre || nombre.trim() === "") {
-      alert("Debes introducir un nombre para continuar.");
-      return;
-    }
+    if (!nombre || nombre.trim() === "") return alert("Debes introducir un nombre para continuar.");
 
     let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
+    if (!fecha_nacimiento || fecha_nacimiento.trim() === "") return alert("Debes introducir tu fecha de nacimiento.");
 
-    if (!fecha_nacimiento || fecha_nacimiento.trim() === "") {
-      alert("Debes introducir tu fecha de nacimiento.");
-      return;
-    }
+    const regexFecha = /^\d{4}-\d{2}-\d{2}\$/;
+    if (!regexFecha.test(fecha_nacimiento)) return alert("La fecha debe tener el formato AAAA-MM-DD.");
 
-    // Validación de formato AAAA-MM-DD
-    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
-
-    if (!regexFecha.test(fecha_nacimiento)) {
-      alert("La fecha debe tener el formato AAAA-MM-DD.");
-      return;
-    }
-
-    // Validación de fecha real
     const fechaObj = new Date(fecha_nacimiento);
-    if (isNaN(fechaObj.getTime())) {
-      alert("La fecha introducida no es válida.");
-      return;
-    }
+    if (isNaN(fechaObj.getTime())) return alert("La fecha introducida no es válida.");
 
     usuario_id = crypto.randomUUID();
+
+    // Extraer los cumpleaños como enteros según Regla Crítica 2
+    const cumple_mes = fechaObj.getMonth() + 1;
+    const cumple_dia = fechaObj.getDate();
 
     const { error } = await supabase
       .from("usuarios")
@@ -433,14 +374,14 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
           id: usuario_id,
           nombre: nombre.trim(),
           telefono: telefono.trim(),
-          fecha_nacimiento
+          fecha_nacimiento,
+          cumple_mes,
+          cumple_dia,
+          horas: 0.00
         }
       ]);
 
-    if (error) {
-      alert("Error creando usuario: " + error.message);
-      return;
-    }
+    if (error) return alert("Error creando usuario: " + error.message);
 
     localStorage.setItem("usuario_id", usuario_id);
     alert("Usuario registrado correctamente.");
@@ -448,7 +389,6 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
 
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("welcome-header").style.display = "none";
-
   document.getElementById("app-screens").style.display = "block";
   document.getElementById("main-header").style.display = "flex";
   document.querySelector(".bottom-nav").style.display = "flex";
@@ -456,33 +396,21 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
   showScreen("operativos");
 });
 
-
-// ===============================
-// NAVEGACIÓN INFERIOR
-// ===============================
+// Navegación PWA
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    const screen = btn.dataset.screen;
-    showScreen(screen);
+    showScreen(btn.dataset.screen);
   });
 });
 
-
-// ===============================
-// CARGA DINÁMICA ADMIN
-// ===============================
+// Carga asíncrona del panel administrativo
 esAdmin().then(admin => {
   if (!admin) return;
-
   document.getElementById("admin-btn").style.display = "block";
-
-  import("https://avpcea.github.io/APPAVPCEA/supabase-admin.js");
+  import("https://github.io");
 });
 
-
-// ===============================
-// EXPONER FUNCIONES AL DOM
-// ===============================
+// Exposición global estricta en el objeto window
 window.cargarOperativos = cargarOperativos;
 window.cargarPreventivos = cargarPreventivos;
 window.cargarEmergencias = cargarEmergencias;
