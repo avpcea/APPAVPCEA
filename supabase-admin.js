@@ -254,11 +254,11 @@ export async function cargarUsuariosAdmin() {
   }
 }
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3 - ACTUALIZADA)
 // =========================================================================
 function initAdminEventListeners() {
   
-  // 1. CREAR USUARIO
+  // 1. CREAR USUARIO CON FECHA DE NACIMIENTO Y HORAS INICIALES
   const btnCrearUsuario = document.getElementById("btn-crear-usuario");
   if (btnCrearUsuario) {
     btnCrearUsuario.addEventListener("click", async (e) => {
@@ -266,17 +266,30 @@ function initAdminEventListeners() {
       const nombre = document.getElementById("usr-nombre")?.value.trim();
       const telefono = document.getElementById("usr-telefono")?.value.trim();
       const rol = document.getElementById("usr-rol")?.value;
-      const cumpleMes = document.getElementById("usr-cumple-mes")?.value;
-      const cumpleDia = document.getElementById("usr-cumple-dia")?.value;
+      const fechaNacimientoInput = document.getElementById("usr-fecha-nacimiento")?.value;
+      const horasInicialesInput = document.getElementById("usr-horas-iniciales")?.value;
 
       if (!nombre || !telefono || !rol) return alert("Rellena nombre, teléfono y rol.");
 
       try {
         btnCrearUsuario.disabled = true;
-        const payload = { nombre, telefono, rol };
-        if (cumpleMes && cumpleDia) {
-          payload.cumple_mes = parseInt(cumpleMes);
-          payload.cumple_dia = parseInt(cumpleDia);
+        
+        // Base del payload respetando la transacción dual usuario + dispositivo
+        const payload = { 
+          nombre, 
+          telefono, 
+          rol,
+          horas: horasInicialesInput ? parseFloat(horasInicialesInput) : 0.00
+        };
+
+        // Regla Crítica 2: Homogeneizar cumpleaños como enteros (cumple_mes y cumple_dia)
+        if (fechaNacimientoInput) {
+          const fechaParseada = new Date(fechaNacimientoInput);
+          if (!isNaN(fechaParseada.getTime())) {
+            payload.fecha_nacimiento = fechaNacimientoInput; // Guardamos la fecha plana YYYY-MM-DD
+            payload.cumple_mes = fechaParseada.getMonth() + 1; // getMonth() va de 0 a 11
+            payload.cumple_dia = fechaParseada.getDate();
+          }
         }
 
         const response = await fetch(`${BASE_FN}/admin-create-user-ts`, {
@@ -286,9 +299,11 @@ function initAdminEventListeners() {
         });
 
         if (response.ok) {
-          alert("Usuario creado correctamente.");
+          alert("Usuario creado correctamente con su rol y saldo de horas.");
           document.getElementById("usr-nombre").value = "";
           document.getElementById("usr-telefono").value = "";
+          document.getElementById("usr-fecha-nacimiento").value = "";
+          document.getElementById("usr-horas-iniciales").value = "0.00";
           await cargarUsuariosAdmin();
         } else {
           const err = await response.json();
@@ -318,7 +333,7 @@ function initAdminEventListeners() {
       try {
         btnCrearOperativo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Extracción plana YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10); // Regla Crítica 3: Exclusivamente YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
@@ -362,7 +377,7 @@ function initAdminEventListeners() {
       try {
         btnCrearPreventivo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Extracción plana YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10); // Regla Crítica 3: Exclusivamente YYYY-MM-DD
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
