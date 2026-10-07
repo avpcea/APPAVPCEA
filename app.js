@@ -333,7 +333,7 @@ export function showScreen(name) {
 }
 
 // ===============================
-// NUEVO FLUJO DE REGISTRO POR TELÉFONO
+// NUEVO FLUJO DE REGISTRO POR TELÉFONO (CORREGIDO)
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
   const telefono = document.getElementById("telefono-bienvenida").value.trim();
@@ -357,7 +357,8 @@ document.getElementById("btn-acceder").addEventListener("click", async () => {
     let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
     if (!fecha_nacimiento || fecha_nacimiento.trim() === "") return alert("Debes introducir tu fecha de nacimiento.");
 
-    const regexFecha = /^\d{4}-\d{2}-\d{2}\$/;
+    // EXPRESIÓN REGULAR CORREGIDA SIN ESCAPES INTERNOS
+    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
     if (!regexFecha.test(fecha_nacimiento)) return alert("La fecha debe tener el formato AAAA-MM-DD.");
 
     const fechaObj = new Date(fecha_nacimiento);
