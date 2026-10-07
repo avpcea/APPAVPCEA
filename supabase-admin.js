@@ -110,7 +110,7 @@ export async function cargarListadoAdmin() {
             <small style="color: #666;">Horas totales: ${op.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${op.id}', 'operativos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('${op.id}', 'operativos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
@@ -138,7 +138,7 @@ export async function cargarListadoAdmin() {
             <small style="color: #666;">Horas totales: ${pr.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${pr.id}', 'preventivos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('${pr.id}', 'preventivos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
