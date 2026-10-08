@@ -410,7 +410,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 esAdmin().then(admin => {
   if (!admin) return;
   document.getElementById("admin-btn").style.display = "block";
-  import("https://github.io");
+  import("./supabase-admin.js");
 });
 
 // Exposición global estricta en el objeto window
