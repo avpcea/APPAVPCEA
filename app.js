@@ -341,53 +341,35 @@ export function showScreen(name) {
 // NUEVO FLUJO DE REGISTRO POR TELÉFONO (CORREGIDO)
 // ===============================
 document.getElementById("btn-acceder").addEventListener("click", async () => {
-  const telefono = document.getElementById("telefono-bienvenida").value.trim();
-  if (!telefono) return alert("Introduce tu teléfono para continuar.");
+  // Solicitud y validación del cumpleaños
+  let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
+  if (!fecha_nacimiento || fecha_nacimiento.trim() === "") return alert("Debes introducir tu fecha de nacimiento.");
 
-  const { data: usuarioExistente } = await supabase
+  const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regexFecha.test(fecha_nacimiento)) return alert("La fecha debe tener el formato AAAA-MM-DD.");
+
+  const fechaObj = new Date(fecha_nacimiento);
+  if (isNaN(fechaObj.getTime())) return alert("La fecha introducida no es válida.");
+
+  usuario_id = crypto.randomUUID();
+
+  // Extraemos exclusivamente los dos enteros requeridos por la arquitectura
+  const cumple_mes = fechaObj.getMonth() + 1;
+  const cumple_dia = fechaObj.getDate();
+
+  const { error } = await supabase
     .from("usuarios")
-    .select("*")
-    .eq("telefono", telefono)
-    .maybeSingle();
+    .insert([
+      {
+        id: usuario_id,
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        cumple_mes,      // Entero homogeneizado
+        cumple_dia,      // Entero homogeneizado
+        horas: 0.00
+      }
+    ]);
 
-  let usuario_id;
-
-  if (usuarioExistente) {
-    usuario_id = usuarioExistente.id;
-    localStorage.setItem("usuario_id", usuario_id);
-  } else {
-    const nombre = prompt("Introduce tu nombre y apellido:");
-    if (!nombre || nombre.trim() === "") return alert("Debes introducir un nombre para continuar.");
-
-    let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
-    if (!fecha_nacimiento || fecha_nacimiento.trim() === "") return alert("Debes introducir tu fecha de nacimiento.");
-
-    // EXPRESIÓN REGULAR CORREGIDA SIN ESCAPES INTERNOS
-    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regexFecha.test(fecha_nacimiento)) return alert("La fecha debe tener el formato AAAA-MM-DD.");
-
-    const fechaObj = new Date(fecha_nacimiento);
-    if (isNaN(fechaObj.getTime())) return alert("La fecha introducida no es válida.");
-
-    usuario_id = crypto.randomUUID();
-
-    // Extraer los cumpleaños como enteros según Regla Crítica 2
-    const cumple_mes = fechaObj.getMonth() + 1;
-    const cumple_dia = fechaObj.getDate();
-
-    const { error } = await supabase
-      .from("usuarios")
-      .insert([
-        {
-          id: usuario_id,
-          nombre: nombre.trim(),
-          telefono: telefono.trim(),
-          fecha_nacimiento,
-          cumple_mes,
-          cumple_dia,
-          horas: 0.00
-        }
-      ]);
 
     if (error) return alert("Error creando usuario: " + error.message);
 
