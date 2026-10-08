@@ -290,19 +290,19 @@ function initAdminEventListeners() {
           nombre, 
           telefono, 
           rol,
-          admin_id, // Enviado de forma segura y verificado
+          admin_id,
           horas: horasInicialesInput ? parseFloat(horasInicialesInput) : 0.00
         };
 
-        // Regla Crítica 2: Homogeneizar cumpleaños como enteros (cumple_mes y cumple_dia)
+        // Procesamos la fecha del selector y la transformamos directamente a los enteros correspondientes
         if (fechaNacimientoInput) {
           const fechaParseada = new Date(fechaNacimientoInput);
           if (!isNaN(fechaParseada.getTime())) {
-            payload.fecha_nacimiento = fechaNacimientoInput; 
             payload.cumple_mes = fechaParseada.getMonth() + 1; 
             payload.cumple_dia = fechaParseada.getDate();
           }
         }
+
 
         const response = await fetch(`${BASE_FN}/admin-create-user-ts`, {
           method: "POST",
