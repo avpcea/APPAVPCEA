@@ -258,7 +258,7 @@ export async function cargarUsuariosAdmin() {
 // =========================================================================
 function initAdminEventListeners() {
   
-  // 1. CREAR USUARIO CON FECHA DE NACIMIENTO Y HORAS INICIALES
+  // 1. CREAR USUARIO CON FECHA DE NACIMIENTO, HORAS INICIALES Y ADMIN_ID (BLINDADO)
   const btnCrearUsuario = document.getElementById("btn-crear-usuario");
   if (btnCrearUsuario) {
     btnCrearUsuario.addEventListener("click", async (e) => {
@@ -268,17 +268,29 @@ function initAdminEventListeners() {
       const rol = document.getElementById("usr-rol")?.value;
       const fechaNacimientoInput = document.getElementById("usr-fecha-nacimiento")?.value;
       const horasInicialesInput = document.getElementById("usr-horas-iniciales")?.value;
+      
+      // CAPTURA DEFENSIVA: Si no encuentra el usuario_id en localStorage, busca en la sesión activa de Supabase
+      let admin_id = localStorage.getItem("usuario_id");
+      if (!admin_id) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        admin_id = sessionData?.session?.user?.id;
+      }
+
+      // Si aun así está vacío, obligamos a detener el flujo para que no rompa la Edge Function
+      if (!admin_id) {
+        return alert("Error de sesión: No se ha detectado tu ID de Administrador en el dispositivo. Por favor, recarga la página.");
+      }
 
       if (!nombre || !telefono || !rol) return alert("Rellena nombre, teléfono y rol.");
 
       try {
         btnCrearUsuario.disabled = true;
         
-        // Base del payload respetando la transacción dual usuario + dispositivo
         const payload = { 
           nombre, 
           telefono, 
           rol,
+          admin_id, // Enviado de forma segura y verificado
           horas: horasInicialesInput ? parseFloat(horasInicialesInput) : 0.00
         };
 
@@ -286,8 +298,8 @@ function initAdminEventListeners() {
         if (fechaNacimientoInput) {
           const fechaParseada = new Date(fechaNacimientoInput);
           if (!isNaN(fechaParseada.getTime())) {
-            payload.fecha_nacimiento = fechaNacimientoInput; // Guardamos la fecha plana YYYY-MM-DD
-            payload.cumple_mes = fechaParseada.getMonth() + 1; // getMonth() va de 0 a 11
+            payload.fecha_nacimiento = fechaNacimientoInput; 
+            payload.cumple_mes = fechaParseada.getMonth() + 1; 
             payload.cumple_dia = fechaParseada.getDate();
           }
         }
