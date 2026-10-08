@@ -207,18 +207,22 @@ export async function cargarEmergencias() {
 // ===============================
 // CONTROL DE SUSCRIPCIONES
 // ===============================
+//  CORRECTO: Mapea directamente la columna 'tipo' y convierte al código correspondiente
 export async function estaSuscrito(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
+  // Mapeamos de vuelta al código de tu tabla: operativos -> OPR, preventivos -> NRP
+  const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
+  
   const { data } = await supabase
     .from("suscripciones")
     .select("*")
     .eq("usuario_id", usuario_id)
-    .eq("tipo_evento", tipo_evento) // Nombre exacto de la columna en Postgres
-    .eq("evento_id", Number(evento_id)) // Comparación BigInt numérica limpia
+    .eq("tipo", tipoCodigo) // Cambiado a 'tipo' con su código corto OPR/NRP
+    .eq("evento_id", String(evento_id)) // Tu esquema almacena el ID como string en esta tabla
     .maybeSingle();
-
   return !!data;
 }
+
 
 export async function toggleSuscripcion(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
@@ -246,13 +250,14 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
     }
     alert("Suscripción realizada con éxito.");
   } else {
-    // Cancelación limpia por cliente Supabase
+    //  CORRECTO
+    const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
     const { error } = await supabase
       .from("suscripciones")
       .delete()
       .eq("usuario_id", usuario_id)
-      .eq("tipo_evento", tipo_evento)
-      .eq("evento_id", eventoIdNumerico);
+      .eq("tipo", tipoCodigo)
+      .eq("evento_id", String(evento_id));
 
     if (error) {
       alert("Error al cancelar la suscripción: " + error.message);
