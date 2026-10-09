@@ -205,40 +205,38 @@ export async function cargarEmergencias() {
 }
 
 // ===============================
-// CONTROL DE SUSCRIPCIONES
+// CONTROL DE SUSCRIPCIONES (CORREGIDO SIN ERRORES DE SINTAXIS)
 // ===============================
-//  CORRECTO: Mapea directamente la columna 'tipo' y convierte al código correspondiente
 export async function estaSuscrito(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
-  // Mapeamos de vuelta al código de tu tabla: operativos -> OPR, preventivos -> NRP
   const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
   
   const { data } = await supabase
     .from("suscripciones")
     .select("*")
     .eq("usuario_id", usuario_id)
-    .eq("tipo", tipoCodigo) // Cambiado a 'tipo' con su código corto OPR/NRP
-    .eq("evento_id", String(evento_id)) // Tu esquema almacena el ID como string en esta tabla
+    .eq("tipo", tipoCodigo) 
+    .eq("evento_id", String(evento_id)) 
     .maybeSingle();
+    
   return !!data;
 }
-
 
 export async function toggleSuscripcion(tipo_evento, evento_id) {
   const usuario_id = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo_evento, evento_id);
   const admin_id = localStorage.getItem("usuario_id"); 
   const eventoIdNumerico = Number(evento_id);
+  const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
 
   if (!suscrito) {
-    // Apunta al backend blindado en TypeScript con sufijo -ts
     const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion-ts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         usuario_id,
-        evento_id: eventoIdNumerico, // Enviado como número puro para BigInt
-        tipo: tipo_evento, // Pasa como 'operativos' o 'preventivos'
+        evento_id: eventoIdNumerico, 
+        tipo: tipo_evento, 
         admin_id: admin_id 
       })
     });
@@ -250,8 +248,6 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
     }
     alert("Suscripción realizada con éxito.");
   } else {
-    //  CORRECTO
-    const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
     const { error } = await supabase
       .from("suscripciones")
       .delete()
@@ -263,10 +259,9 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
       alert("Error al cancelar la suscripción: " + error.message);
       return;
     }
-    alert("Suscripción cancelada.");
+    alert("Suscripción cancelled.");
   }
 
-  // Recarga optimizada de pantallas
   if (tipo_evento === "preventivos") cargarPreventivos();
   if (tipo_evento === "operativos") cargarOperativos();
   if (tipo_evento === "emergencias") cargarEmergencias();
