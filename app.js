@@ -230,9 +230,14 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
   const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
 
   if (!suscrito) {
+    //  CORRECTO: Inyección estricta de cabeceras de autorización para revocar el Error 401
     const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion-ts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "apiKey": supabase.supabaseKey,
+        "Authorization": `Bearer ${supabase.supabaseKey}`
+      },
       body: JSON.stringify({
         usuario_id,
         evento_id: eventoIdNumerico, 
