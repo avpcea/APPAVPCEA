@@ -37,7 +37,11 @@ window.ejecutarCierreEvento = async function(id, tipo) {
       alert("Formato de fecha inválido. Por favor, usa el formato: AAAA-MM-DD HH:MM (Ej: 2026-10-24 20:30)");
       return;
     }
-    fechaFinISO = fechaParseada.toISOString();
+    //  CORRECTO: Conserva la hora exacta escrita por el usuario adaptándola al estándar ISO con su desfase local real
+    const desfaseMinutos = fechaParseada.getTimezoneOffset();
+    const fechaCompensada = new Date(fechaParseada.getTime() - (desfaseMinutos * 60000));
+    fechaFinISO = fechaCompensada.toISOString().replace('Z', ''); // Removemos la Z para que no asuma UTC puro
+
   }
 
   try {
