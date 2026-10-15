@@ -437,13 +437,17 @@ function initAdminEventListeners() {
         btnCrearEmergencia.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
 
-        const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch(`${BASE_FN}/emergencia-ts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apiKey': supabase.supabaseKey,
+            'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+          },
           body: JSON.stringify({
-            tipo: "emergencias",
-            admin_id,
-            values: { titulo, nivel, fecha_inicio: fechaISO, activa: true, creado_en: new Date().toISOString() }
+            lugar: document.getElementById('input-lugar-emergencia').value,
+            descripcion: document.getElementById('input-desc-emergencia').value,
+            admin_id: usuarioGlobalId // El ID del administrador activo
           })
         });
 
