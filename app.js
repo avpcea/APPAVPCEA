@@ -1,8 +1,8 @@
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 3)
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y RENDERS DE EVENTOS (PARTE 1 DE 3)
 // =========================================================================
 
-// 1. IMPORTACIÓN E INICIALIZACIÓN DEL CLIENTE (Estático en la raíz)
+// 1. IMPORTACIÓN E INICIALIZACIÓN DEL CLIENTE DE SUPABASE
 import { createClient } from "https://esm.sh" ;
 
 const SUPABASE_URL = "https://supabase.co";
@@ -11,7 +11,11 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
 
-// 2. SISTEMA DE CONTROL DEFENSIVO ANTI-DUPLICADOS (Se queda aquí, intacto)
+// Variables globales del contexto de Audio para el pitido continuo de emergencia
+let ecgAudioContext = null;
+let ecgOscillator = null;
+
+// Sistema de control defensivo anti-duplicados
 const cargando = {
   operativos: false,
   preventivos: false,
@@ -19,8 +23,9 @@ const cargando = {
 };
 
 // =========================================================================
-// RENDERS PÚBLICOS DE EVENTOS
+// RENDERS PÚBLICOS DE EVENTOS ACTIVE (OCULTANDO LOS CERRADOS)
 // =========================================================================
+
 export async function cargarOperativos() {
   if (cargando.operativos) return;
   cargando.operativos = true;
@@ -32,6 +37,7 @@ export async function cargarOperativos() {
   }
   cont.innerHTML = "<p>Cargando operativos...</p>";
 
+  // Los operativos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
   const { data: operativos, error } = await supabase
     .from("operativos")
     .select("*")
@@ -53,61 +59,7 @@ export async function cargarOperativos() {
       const fechaInicioStr = op.fecha_inicio ? op.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
 
       cont.innerHTML += `
-        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
-          <h3><a href="#/evento/operativos/${op.id}" style="color:#2b6cb0; text-decoration:none;">${op.titulo} ↗</a></h3>
-          <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
-          <p><strong>Fecha de evento:</strong> ${op.fecha || "—"}</p>
-          <p><strong>Fecha inicio:</strong> ${fechaInicioStr}</p>
-          <p>${op.descripcion || "Sin observaciones"}</p>
-          <button class="btn-primary" style="margin-top:8px;" onclick="window.toggleSuscripcion('operativos', '${op.id}')">
-            ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-          </button>
-        </div>
-      `;
-    }
-  }
-  cargando.operativos = false;
-}
-
-
-// ===============================
-// RENDERS PÚBLICOS DE EVENTOS
-// ===============================
-
-export async function cargarOperativos() {
-  if (cargando.operativos) return;
-  cargando.operativos = true;
-
-  const cont = document.getElementById("lista-operativos");
-  if (!cont) {
-    cargando.operativos = false;
-    return;
-  }
-  cont.innerHTML = "<p>Cargando operativos...</p>";
-
-  // SOLUCIÓN: Los operativos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
-  const { data: operativos, error } = await supabase
-    .from("operativos")
-    .select("*")
-    .is("fecha_fin", null)
-    .order("fecha_inicio", { ascending: false });
-
-  if (error) {
-    cont.innerHTML = "<p>Error al cargar operativos.</p>";
-    cargando.operativos = false;
-    return;
-  }
-
-  cont.innerHTML = "";
-  if (!operativos || operativos.length === 0) {
-    cont.innerHTML = "<p>No hay operativos activos en este momento.</p>";
-  } else {
-    for (const op of operativos) {
-      const suscrito = await estaSuscrito("operativos", op.id);
-      const fechaInicioStr = op.fecha_inicio ? op.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
-
-      cont.innerHTML += `
-        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
+        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px; font-family:sans-serif;">
           <h3><a href="#/evento/operativos/${op.id}" style="color:#2b6cb0; text-decoration:none;">${op.titulo} ↗</a></h3>
           <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
           <p><strong>Fecha de evento:</strong> ${op.fecha || "—"}</p>
@@ -134,7 +86,7 @@ export async function cargarPreventivos() {
   }
   cont.innerHTML = "<p>Cargando preventivos...</p>";
 
-  // SOLUCIÓN: Los preventivos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
+  // Los preventivos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
   const { data: preventivos, error } = await supabase
     .from("preventivos")
     .select("*")
@@ -156,7 +108,7 @@ export async function cargarPreventivos() {
       const fechaInicioStr = p.fecha_inicio ? p.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
 
       cont.innerHTML += `
-        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
+        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px; font-family:sans-serif;">
           <h3><a href="#/evento/preventivos/${p.id}" style="color:#2b6cb0; text-decoration:none;">${p.titulo} ↗</a></h3>
           <p><strong>Lugar:</strong> ${p.lugar || "—"}</p>
           <p><strong>Fecha de evento:</strong> ${p.fecha || "—"}</p>
@@ -174,16 +126,12 @@ export async function cargarPreventivos() {
 
 
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 DE 3)
+// APP AVPCEA - ALARMA ACÚSTICA Y SUSCRIPCIONES (PARTE 2 DE 3)
 // =========================================================================
 
-// Variables globales del contexto de Audio para el pitido continuo
-let ecgAudioContext = null;
-let ecgOscillator = null;
-
-// ===============================
+// =========================================================================
 // SISTEMA DE ALARMA ELECTRÓNICA INTERACTIVA (EMERGENCIAS)
-// ===============================
+// =========================================================================
 export function activarPitidoEmergencia() {
   if (ecgOscillator) return;
   try {
@@ -221,9 +169,6 @@ export function detenerPitidoEmergencia() {
   }
 }
 
-// ===============================
-// CARGA EMERGENCIAS
-// ===============================
 export async function cargarEmergencias() {
   if (cargando.emergencias) return;
   cargando.emergencias = true;
@@ -249,24 +194,24 @@ export async function cargarEmergencias() {
 
   if (!emergencias || emergencias.length === 0) {
     cont.innerHTML = `
-      <div class="card" style="padding:15px; border:1px solid #eee; border-radius:4px;">
+      <div class="card" style="padding:15px; border:1px solid #eee; border-radius:4px; font-family:sans-serif;">
         <h3>Sin emergencias activas</h3>
         <p>Actualmente no hay emergencias que requieran tu asistencia.</p>
       </div>
     `;
-    detenerPitidoEmergencia(); // Si no quedan emergencias activas, apagamos el zumbador
+    detenerPitidoEmergencia(); // Si la cola se vacía, apagamos el pitido automáticamente
     cargando.emergencias = false;
     return;
   }
 
   cont.innerHTML = "";
   
-  // ACTIVACIÓN DEL PITIDO: Al detectarse al menos una emergencia activa en la cola
+  // Disparar la alarma sonora si hay alertas críticas activas en el sistema
   activarPitidoEmergencia();
 
   emergencias.forEach(emg => {
     cont.innerHTML += `
-      <div class="card" style="border:2px solid #ff4d4d; background:#fff5f5; padding:15px; margin-bottom:12px; border-radius:4px;">
+      <div class="card" style="border:2px solid #ff4d4d; background:#fff5f5; padding:15px; margin-bottom:12px; border-radius:4px; font-family:sans-serif;">
         <h3 style="color:#d32f2f; margin-top:0;">🚨 EMERGENCIA CRÍTICA</h3>
         <p><strong>Lugar:</strong> ${emg.lugar || "—"}</p>
         <p><strong>Descripción:</strong> ${emg.descripcion || "Sin detalles adicionales"}</p>
@@ -286,9 +231,8 @@ export async function cargarEmergencias() {
   cargando.emergencias = false;
 }
 
-// Lógica reactiva expuesta a window para apagar la alarma del voluntario
 window.responderAAlerta = async function(emergenciaId, accion) {
-  detenerPitidoEmergencia();
+  detenerPitidoEmergencia(); // Interacción explícita: Silencia el zumbador de inmediato
   
   if (accion === 'aceptar') {
     const uid = localStorage.getItem("usuario_id");
@@ -307,9 +251,9 @@ window.responderAAlerta = async function(emergenciaId, accion) {
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
 
-// ===============================
-// CONTROL DE SUSCRIPCIONES
-// ===============================
+// =========================================================================
+// CONTROL DE SUSCRIPCIONES Y ENLACE DE BACKEND
+// =========================================================================
 export async function estaSuscrito(tipo_evento, evento_id) {
   const uid = localStorage.getItem("usuario_id");
   const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
@@ -324,10 +268,6 @@ export async function estaSuscrito(tipo_evento, evento_id) {
     
   return !!data;
 }
-
-// =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 3 de 3)
-// =========================================================================
 
 window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   const uid = localStorage.getItem("usuario_id");
@@ -373,12 +313,17 @@ window.toggleSuscripcion = async function(tipo_evento, evento_id) {
 
   if (tipo_evento === "preventivos") cargarPreventivos();
   if (tipo_evento === "operativos") cargarOperativos();
-  await cargarFichaVoluntario(); // Refresca las suscripciones en la ficha personal
+  if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
 
-// ===============================
+
+// =========================================================================
+// APP AVPCEA - FICHA PERSONAL E INICIALIZACIÓN AUTOMÁTICA (PARTE 3 DE 3)
+// =========================================================================
+
+// =========================================================================
 // GESTIÓN DE DISPOSITIVOS Y ROL
-// ===============================
+// =========================================================================
 export async function registrarDispositivo() {
   const uid = localStorage.getItem("usuario_id");
   if (!uid) return;
@@ -396,9 +341,9 @@ export async function esAdmin() {
   return data && data.rol === "admin";
 }
 
-// ===============================
+// =========================================================================
 // FICHA DEL VOLUNTARIO DINÁMICA (PÁGINA PRINCIPAL)
-// ===============================
+// =========================================================================
 export async function cargarFichaVoluntario() {
   const cont = document.getElementById("screen-ficha-voluntario") || document.getElementById("screen-inicio");
   if (!cont) return;
@@ -406,7 +351,6 @@ export async function cargarFichaVoluntario() {
   const uid = localStorage.getItem("usuario_id");
   
   try {
-    // 1. Obtener la información del voluntario
     const { data: usr, error: usrErr } = await supabase
       .from("usuarios")
       .select("nombre, telefono, cumple_mes, cumple_dia, horas")
@@ -418,17 +362,14 @@ export async function cargarFichaVoluntario() {
       return;
     }
 
-    // 2. Obtener todas sus suscripciones actuales
     const { data: subs, error: subsErr } = await supabase
       .from("suscripciones")
       .select("evento_id, tipo")
       .eq("usuario_id", uid);
 
-    // Formatear el cumpleaños a partir de las columnas homogeneizadas como enteros
     const cumpleStr = (usr.cumple_dia && usr.cumple_mes) ? 
       `${String(usr.cumple_dia).padStart(2, '0')}/${String(usr.cumple_mes).padStart(2, '0')}` : "Sin definir";
 
-    // Imagen por defecto institucional para el avatar del voluntario
     const fotoUrl = "https://unsplash.com";
 
     let subsHtml = "";
@@ -447,16 +388,16 @@ export async function cargarFichaVoluntario() {
     }
 
     cont.innerHTML = `
-      <div class="ficha-container" style="max-width:500px; margin: 0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+      <div class="ficha-container" style="max-width:500px; margin: 0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05); font-family:sans-serif;">
         <div style="text-align:center; margin-bottom:20px;">
           <img src="${fotoUrl}" alt="Foto Voluntario" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #2b6cb0; margin-bottom:10px;" />
           <h2 style="margin:0; color:#2d3748;">${usr.nombre}</h2>
           <span style="background:#edf2f7; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold; color:#4a5568;">Voluntario Activo</span>
         </div>
         
-        <div style="border-top:1px solid #edf2f7; padding-top:15px; font-size:14px; color:#4a5568;">
+        <div style="border-top:1px solid #edf2f7; padding-top:15px; font-size:14px; color:#4a5568; line-height:1.6;">
           <p><strong>📞 Teléfono:</strong> ${usr.telefono}</p>
-          <p><strong>🎂 Fecha de Nacimiento (Cumpleaños):</strong> ${cumpleStr}</p>
+          <p><strong>🎂 Cumpleaños:</strong> ${cumpleStr}</p>
           <p><strong>⏳ Saldo Total Acumulado:</strong> <span style="font-weight:bold; color:#2b6cb0; font-size:16px;">${parseFloat(usr.horas).toFixed(2)} hs</span></p>
         </div>
 
@@ -472,9 +413,9 @@ export async function cargarFichaVoluntario() {
   }
 }
 
-// ===============================
+// =========================================================================
 // SPA: CAMBIO DE PANTALLAS EXTENDIDO
-// ===============================
+// =========================================================================
 export function showScreen(name) {
   if (name === "inicio" || name === "ficha") cargarFichaVoluntario();
   if (name === "preventivos") cargarPreventivos();
@@ -513,22 +454,58 @@ export function showScreen(name) {
   }
 }
 
-// ===============================
-// MOTOR DE INICIALIZACIÓN AUTOMÁTICA (IDENTIFICACIÓN POR USUARIO_ID)
-// ===============================
+// =========================================================================
+// MOTOR DE INICIALIZACIÓN AUTOMÁTICA CON CONTROL DE TIEMPOS DOM
+// =========================================================================
 async function inicializarAplicacionVoluntario() {
+  const appContainer = document.getElementById("app-container");
+  if (appContainer) appContainer.style.display = "block";
+
+  const TOKEN_SECRETO = "v3";
+  const tokenGuardado = localStorage.getItem("avpcea_token");
+  window.AVPCEA_AUTORIZADO = false;
+
+  if (tokenGuardado === TOKEN_SECRETO) {
+    window.AVPCEA_AUTORIZADO = true;
+    await registrarDispositivo();
+  } else {
+    let autorizado = false;
+    while (!autorizado) {
+      const codigo = prompt("Introduce el código de autorización del dispositivo:");
+      if (codigo === null) {
+        alert("Acceso denegado.");
+        break;
+      }
+      if (codigo === TOKEN_SECRETO) {
+        localStorage.setItem("avpcea_token", TOKEN_SECRETO);
+        alert("Dispositivo autorizado.");
+        window.AVPCEA_AUTORIZADO = true;
+        autorizado = true;
+        await registrarDispositivo();
+      } else {
+        alert("Código incorrecto.");
+      }
+    }
+  }
+
+  if (!window.AVPCEA_AUTORIZADO) {
+    document.body.innerHTML = "<p style='padding:20px; text-align:center; font-weight:bold; color:#e53e3e;'>Acceso no autorizado.</p>";
+    return;
+  }
+
   const uid = localStorage.getItem("usuario_id");
 
-  // Entrada transparente si el identificador físico ya está enlazado
   if (uid && uid.trim() !== "") {
     const esAdministrador = await esAdmin();
     if (esAdministrador) {
-      // Carga dinámica asíncrona local según Regla Crítica 1
-      import("./supabase-admin.js").then(modulo => {
+      try {
+        const modulo = await import("./supabase-admin.js");
         window.cargarListadoAdmin = modulo.cargarListadoAdmin;
         window.cargarUsuariosAdmin = modulo.cargarUsuariosAdmin;
         window.cargarListadoHorasVoluntarios = modulo.cargarListadoHorasVoluntarios;
-      });
+      } catch (err) {
+        console.error("Error cargando el módulo administrativo:", err);
+      }
     }
     
     const welcomeScreen = document.getElementById("welcome-screen");
@@ -539,17 +516,18 @@ async function inicializarAplicacionVoluntario() {
     showScreen("inicio");
   } else {
     console.log("Terminal nuevo detectado sin enlazado previo.");
-    document.body.innerHTML = `<div style="padding:40px; text-align:center; font-family:sans-serif;">
-      <h2 style="color:#e53e3e; margin-bottom:10px;">Dispositivo No Enlazado</h2>
-      <p style="color:#4a5568; margin-bottom:20px;">Este terminal no dispone de credenciales locales de autenticación enlazadas en localStorage.</p>
-      <div style="background:#f7fafc; padding:12px; border-radius:4px; border:1px solid #e2e8f0; display:inline-block;">
-        <small style="color:#718096; font-family:monospace; font-size:12px;">Consulte al administrador para vincular su usuario_id.</small>
-      </div>
-    </div>`;
+    document.body.innerHTML = `
+      <div style="padding:40px; text-align:center; font-family:sans-serif; max-width:400px; margin:40px auto; background:#fff; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+        <h2 style="color:#e53e3e; margin-bottom:10px;">Dispositivo No Enlazado</h2>
+        <p style="color:#4a5568; margin-bottom:20px; font-size:14px; line-height:1.5;">Este terminal no dispone de credenciales de autenticación locales guardadas en localStorage.</p>
+        <div style="background:#f7fafc; padding:12px; border-radius:4px; border:1px solid #e2e8f0; display:inline-block; width:100%; box-sizing:border-box;">
+          <small style="color:#718096; font-family:monospace; font-size:11px; word-break:break-all;">Vincule este dispositivo en el panel de administración usando este identificador único.</small>
+        </div>
+      </div>`;
   }
 }
 
-// Inicialización defensiva dual
+// Inicialización defensiva dual regulada
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', inicializarAplicacionVoluntario);
 } else {
