@@ -20,7 +20,6 @@ const cargando = {
   preventivos: false,
   emergencias: false
 };
-
 // =========================================================================
 // RENDERS PÚBLICOS DE EVENTOS ACTIVE (OCULTANDO LOS CERRADOS)
 // =========================================================================
@@ -72,7 +71,6 @@ export async function cargarOperativos() {
   }
   cargando.operativos = false;
 };
-
 export async function cargarPreventivos() {
   if (cargando.preventivos) return;
   cargando.preventivos = true;
@@ -121,7 +119,6 @@ export async function cargarPreventivos() {
   }
   cargando.preventivos = false;
 };
-
 // =========================================================================
 // SISTEMA DE ALARMA ELECTRÓNICA INTERACTIVA (EMERGENCIAS)
 // =========================================================================
@@ -144,7 +141,6 @@ export function activarPitidoEmergencia() {
     console.warn("Audio bloqueado automáticamente por el navegador. Esperando interacción.", e);
   }
 };
-
 export function detenerPitidoEmergencia() {
   if (ecgOscillator) {
     try {
@@ -161,7 +157,6 @@ export function detenerPitidoEmergencia() {
     console.log("🔊 Pitido continuo silenciado.");
   }
 };
-
 export async function cargarEmergencias() {
   if (cargando.emergencias) return;
   cargando.emergencias = true;
@@ -223,7 +218,6 @@ export async function cargarEmergencias() {
   });
   cargando.emergencias = false;
 };
-
 window.responderAAlerta = async function(emergenciaId, accion) {
   detenerPitidoEmergencia(); // Interacción explícita: Silencia el zumbador de inmediato
   
@@ -243,7 +237,6 @@ window.responderAAlerta = async function(emergenciaId, accion) {
   await cargarEmergencias();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
-
 // =========================================================================
 // CONTROL DE SUSCRIPCIONES Y ENLACE DE BACKEND
 // =========================================================================
@@ -261,7 +254,6 @@ export async function estaSuscrito(tipo_evento, evento_id) {
     
   return !!data;
 };
-
 window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   const uid = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo_evento, evento_id);
@@ -308,7 +300,6 @@ window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   if (tipo_evento === "operativos") cargarOperativos();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
-
 // =========================================================================
 // GESTIÓN DE DISPOSITIVOS Y ROL
 // =========================================================================
@@ -320,14 +311,13 @@ export async function registrarDispositivo() {
   if (!data) {
     await supabase.from("dispositivos").insert([{ id: uid, rol: "normal" }]);
   }
-}
-
+};
 export async function esAdmin() {
   const uid = localStorage.getItem("usuario_id");
   if (!uid) return false;
   const { data } = await supabase.from("dispositivos").select("rol").eq("id", uid).maybeSingle();
   return data && data.rol === "admin";
-}
+};
 // =========================================================================
 // FICHA DEL VOLUNTARIO DINÁMICA (PÁGINA PRINCIPAL)
 // =========================================================================
@@ -398,7 +388,7 @@ export async function cargarFichaVoluntario() {
   } catch (e) {
     console.error("Error al renderizar la ficha:", e);
   }
-}
+};
 // =========================================================================
 // SPA: CAMBIO DE PANTALLAS EXTENDIDO
 // =========================================================================
@@ -438,7 +428,7 @@ export function showScreen(name) {
     if (window.cargarUsuariosAdmin) window.cargarUsuariosAdmin();
     if (window.cargarListadoHorasVoluntarios) window.cargarListadoHorasVoluntarios();
   }
-}
+};
 // =========================================================================
 // MOTOR DE INICIALIZACIÓN AUTOMÁTICA CON CONTROL DE TIEMPOS DOM
 // =========================================================================
@@ -510,7 +500,7 @@ async function inicializarAplicacionVoluntario() {
         </div>
       </div>`;
   }
-}
+};
 
 // Inicialización defensiva dual regulada
 if (document.readyState === 'loading') {
