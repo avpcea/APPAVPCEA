@@ -288,7 +288,7 @@ export async function cargarUsuariosAdmin() {
 
 
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3 - COMPLETADA Y SANEADA)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 - BLOQUE A DE B)
 // =========================================================================
 function initAdminEventListeners() {
   
@@ -347,7 +347,9 @@ function initAdminEventListeners() {
           document.getElementById("usr-fecha-nacimiento").value = "";
           document.getElementById("usr-horas-iniciales").value = "0.00";
           await cargarUsuariosAdmin();
-          await cargarListadoHorasVoluntarios();
+          if (typeof cargarListadoHorasVoluntarios === "function") {
+            await cargarListadoHorasVoluntarios();
+          }
         } else {
           const err = await response.json();
           alert("Error al crear usuario: " + err.error);
@@ -368,7 +370,7 @@ function initAdminEventListeners() {
       const titulo = document.getElementById("op-titulo")?.value.trim();
       const lugar = document.getElementById("op-lugar")?.value.trim();
       const descripcion = document.getElementById("op-descripcion")?.value.trim();
-      const fechaInput = document.getElementById("op-fecha")?.value; // Selector del formulario
+      const fechaInput = document.getElementById("op-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
       if (!titulo || !fechaInput) return alert("Introduce Título y Fecha de evento.");
@@ -454,7 +456,7 @@ function initAdminEventListeners() {
     });
   }
 
-  // 4. CREAR EMERGENCIA (CORREGIDO Y BLINDADO SIN ERRORES AL PROCESAR)
+  // 4. CREAR EMERGENCIA (CORREGIDO CON SELECTORES DE TU INTERFAZ NATURALEZA)
   const btnCrearEmergencia = document.getElementById("btn-crear-emergencia");
   if (btnCrearEmergencia) {
     btnCrearEmergencia.addEventListener("click", async (e) => {
@@ -510,11 +512,12 @@ function initAdminEventListeners() {
   }
 }
 
+
 // =========================================================================
-// MOTOR ADICIONAL: CONTABILIDAD DE HORAS Y EDICIÓN DE USUARIOS
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 - BLOQUE B DE B)
 // =========================================================================
 
-// LISTADO EXTENDIDO PARA VER LAS HORAS DE CADA VOLUNTARIO
+// LISTADO EXTENDIDO PARA VER LAS HORAS DE CADA VOLUNTARIO SEGREGADAS
 export async function cargarListadoHorasVoluntarios() {
   const cont = document.getElementById("admin-contabilidad-horas");
   if (!cont) return;
@@ -534,5 +537,80 @@ export async function cargarListadoHorasVoluntarios() {
 
     let html = `<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; text-align:left;">
                   <thead>
-                    <tr style="background:#e8f4fd; border-bottom:2px solid #bce0fd;">
+                    <tr style="background:#e8f4fd; border-bottom:2px solid #bce0fd; color:#2b6cb0;">
                       <th style="padding:8px;">Voluntario</th>
+                      <th style="padding:8px;">Tipo Servicio</th>
+                      <th style="padding:8px;">Horas</th>
+                      <th style="padding:8px;">Año</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
+    
+    registros.forEach(reg => {
+      const nombreVoluntario = reg.usuarios?.nombre || "Voluntario eliminado";
+      html += `
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px; font-weight:bold;">${nombreVoluntario}</td>
+          <td style="padding:8px;"><span class="badge-tipo" style="padding:2px 6px; background:#e2e8f0; border-radius:4px; font-size:12px;">${reg.tipo}</span></td>
+          <td style="padding:8px; color:#2b6cb0; font-weight:bold;">${parseFloat(reg.horas).toFixed(2)} hs</td>
+          <td style="padding:8px;">${reg.anio}</td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table>`;
+    cont.innerHTML = html;
+  } catch (err) {
+    console.error("Error cargando contabilidad de horas:", err);
+  }
+}
+
+// PANEL INTERACTIVO DE EDICIÓN DE VOLUNTARIOS (EXPUESTO A WINDOW)
+window.abrirModalEdicionUsuario = async function(id) {
+  try {
+    const { data: usr, error } = await supabase.from("usuarios").select("*").eq("id", id).single();
+    if (error) throw error;
+
+    const nuevoNombre = prompt("Modificar nombre y apellidos:", usr.nombre);
+    if (nuevoNombre === null) return;
+    const nuevoTelefono = prompt("Modificar número de teléfono:", usr.telefono);
+    if (nuevoTelefono === null) return;
+    
+    // Formateamos visualmente el cumpleaños actual guardado en la base de datos
+    const cumpleActual = (usr.cumple_dia && usr.cumple_mes) ? 
+      `${String(usr.cumple_dia).padStart(2, '0')}/${String(usr.cumple_mes).padStart(2, '0')}` : "no definido";
+      
+    const nuevoCumple = prompt("Modificar cumpleaños (Formato: DD/MM) - Actual: " + cumpleActual, cumpleActual);
+    if (nuevoCumple === null) return;
+
+    const datosActualizados = {
+      nombre: nuevoNombre.trim(),
+      telefono: nuevoTelefono.trim()
+    };
+
+    // Procesamos defensivamente la cadena de texto ingresada por el administrador
+    if (nuevoCumple.includes("/")) {
+      const partes = nuevoCumple.split("/");
+      const dia = parseInt(partes[0], 10);
+      const mes = parseInt(partes[1], 10);
+      
+      if (!isNaN(dia) && !isNaN(mes) && dia >= 1 && dia <= 31 && mes >= 1 && mes <= 12) {
+        datosActualizados.cumple_dia = dia;
+        datosActualizados.cumple_mes = mes;
+      } else {
+        alert("Formato de día o mes inválido. No se ha modificado la fecha de cumpleaños.");
+      }
+    }
+
+    const { error: updateError } = await supabase.from("usuarios").update(datosActualizados).eq("id", id);
+    if (updateError) throw updateError;
+
+    alert("Datos del voluntario actualizados con éxito.");
+    
+    // Sincronización instantánea de las listas del panel de control
+    await cargarUsuariosAdmin();
+    await cargarListadoHorasVoluntarios();
+
+  } catch (err) {
+    alert("Error al editar voluntario: " + err.message);
+  }
+};
