@@ -2,7 +2,7 @@
 // APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 2)
 // =========================================================================
 
-//  CORRECTO: Bundle completo optimizado para producción en GitHub Pages sin CORS
+// CORRECTO: Bundle completo optimizado para producción en GitHub Pages sin CORS
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2?bundle" ;
 
 const SUPABASE_URL = "https://hptnaoliiychgkxsaksy.supabase.co";
@@ -15,7 +15,7 @@ export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
 document.getElementById("app-container").style.display = "block";
 
 // ===============================
-// CONTROL DE ACCESO Y AUTORIZACIÓN
+// CONTROL DE ACCESO Y AUTORIZACIÓN AUTOMÁTICA
 // ===============================
 const TOKEN_SECRETO = "v3";
 const tokenGuardado = localStorage.getItem("avpcea_token");
@@ -23,14 +23,15 @@ const tokenGuardado = localStorage.getItem("avpcea_token");
 window.AVPCEA_AUTORIZADO = false;
 let usuario_id = localStorage.getItem("usuario_id");
 
+// MOTOR: Si no hay usuario_id previo en localStorage, se solicitará al voluntario o se asignará en el registro preliminar
 if (!usuario_id || usuario_id.trim() === "") {
-  usuario_id = crypto.randomUUID();
-  localStorage.setItem("usuario_id", usuario_id);
+  // Inicialización defensiva de resguardo para el flujo inicial guiado
+  usuario_id = localStorage.getItem("usuario_id") || "";
 }
 
 if (tokenGuardado === TOKEN_SECRETO) {
   window.AVPCEA_AUTORIZADO = true;
-  registrarDispositivo();
+  if (typeof registrarDispositivo === "function") registrarDispositivo();
 } else {
   let autorizado = false;
   while (!autorizado) {
@@ -44,7 +45,7 @@ if (tokenGuardado === TOKEN_SECRETO) {
       alert("Dispositivo autorizado.");
       window.AVPCEA_AUTORIZADO = true;
       autorizado = true;
-      registrarDispositivo();
+      if (typeof registrarDispositivo === "function") registrarDispositivo();
     } else {
       alert("Código incorrecto. Inténtalo de nuevo.");
     }
@@ -52,7 +53,7 @@ if (tokenGuardado === TOKEN_SECRETO) {
 }
 
 if (!window.AVPCEA_AUTORIZADO) {
-  document.body.innerHTML = "<p>Acceso no autorizado.</p>";
+  document.body.innerHTML = "<p style='padding:20px; text-align:center;'>Acceso no autorizado.</p>";
   throw new Error("Acceso no autorizado");
 }
 
@@ -72,12 +73,18 @@ export async function cargarOperativos() {
   cargando.operativos = true;
 
   const cont = document.getElementById("lista-operativos");
+  if (!cont) {
+    cargando.operativos = false;
+    return;
+  }
   cont.innerHTML = "<p>Cargando operativos...</p>";
 
+  // SOLUCIÓN: Los operativos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
   const { data: operativos, error } = await supabase
     .from("operativos")
     .select("*")
-    .order("fecha", { ascending: false });
+    .is("fecha_fin", null)
+    .order("fecha_inicio", { ascending: false });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar operativos.</p>";
@@ -86,21 +93,26 @@ export async function cargarOperativos() {
   }
 
   cont.innerHTML = "";
-  for (const op of operativos) {
-    // Homologado con el nombre exacto de la tabla Postgres
-    const suscrito = await estaSuscrito("operativos", op.id);
+  if (!operativos || operativos.length === 0) {
+    cont.innerHTML = "<p>No hay operativos activos en este momento.</p>";
+  } else {
+    for (const op of operativos) {
+      const suscrito = await estaSuscrito("operativos", op.id);
+      const fechaInicioStr = op.fecha_inicio ? op.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
 
-    cont.innerHTML += `
-      <div class="card">
-        <h3>${op.titulo}</h3>
-        <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
-        <p><strong>Fecha:</strong> ${op.fecha}</p>
-        <p>${op.descripcion || "Sin observaciones"}</p>
-        <button class="btn-primary" onclick="window.toggleSuscripcion('operativos', ${op.id})">
-          ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-        </button>
-      </div>
-    `;
+      cont.innerHTML += `
+        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
+          <h3><a href="#/evento/operativos/${op.id}" style="color:#2b6cb0; text-decoration:none;">${op.titulo} ↗</a></h3>
+          <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
+          <p><strong>Fecha de evento:</strong> ${op.fecha || "—"}</p>
+          <p><strong>Fecha inicio:</strong> ${fechaInicioStr}</p>
+          <p>${op.descripcion || "Sin observaciones"}</p>
+          <button class="btn-primary" style="margin-top:8px;" onclick="window.toggleSuscripcion('operativos', '${op.id}')">
+            ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
+          </button>
+        </div>
+      `;
+    }
   }
   cargando.operativos = false;
 }
@@ -110,12 +122,18 @@ export async function cargarPreventivos() {
   cargando.preventivos = true;
 
   const cont = document.getElementById("lista-preventivos");
+  if (!cont) {
+    cargando.preventivos = false;
+    return;
+  }
   cont.innerHTML = "<p>Cargando preventivos...</p>";
 
+  // SOLUCIÓN: Los preventivos cerrados desaparecen automáticamente usando .is("fecha_fin", null)
   const { data: preventivos, error } = await supabase
     .from("preventivos")
     .select("*")
-    .order("fecha", { ascending: false });
+    .is("fecha_fin", null)
+    .order("fecha_inicio", { ascending: false });
 
   if (error) {
     cont.innerHTML = "<p>Error al cargar preventivos.</p>";
@@ -124,27 +142,78 @@ export async function cargarPreventivos() {
   }
 
   cont.innerHTML = "";
-  for (const p of preventivos) {
-    // Homologado con el nombre exacto de la tabla Postgres
-    const suscrito = await estaSuscrito("preventivos", p.id);
+  if (!preventivos || preventivos.length === 0) {
+    cont.innerHTML = "<p>No hay preventivos activos en este momento.</p>";
+  } else {
+    for (const p of preventivos) {
+      const suscrito = await estaSuscrito("preventivos", p.id);
+      const fechaInicioStr = p.fecha_inicio ? p.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
 
-    cont.innerHTML += `
-      <div class="card">
-        <h3>${p.titulo}</h3>
-        <p><strong>Lugar:</strong> ${p.lugar || "—"}</p>
-        <p><strong>Fecha:</strong> ${p.fecha}</p>
-        <p>${p.descripcion || "Sin observaciones"}</p>
-        <button class="btn-primary" onclick="window.toggleSuscripcion('preventivos', ${p.id})">
-          ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
-        </button>
-      </div>
-    `;
+      cont.innerHTML += `
+        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
+          <h3><a href="#/evento/preventivos/${p.id}" style="color:#2b6cb0; text-decoration:none;">${p.titulo} ↗</a></h3>
+          <p><strong>Lugar:</strong> ${p.lugar || "—"}</p>
+          <p><strong>Fecha de evento:</strong> ${p.fecha || "—"}</p>
+          <p><strong>Fecha inicio:</strong> ${fechaInicioStr}</p>
+          <p>${p.descripcion || "Sin observaciones"}</p>
+          <button class="btn-primary" style="margin-top:8px;" onclick="window.toggleSuscripcion('preventivos', '${p.id}')">
+            ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
+          </button>
+        </div>
+      `;
+    }
   }
   cargando.preventivos = false;
 }
+
+
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 DE 2)
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 - BLOQUE A DE B)
 // =========================================================================
+
+// Variables globales del contexto de Audio para el pitido continuo
+let ecgAudioContext = null;
+let ecgOscillator = null;
+
+// ===============================
+// SISTEMA DE ALARMA ELECTRÓNICA INTERACTIVA (EMERGENCIAS)
+// ===============================
+export function activarPitidoEmergencia() {
+  if (ecgOscillator) return;
+  try {
+    ecgAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    ecgOscillator = ecgAudioContext.createOscillator();
+    const gainNode = ecgAudioContext.createGain();
+
+    ecgOscillator.type = 'sine';
+    ecgOscillator.frequency.setValueAtTime(880, ecgAudioContext.currentTime); // Tono agudo electrónico
+    gainNode.gain.setValueAtTime(0.4, ecgAudioContext.currentTime);
+
+    ecgOscillator.connect(gainNode);
+    gainNode.connect(ecgAudioContext.destination);
+    ecgOscillator.start();
+    console.log("🚨 Pitido continuo de emergencia activado.");
+  } catch (e) {
+    console.warn("Audio bloqueado automáticamente por el navegador. Esperando interacción.", e);
+  }
+}
+
+export function detenerPitidoEmergencia() {
+  if (ecgOscillator) {
+    try {
+      ecgOscillator.stop();
+      ecgOscillator.disconnect();
+      if (ecgAudioContext && ecgAudioContext.state !== 'closed') {
+        ecgAudioContext.close();
+      }
+    } catch (e) {
+      console.error("Error al silenciar el audio:", e);
+    }
+    ecgOscillator = null;
+    ecgAudioContext = null;
+    console.log("🔊 Pitido continuo silenciado.");
+  }
+}
 
 // ===============================
 // CARGA EMERGENCIAS
@@ -154,6 +223,10 @@ export async function cargarEmergencias() {
   cargando.emergencias = true;
 
   const cont = document.getElementById("lista-emergencias");
+  if (!cont) {
+    cargando.emergencias = false;
+    return;
+  }
   cont.innerHTML = "<p>Cargando emergencias...</p>";
 
   const { data: emergencias, error } = await supabase
@@ -170,51 +243,75 @@ export async function cargarEmergencias() {
 
   if (!emergencias || emergencias.length === 0) {
     cont.innerHTML = `
-      <div class="card">
+      <div class="card" style="padding:15px; border:1px solid #eee; border-radius:4px;">
         <h3>Sin emergencias activas</h3>
-        <p>Actualmente no hay emergencias registradas.</p>
+        <p>Actualmente no hay emergencias que requieran tu asistencia.</p>
       </div>
     `;
+    detenerPitidoEmergencia(); // Si no quedan emergencias activas, apagamos el zumbador
     cargando.emergencias = false;
     return;
   }
 
   cont.innerHTML = "";
-  for (const emg of emergencias) {
-    const nivelColor =
-      emg.nivel === "crítico" ? "red" :
-      emg.nivel === "alto" ? "orange" :
-      emg.nivel === "medio" ? "blue" :
-      "green";
+  
+  // ACTIVACIÓN DEL PITIDO: Al detectarse al menos una emergencia activa en la cola
+  activarPitidoEmergencia();
 
+  emergencias.forEach(emg => {
     cont.innerHTML += `
-      <div class="card">
-        <h3>${emg.titulo}</h3>
-        <p><strong>Nivel:</strong> 
-          <span style="color:${nivelColor}; font-weight:bold;">
-            ${emg.nivel.toUpperCase()}
-          </span>
-        </p>
-        <p><strong>Inicio:</strong> ${new Date(emg.fecha_inicio).toLocaleString()}</p>
-        <p><strong>Horas asignadas:</strong> ${emg.horas || 0}</p>
-        <p><strong>Estado:</strong> Activa</p>
+      <div class="card" style="border:2px solid #ff4d4d; background:#fff5f5; padding:15px; margin-bottom:12px; border-radius:4px;">
+        <h3 style="color:#d32f2f; margin-top:0;">🚨 EMERGENCIA CRÍTICA</h3>
+        <p><strong>Lugar:</strong> ${emg.lugar || "—"}</p>
+        <p><strong>Descripción:</strong> ${emg.descripcion || "Sin detalles adicionales"}</p>
+        <p><strong>Inicio:</strong> ${emg.fecha_inicio ? emg.fecha_inicio.substring(0, 16).replace('T', ' ') : "—"}</p>
+        
+        <div style="margin-top:12px; display:flex; gap:10px;">
+          <button class="btn-success" style="padding:8px 16px; background:#38a169; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.responderAAlerta('${emg.id}', 'aceptar')">
+            Aceptar y Acudir
+          </button>
+          <button class="btn-danger" style="padding:8px 16px; background:#e53e3e; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="window.responderAAlerta('${emg.id}', 'declinar')">
+            Declinar
+          </button>
+        </div>
       </div>
     `;
-  }
+  });
   cargando.emergencias = false;
 }
 
+// Lógica reactiva expuesta a window para apagar la alarma del voluntario
+window.responderAAlerta = async function(emergenciaId, accion) {
+  detenerPitidoEmergencia();
+  
+  if (accion === 'aceptar') {
+    const uid = localStorage.getItem("usuario_id");
+    const { error } = await supabase.from("suscripciones").insert([
+      { usuario_id: uid, evento_id: String(emergenciaId), tipo: "EMG" }
+    ]);
+    if (error) {
+      alert("Error al suscribirse a la emergencia: " + error.message);
+    } else {
+      alert("Suscripción registrada. Desplázate al lugar indicado.");
+    }
+  } else {
+    alert("Has declinado la asistencia a la emergencia.");
+  }
+  await cargarEmergencias();
+  if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
+};
+
 // ===============================
-// CONTROL DE SUSCRIPCIONES (CORREGIDO SIN ERRORES DE SINTAXIS)
+// CONTROL DE SUSCRIPCIONES
 // ===============================
 export async function estaSuscrito(tipo_evento, evento_id) {
-  const usuario_id = localStorage.getItem("usuario_id");
+  const uid = localStorage.getItem("usuario_id");
   const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
   
   const { data } = await supabase
     .from("suscripciones")
     .select("*")
-    .eq("usuario_id", usuario_id)
+    .eq("usuario_id", uid)
     .eq("tipo", tipoCodigo) 
     .eq("evento_id", String(evento_id)) 
     .maybeSingle();
@@ -222,27 +319,28 @@ export async function estaSuscrito(tipo_evento, evento_id) {
   return !!data;
 }
 
-export async function toggleSuscripcion(tipo_evento, evento_id) {
-  const usuario_id = localStorage.getItem("usuario_id");
+// =========================================================================
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 - BLOQUE B DE B)
+// =========================================================================
+
+window.toggleSuscripcion = async function(tipo_evento, evento_id) {
+  const uid = localStorage.getItem("usuario_id");
   const suscrito = await estaSuscrito(tipo_evento, evento_id);
-  const admin_id = localStorage.getItem("usuario_id"); 
-  const eventoIdNumerico = Number(evento_id);
   const tipoCodigo = tipo_evento === "operativos" ? "OPR" : "NRP";
 
   if (!suscrito) {
-    //  CORRECTO: Inyección estricta de cabeceras de autorización para revocar el Error 401
     const respuesta = await fetch(`${BASE_FN}/admin-create-suscripcion-ts`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
         "apiKey": supabase.supabaseKey,
-        "Authorization": `Bearer ${supabase.supabaseKey}`
+        "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
       },
       body: JSON.stringify({
-        usuario_id,
-        evento_id: eventoIdNumerico, 
+        usuario_id: uid,
+        evento_id: isNaN(Number(evento_id)) ? evento_id : Number(evento_id), 
         tipo: tipo_evento, 
-        admin_id: admin_id 
+        admin_id: uid 
       })
     });
 
@@ -256,7 +354,7 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
     const { error } = await supabase
       .from("suscripciones")
       .delete()
-      .eq("usuario_id", usuario_id)
+      .eq("usuario_id", uid)
       .eq("tipo", tipoCodigo)
       .eq("evento_id", String(evento_id));
 
@@ -264,56 +362,128 @@ export async function toggleSuscripcion(tipo_evento, evento_id) {
       alert("Error al cancelar la suscripción: " + error.message);
       return;
     }
-    alert("Suscripción cancelled.");
+    alert("Suscripción cancelada.");
   }
 
   if (tipo_evento === "preventivos") cargarPreventivos();
   if (tipo_evento === "operativos") cargarOperativos();
-  if (tipo_evento === "emergencias") cargarEmergencias();
-}
+  await cargarFichaVoluntario(); // Refresca las suscripciones en la ficha personal
+};
 
 // ===============================
 // GESTIÓN DE DISPOSITIVOS Y ROL
 // ===============================
 export async function registrarDispositivo() {
-  const usuario_id = localStorage.getItem("usuario_id");
-  const { data } = await supabase
-    .from("dispositivos")
-    .select("*")
-    .eq("id", usuario_id)
-    .maybeSingle();
+  const uid = localStorage.getItem("usuario_id");
+  if (!uid) return;
+  const { data } = await supabase.from("dispositivos").select("*").eq("id", uid).maybeSingle();
 
   if (!data) {
-    await supabase.from("dispositivos").insert([
-      { id: usuario_id, rol: "normal" }
-    ]);
+    await supabase.from("dispositivos").insert([{ id: uid, rol: "normal" }]);
   }
 }
 
 export async function esAdmin() {
-  const usuario_id = localStorage.getItem("usuario_id");
-  const { data } = await supabase
-    .from("dispositivos")
-    .select("rol")
-    .eq("id", usuario_id)
-    .maybeSingle();
-
+  const uid = localStorage.getItem("usuario_id");
+  if (!uid) return false;
+  const { data } = await supabase.from("dispositivos").select("rol").eq("id", uid).maybeSingle();
   return data && data.rol === "admin";
 }
 
 // ===============================
-// SPA: CAMBIO DE PANTALLAS
+// FICHA DEL VOLUNTARIO DINÁMICA (PÁGINA PRINCIPAL)
+// ===============================
+export async function cargarFichaVoluntario() {
+  const cont = document.getElementById("screen-ficha-voluntario") || document.getElementById("screen-inicio");
+  if (!cont) return;
+
+  const uid = localStorage.getItem("usuario_id");
+  
+  try {
+    // 1. Obtener la información del voluntario
+    const { data: usr, error: usrErr } = await supabase
+      .from("usuarios")
+      .select("nombre, telefono, cumple_mes, cumple_dia, horas")
+      .eq("id", uid)
+      .maybeSingle();
+
+    if (usrErr || !usr) {
+      cont.innerHTML = `<p style='padding:20px; text-align:center;'>Error al cargar perfil o tu ID no se encuentra registrado en el sistema.</p>`;
+      return;
+    }
+
+    // 2. Obtener todas sus suscripciones actuales
+    const { data: subs, error: subsErr } = await supabase
+      .from("suscripciones")
+      .select("evento_id, tipo")
+      .eq("usuario_id", uid);
+
+    // Formatear el cumpleaños a partir de las columnas homogeneizadas como enteros
+    const cumpleStr = (usr.cumple_dia && usr.cumple_mes) ? 
+      `${String(usr.cumple_dia).padStart(2, '0')}/${String(usr.cumple_mes).padStart(2, '0')}` : "Sin definir";
+
+    // Imagen por defecto institucional para el avatar del voluntario
+    const fotoUrl = "https://unsplash.com";
+
+    let subsHtml = "";
+    if (subs && subs.length > 0) {
+      subsHtml = "<ul style='padding-left:20px; margin-top:8px;'>";
+      subs.forEach(s => {
+        const rutaFicha = s.tipo === "EMG" ? "emergencias" : (s.tipo === "OPR" ? "operativos" : "preventivos");
+        subsHtml += `<li style='margin-bottom:6px;'>
+          <span style='font-weight:bold; color:#2b6cb0;'>[${s.tipo}]</span> 
+          <a href='#/evento/${rutaFicha}/${s.evento_id}' style='color:#4a5568; text-decoration:underline;'>Ver detalles del evento ↗</a>
+        </li>`;
+      });
+      subsHtml += "</ul>";
+    } else {
+      subsHtml = "<p style='color:#718096; font-style:italic; margin-top:8px;'>No estás apuntado a ningún evento actualmente.</p>";
+    }
+
+    cont.innerHTML = `
+      <div class="ficha-container" style="max-width:500px; margin: 0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+        <div style="text-align:center; margin-bottom:20px;">
+          <img src="${fotoUrl}" alt="Foto Voluntario" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #2b6cb0; margin-bottom:10px;" />
+          <h2 style="margin:0; color:#2d3748;">${usr.nombre}</h2>
+          <span style="background:#edf2f7; padding:4px 10px; border-radius:12px; font-size:12px; font-weight:bold; color:#4a5568;">Voluntario Activo</span>
+        </div>
+        
+        <div style="border-top:1px solid #edf2f7; padding-top:15px; font-size:14px; color:#4a5568;">
+          <p><strong>📞 Teléfono:</strong> ${usr.telefono}</p>
+          <p><strong>🎂 Fecha de Nacimiento (Cumpleaños):</strong> ${cumpleStr}</p>
+          <p><strong>⏳ Saldo Total Acumulado:</strong> <span style="font-weight:bold; color:#2b6cb0; font-size:16px;">${parseFloat(usr.horas).toFixed(2)} hs</span></p>
+        </div>
+
+        <div style="border-top:1px solid #edf2f7; padding-top:15px; margin-top:15px;">
+          <h4 style="margin:0 0 5px 0; color:#2d3748;">Mis Suscripciones Activas:</h4>
+          ${subsHtml}
+        </div>
+      </div>
+    `;
+
+  } catch (e) {
+    console.error("Error al renderizar la ficha:", e);
+  }
+}
+
+// ===============================
+// SPA: CAMBIO DE PANTALLAS EXTENDIDO
 // ===============================
 export function showScreen(name) {
+  if (name === "inicio" || name === "ficha") cargarFichaVoluntario();
   if (name === "preventivos") cargarPreventivos();
   if (name === "operativos") cargarOperativos();
   if (name === "emergencias") cargarEmergencias();
 
-  document.querySelector(".header-title").textContent =
-    name === "operativos" ? "Operativos" :
-    name === "preventivos" ? "Preventivos" :
-    name === "emergencias" ? "Emergencias" :
-    name === "admin" ? "Administración" : "";
+  const titleCont = document.querySelector(".header-title");
+  if (titleCont) {
+    titleCont.textContent =
+      name === "inicio" || name === "ficha" ? "Mi Ficha Personal" :
+      name === "operativos" ? "Operativos" :
+      name === "preventivos" ? "Preventivos" :
+      name === "emergencias" ? "Emergencias" :
+      name === "admin" ? "Administración" : "";
+  }
 
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   const btn = document.querySelector(`.nav-btn[data-screen="${name}"]`);
@@ -324,169 +494,58 @@ export function showScreen(name) {
     s.style.display = "none";
   });
 
-  const screen = document.getElementById(name === "admin" ? "screen-administracion" : "screen-" + name);
+  const screen = document.getElementById(name === "admin" ? "screen-administracion" : (name === "inicio" ? "screen-ficha-voluntario" : "screen-" + name));
   if (screen) {
     screen.classList.add("active");
     screen.style.display = "block";
   }
 
   if (name === "admin") {
-    // Inicialización defensiva dual dinámica
     if (window.cargarListadoAdmin) window.cargarListadoAdmin();
     if (window.cargarUsuariosAdmin) window.cargarUsuariosAdmin();
+    if (window.cargarListadoHorasVoluntarios) window.cargarListadoHorasVoluntarios();
   }
 }
 
 // ===============================
-// NUEVO FLUJO DE REGISTRO POR TELÉFONO (CORREGIDO SIN ERRORES DE SINTAXIS)
+// MOTOR DE INICIALIZACIÓN AUTOMÁTICA (IDENTIFICACIÓN POR USUARIO_ID)
 // ===============================
-document.getElementById("btn-acceder").addEventListener("click", async () => {
-  const telefono = document.getElementById("telefono-bienvenida").value.trim();
-  if (!telefono) return alert("Introduce tu teléfono para continuar.");
+async function inicializarAplicacionVoluntario() {
+  const uid = localStorage.getItem("usuario_id");
 
-  const { data: usuarioExistente } = await supabase
-    .from("usuarios")
-    .select("*")
-    .eq("telefono", telefono)
-    .maybeSingle();
-
-  let idUsuarioActivo;
-
-  if (usuarioExistente) {
-    idUsuarioActivo = usuarioExistente.id;
-    localStorage.setItem("usuario_id", idUsuarioActivo);
-  } else {
-    const nombre = prompt("Introduce tu nombre y apellido:");
-    if (!nombre || nombre.trim() === "") return alert("Debes introducir un nombre para continuar.");
-
-    let fecha_nacimiento = prompt("Introduce tu fecha de nacimiento (AAAA-MM-DD):");
-    if (!fecha_nacimiento || fecha_nacimiento.trim() === "") return alert("Debes introducir tu fecha de nacimiento.");
-
-    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regexFecha.test(fecha_nacimiento)) return alert("La fecha debe tener el formato AAAA-MM-DD.");
-
-    const fechaObj = new Date(fecha_nacimiento);
-    if (isNaN(fechaObj.getTime())) return alert("La fecha introducida no es válida.");
-
-    idUsuarioActivo = crypto.randomUUID();
-
-    // Extraer los cumpleaños como enteros según Regla Crítica 2
-    const cumple_mes = fechaObj.getMonth() + 1;
-    const cumple_dia = fechaObj.getDate();
-
-    const { error } = await supabase
-      .from("usuarios")
-      .insert([
-        {
-          id: idUsuarioActivo,
-          nombre: nombre.trim(),
-          telefono: telefono.trim(),
-          cumple_mes: cumple_mes,
-          cumple_dia: cumple_dia,
-          horas: 0.00
-        }
-      ]);
-
-    if (error) return alert("Error creando usuario: " + error.message);
-
-    localStorage.setItem("usuario_id", idUsuarioActivo);
-    alert("Usuario registrado correctamente.");
-  }
-
-  document.getElementById("welcome-screen").style.display = "none";
-  document.getElementById("welcome-header").style.display = "none";
-  document.getElementById("app-screens").style.display = "block";
-  document.getElementById("main-header").style.display = "flex";
-  document.querySelector(".bottom-nav").style.display = "flex";
-
-  showScreen("operativos");
-});
-
-// Navegación PWA
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    showScreen(btn.dataset.screen);
-  });
-});
-
-// Carga asíncrona del panel administrativo
-esAdmin().then(admin => {
-  if (!admin) return;
-  document.getElementById("admin-btn").style.display = "block";
-  import("./supabase-admin.js");
-});
-
-// Exposición global estricta en el objeto window
-window.cargarOperativos = cargarOperativos;
-window.cargarPreventivos = cargarPreventivos;
-window.cargarEmergencias = cargarEmergencias;
-window.toggleSuscripcion = toggleSuscripcion;
-window.estaSuscrito = estaSuscrito;
-window.showScreen = showScreen;
-window.esAdmin = esAdmin;
-window.registrarDispositivo = registrarDispositivo;
-
-
-
-
-// =========================================================================
-// SISTEMA DE ALARMA ELECTRÓNICA PARA EMERGENCIAS (Al final de app.js)
-// =========================================================================
-let ecgAudioContext = null;
-let ecgOscillator = null;
-
-// Función para encender el pitido continuo
-window.activarPitidoEmergencia = function() {
-  if (ecgOscillator) return; // Si ya está sonando, no hace nada
-
-  try {
-    ecgAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-    ecgOscillator = ecgAudioContext.createOscillator();
-    const gainNode = ecgAudioContext.createGain();
-
-    ecgOscillator.type = 'sine';
-    ecgOscillator.frequency.setValueAtTime(880, ecgAudioContext.currentTime); // Tono de alarma agudo
-    gainNode.gain.setValueAtTime(0.4, ecgAudioContext.currentTime); // Volumen intermedio
-
-    ecgOscillator.connect(gainNode);
-    gainNode.connect(ecgAudioContext.destination);
-
-    ecgOscillator.start();
-    console.log("🚨 Pitido continuo de emergencia iniciado.");
-  } catch (e) {
-    console.warn("Audio bloqueado automáticamente por el navegador. Esperando click del usuario.", e);
-  }
-};
-
-// Función para apagar el pitido
-window.detenerPitidoEmergencia = function() {
-  if (ecgOscillator) {
-    try {
-      ecgOscillator.stop();
-      ecgOscillator.disconnect();
-      if (ecgAudioContext && ecgAudioContext.state !== 'closed') {
-        ecgAudioContext.close();
-      }
-    } catch (e) {
-      console.error("Error al detener el contexto de audio:", e);
+  // Entrada transparente si el identificador físico ya está enlazado
+  if (uid && uid.trim() !== "") {
+    const esAdministrador = await esAdmin();
+    if (esAdministrador) {
+      // Carga dinámica asíncrona local según Regla Crítica 1
+      import("./supabase-admin.js").then(modulo => {
+        window.cargarListadoAdmin = modulo.cargarListadoAdmin;
+        window.cargarUsuariosAdmin = modulo.cargarUsuariosAdmin;
+        window.cargarListadoHorasVoluntarios = modulo.cargarListadoHorasVoluntarios;
+      });
     }
-    ecgOscillator = null;
-    ecgAudioContext = null;
-    console.log("🔊 Alarma de emergencia silenciada.");
+    
+    const welcomeScreen = document.getElementById("welcome-screen");
+    const welcomeHeader = document.getElementById("welcome-header");
+    if (welcomeScreen) welcomeScreen.style.display = "none";
+    if (welcomeHeader) welcomeHeader.style.display = "none";
+    
+    showScreen("inicio");
+  } else {
+    console.log("Terminal nuevo detectado sin enlazado previo.");
+    document.body.innerHTML = `<div style="padding:40px; text-align:center; font-family:sans-serif;">
+      <h2 style="color:#e53e3e; margin-bottom:10px;">Dispositivo No Enlazado</h2>
+      <p style="color:#4a5568; margin-bottom:20px;">Este terminal no dispone de credenciales locales de autenticación enlazadas en localStorage.</p>
+      <div style="background:#f7fafc; padding:12px; border-radius:4px; border:1px solid #e2e8f0; display:inline-block;">
+        <small style="color:#718096; font-family:monospace; font-size:12px;">Consulte al administrador para vincular su usuario_id.</small>
+      </div>
+    </div>`;
   }
-};
+}
 
-// Acciones de los botones de la tarjeta de emergencia en la pantalla del voluntario
-window.suscribirseAEmergencia = async function(emergenciaId) {
-  // Aquí irá tu lógica para insertar al voluntario en la tabla 'suscripciones'
-  
-  // Apagamos el sonido inmediatamente al interactuar
-  window.detenerPitidoEmergencia();
-  alert("Te has suscrito a la emergencia. Acude de inmediato.");
-};
-
-window.declinarEmergencia = function() {
-  // Apagamos el sonido inmediatamente al interactuar
-  window.detenerPitidoEmergencia();
-  alert("Has declinado la emergencia.");
-};
+// Inicialización defensiva dual
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', inicializarAplicacionVoluntario);
+} else {
+  inicializarAplicacionVoluntario();
+}
