@@ -466,4 +466,49 @@ function initAdminEventListeners() {
       }
     });
   }
+
+
+
+  
+  window.enviarEmergencia = async function() {
+  try {
+    const lugarInput = document.getElementById('input-lugar-emergencia').value;
+    const descripcionInput = document.getElementById('input-desc-emergencia').value;
+
+    const response = await fetch(`${BASE_FN}/emergencia-ts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apiKey': supabase.supabaseKey,
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
+      },
+      body: JSON.stringify({
+        lugar: lugarInput,
+        descripcion: descripcionInput,
+        admin_id: window.usuarioGlobalId // Ajusta esta variable según tu estado global
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      // Si el servidor responde con error, lo lanzamos para capturarlo en el catch
+      throw new Error(result.error || `Error del servidor con código ${response.status}`);
+    }
+
+    alert("¡Emergencia creada con éxito!");
+    console.log("Datos de la emergencia:", result.data);
+
+  } catch (error) {
+    // Imprime el error detallado en la consola del desarrollador (F12) para no perder rastro
+    console.error("Fallo detallado en enviarEmergencia:", error);
+    alert(`Error al procesar: ${error.message}`);
+  }
+};
+
+
+
+
+
+
 }
