@@ -1,5 +1,5 @@
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 2)
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 3)
 // =========================================================================
 
 // CORRECTO: Bundle completo optimizado para producción en GitHub Pages sin CORS
@@ -168,7 +168,7 @@ export async function cargarPreventivos() {
 
 
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 - BLOQUE A DE B)
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 DE 3)
 // =========================================================================
 
 // Variables globales del contexto de Audio para el pitido continuo
@@ -320,7 +320,7 @@ export async function estaSuscrito(tipo_evento, evento_id) {
 }
 
 // =========================================================================
-// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 2 - BLOQUE B DE B)
+// APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 3 de 3)
 // =========================================================================
 
 window.toggleSuscripcion = async function(tipo_evento, evento_id) {
