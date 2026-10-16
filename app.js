@@ -2,67 +2,73 @@
 // APP AVPCEA - CONFIGURACIÓN CENTRAL Y MÓDULOS DEL FRONTEND (PARTE 1 DE 3)
 // =========================================================================
 
-// CORRECTO: Bundle completo optimizado para producción en GitHub Pages sin CORS
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2?bundle" ;
+// 1. IMPORTACIÓN E INICIALIZACIÓN DEL CLIENTE (Estático en la raíz)
+import { createClient } from "https://esm.sh" ;
 
-const SUPABASE_URL = "https://hptnaoliiychgkxsaksy.supabase.co";
+const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export const BASE_FN = `${SUPABASE_URL}/functions/v1`;
 
-// Mostrar contenedor principal de la aplicación PWA
-document.getElementById("app-container").style.display = "block";
-
-// ===============================
-// CONTROL DE ACCESO Y AUTORIZACIÓN AUTOMÁTICA
-// ===============================
-const TOKEN_SECRETO = "v3";
-const tokenGuardado = localStorage.getItem("avpcea_token");
-
-window.AVPCEA_AUTORIZADO = false;
-let usuario_id = localStorage.getItem("usuario_id");
-
-// MOTOR: Si no hay usuario_id previo en localStorage, se solicitará al voluntario o se asignará en el registro preliminar
-if (!usuario_id || usuario_id.trim() === "") {
-  // Inicialización defensiva de resguardo para el flujo inicial guiado
-  usuario_id = localStorage.getItem("usuario_id") || "";
-}
-
-if (tokenGuardado === TOKEN_SECRETO) {
-  window.AVPCEA_AUTORIZADO = true;
-  if (typeof registrarDispositivo === "function") registrarDispositivo();
-} else {
-  let autorizado = false;
-  while (!autorizado) {
-    const codigo = prompt("Introduce el código de autorización:");
-    if (codigo === null) {
-      alert("Acceso denegado. No se ha introducido código.");
-      break;
-    }
-    if (codigo === TOKEN_SECRETO) {
-      localStorage.setItem("avpcea_token", TOKEN_SECRETO);
-      alert("Dispositivo autorizado.");
-      window.AVPCEA_AUTORIZADO = true;
-      autorizado = true;
-      if (typeof registrarDispositivo === "function") registrarDispositivo();
-    } else {
-      alert("Código incorrecto. Inténtalo de nuevo.");
-    }
-  }
-}
-
-if (!window.AVPCEA_AUTORIZADO) {
-  document.body.innerHTML = "<p style='padding:20px; text-align:center;'>Acceso no autorizado.</p>";
-  throw new Error("Acceso no autorizado");
-}
-
-// Sistema de control defensivo anti-duplicados
+// 2. SISTEMA DE CONTROL DEFENSIVO ANTI-DUPLICADOS (Se queda aquí, intacto)
 const cargando = {
   operativos: false,
   preventivos: false,
   emergencias: false
 };
+
+// =========================================================================
+// RENDERS PÚBLICOS DE EVENTOS
+// =========================================================================
+export async function cargarOperativos() {
+  if (cargando.operativos) return;
+  cargando.operativos = true;
+
+  const cont = document.getElementById("lista-operativos");
+  if (!cont) {
+    cargando.operativos = false;
+    return;
+  }
+  cont.innerHTML = "<p>Cargando operativos...</p>";
+
+  const { data: operativos, error } = await supabase
+    .from("operativos")
+    .select("*")
+    .is("fecha_fin", null)
+    .order("fecha_inicio", { ascending: false });
+
+  if (error) {
+    cont.innerHTML = "<p>Error al cargar operativos.</p>";
+    cargando.operativos = false;
+    return;
+  }
+
+  cont.innerHTML = "";
+  if (!operativos || operativos.length === 0) {
+    cont.innerHTML = "<p>No hay operativos activos en este momento.</p>";
+  } else {
+    for (const op of operativos) {
+      const suscrito = await estaSuscrito("operativos", op.id);
+      const fechaInicioStr = op.fecha_inicio ? op.fecha_inicio.substring(0, 16).replace('T', ' ') : "—";
+
+      cont.innerHTML += `
+        <div class="card" style="margin-bottom:12px; padding:12px; border:1px solid #eee; border-radius:4px;">
+          <h3><a href="#/evento/operativos/${op.id}" style="color:#2b6cb0; text-decoration:none;">${op.titulo} ↗</a></h3>
+          <p><strong>Lugar:</strong> ${op.lugar || "—"}</p>
+          <p><strong>Fecha de evento:</strong> ${op.fecha || "—"}</p>
+          <p><strong>Fecha inicio:</strong> ${fechaInicioStr}</p>
+          <p>${op.descripcion || "Sin observaciones"}</p>
+          <button class="btn-primary" style="margin-top:8px;" onclick="window.toggleSuscripcion('operativos', '${op.id}')">
+            ${suscrito ? "Cancelar suscripción" : "Suscribirme"}
+          </button>
+        </div>
+      `;
+    }
+  }
+  cargando.operativos = false;
+}
+
 
 // ===============================
 // RENDERS PÚBLICOS DE EVENTOS
