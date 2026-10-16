@@ -1,5 +1,5 @@
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 1 DE 3)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 1 DE 4)
 // =========================================================================
 import { supabase, BASE_FN } from "./app.js";
 
@@ -89,7 +89,7 @@ window.ejecutarEliminacionElemento = async function(tipo, id) {
 
 
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 2 DE 3)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 2 DE 4)
 // =========================================================================
 
 // ===============================
@@ -288,7 +288,7 @@ export async function cargarUsuariosAdmin() {
 
 
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 - BLOQUE A DE B)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 4)
 // =========================================================================
 function initAdminEventListeners() {
   
@@ -514,7 +514,7 @@ function initAdminEventListeners() {
 
 
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 - BLOQUE B DE B)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 4 de 4)
 // =========================================================================
 
 // LISTADO EXTENDIDO PARA VER LAS HORAS DE CADA VOLUNTARIO SEGREGADAS
