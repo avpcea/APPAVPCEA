@@ -20,6 +20,7 @@ const cargando = {
   preventivos: false,
   emergencias: false
 };
+
 // =========================================================================
 // RENDERS PÚBLICOS DE EVENTOS ACTIVE (OCULTANDO LOS CERRADOS)
 // =========================================================================
@@ -70,7 +71,7 @@ export async function cargarOperativos() {
     }
   }
   cargando.operativos = false;
-}
+};
 
 export async function cargarPreventivos() {
   if (cargando.preventivos) return;
@@ -119,10 +120,8 @@ export async function cargarPreventivos() {
     }
   }
   cargando.preventivos = false;
-}
-// =========================================================================
-// APP AVPCEA - ALARMA ACÚSTICA Y SUSCRIPCIONES (PARTE 2 DE 3)
-// =========================================================================
+};
+
 // =========================================================================
 // SISTEMA DE ALARMA ELECTRÓNICA INTERACTIVA (EMERGENCIAS)
 // =========================================================================
@@ -144,7 +143,7 @@ export function activarPitidoEmergencia() {
   } catch (e) {
     console.warn("Audio bloqueado automáticamente por el navegador. Esperando interacción.", e);
   }
-}
+};
 
 export function detenerPitidoEmergencia() {
   if (ecgOscillator) {
@@ -161,7 +160,7 @@ export function detenerPitidoEmergencia() {
     ecgAudioContext = null;
     console.log("🔊 Pitido continuo silenciado.");
   }
-}
+};
 
 export async function cargarEmergencias() {
   if (cargando.emergencias) return;
@@ -223,7 +222,7 @@ export async function cargarEmergencias() {
     `;
   });
   cargando.emergencias = false;
-}
+};
 
 window.responderAAlerta = async function(emergenciaId, accion) {
   detenerPitidoEmergencia(); // Interacción explícita: Silencia el zumbador de inmediato
@@ -244,6 +243,7 @@ window.responderAAlerta = async function(emergenciaId, accion) {
   await cargarEmergencias();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
+
 // =========================================================================
 // CONTROL DE SUSCRIPCIONES Y ENLACE DE BACKEND
 // =========================================================================
@@ -260,7 +260,7 @@ export async function estaSuscrito(tipo_evento, evento_id) {
     .maybeSingle();
     
   return !!data;
-}
+};
 
 window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   const uid = localStorage.getItem("usuario_id");
@@ -308,9 +308,7 @@ window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   if (tipo_evento === "operativos") cargarOperativos();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
-// =========================================================================
-// APP AVPCEA - FICHA PERSONAL E INICIALIZACIÓN AUTOMÁTICA (PARTE 3 DE 3)
-// =========================================================================
+
 // =========================================================================
 // GESTIÓN DE DISPOSITIVOS Y ROL
 // =========================================================================
