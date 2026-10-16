@@ -1,7 +1,6 @@
 // =========================================================================
 // APP AVPCEA - CONFIGURACIÓN CENTRAL Y RENDERS DE EVENTOS (PARTE 1 DE 3)
 // =========================================================================
-
 // 1. IMPORTACIÓN E INICIALIZACIÓN DEL CLIENTE DE SUPABASE
 import { createClient } from "https://esm.sh" ;
 
@@ -21,11 +20,9 @@ const cargando = {
   preventivos: false,
   emergencias: false
 };
-
 // =========================================================================
 // RENDERS PÚBLICOS DE EVENTOS ACTIVE (OCULTANDO LOS CERRADOS)
 // =========================================================================
-
 export async function cargarOperativos() {
   if (cargando.operativos) return;
   cargando.operativos = true;
@@ -123,12 +120,9 @@ export async function cargarPreventivos() {
   }
   cargando.preventivos = false;
 }
-
-
 // =========================================================================
 // APP AVPCEA - ALARMA ACÚSTICA Y SUSCRIPCIONES (PARTE 2 DE 3)
 // =========================================================================
-
 // =========================================================================
 // SISTEMA DE ALARMA ELECTRÓNICA INTERACTIVA (EMERGENCIAS)
 // =========================================================================
@@ -250,7 +244,6 @@ window.responderAAlerta = async function(emergenciaId, accion) {
   await cargarEmergencias();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
-
 // =========================================================================
 // CONTROL DE SUSCRIPCIONES Y ENLACE DE BACKEND
 // =========================================================================
@@ -315,12 +308,9 @@ window.toggleSuscripcion = async function(tipo_evento, evento_id) {
   if (tipo_evento === "operativos") cargarOperativos();
   if (typeof cargarFichaVoluntario === "function") await cargarFichaVoluntario();
 };
-
-
 // =========================================================================
 // APP AVPCEA - FICHA PERSONAL E INICIALIZACIÓN AUTOMÁTICA (PARTE 3 DE 3)
 // =========================================================================
-
 // =========================================================================
 // GESTIÓN DE DISPOSITIVOS Y ROL
 // =========================================================================
@@ -340,7 +330,6 @@ export async function esAdmin() {
   const { data } = await supabase.from("dispositivos").select("rol").eq("id", uid).maybeSingle();
   return data && data.rol === "admin";
 }
-
 // =========================================================================
 // FICHA DEL VOLUNTARIO DINÁMICA (PÁGINA PRINCIPAL)
 // =========================================================================
@@ -412,7 +401,6 @@ export async function cargarFichaVoluntario() {
     console.error("Error al renderizar la ficha:", e);
   }
 }
-
 // =========================================================================
 // SPA: CAMBIO DE PANTALLAS EXTENDIDO
 // =========================================================================
@@ -453,7 +441,6 @@ export function showScreen(name) {
     if (window.cargarListadoHorasVoluntarios) window.cargarListadoHorasVoluntarios();
   }
 }
-
 // =========================================================================
 // MOTOR DE INICIALIZACIÓN AUTOMÁTICA CON CONTROL DE TIEMPOS DOM
 // =========================================================================
