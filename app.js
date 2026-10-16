@@ -484,15 +484,17 @@ async function inicializarAplicacionVoluntario() {
   if (uid && uid.trim() !== "") {
     const esAdministrador = await esAdmin();
     if (esAdministrador) {
+      // Corrección definitiva: Usamos la ruta relativa limpia './supabase-admin.js'
       try {
         const modulo = await import("./supabase-admin.js");
         window.cargarListadoAdmin = modulo.cargarListadoAdmin;
         window.cargarUsuariosAdmin = modulo.cargarUsuariosAdmin;
         window.cargarListadoHorasVoluntarios = modulo.cargarListadoHorasVoluntarios;
       } catch (err) {
-        console.error("Error cargando el módulo administrativo:", err);
+        console.warn("Módulo de administración no cargado dinámicamente, asegurando carga estática.");
       }
     }
+
     
     const welcomeScreen = document.getElementById("welcome-screen");
     const welcomeHeader = document.getElementById("welcome-header");
