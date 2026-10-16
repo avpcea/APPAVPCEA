@@ -7,6 +7,10 @@ async function inicializarAdminCompleto() {
   initAdminEventListeners();
   await cargarListadoAdmin();
   await cargarUsuariosAdmin();
+  // El listado de horas de voluntarios se cargará desde la función dedicada en la Parte 3
+  if (typeof cargarListadoHorasVoluntarios === "function") {
+    await cargarListadoHorasVoluntarios();
+  }
 }
 
 // Inicialización defensiva dual según Regla Crítica 3
@@ -37,11 +41,10 @@ window.ejecutarCierreEvento = async function(id, tipo) {
       alert("Formato de fecha inválido. Por favor, usa el formato: AAAA-MM-DD HH:MM (Ej: 2026-10-24 20:30)");
       return;
     }
-    //  CORRECTO: Conserva la hora exacta escrita por el usuario adaptándola al estándar ISO con su desfase local real
+    // CORRECTO: Conserva la hora exacta escrita por el usuario adaptándola al estándar ISO con su desfase local real
     const desfaseMinutos = fechaParseada.getTimezoneOffset();
     const fechaCompensada = new Date(fechaParseada.getTime() - (desfaseMinutos * 60000));
     fechaFinISO = fechaCompensada.toISOString().replace('Z', ''); // Removemos la Z para que no asuma UTC puro
-
   }
 
   try {
@@ -57,6 +60,9 @@ window.ejecutarCierreEvento = async function(id, tipo) {
     if (response.ok) {
       alert("Registro cerrado correctamente. Las horas han sido procesadas.");
       await cargarListadoAdmin();
+      if (typeof cargarListadoHorasVoluntarios === "function") {
+        await cargarListadoHorasVoluntarios(); // Refresca la tabla de contabilidad de horas en admin
+      }
     } else {
       const err = await response.json();
       alert("Error al cerrar: " + err.error);
@@ -80,12 +86,14 @@ window.ejecutarEliminacionElemento = async function(tipo, id) {
     alert(`Error al eliminar: ${error.message}`);
   }
 };
+
+
 // =========================================================================
 // APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 2 DE 3)
 // =========================================================================
 
 // ===============================
-// LISTADO GENERAL ADMIN (CORREGIDO SIN ESCAPES)
+// LISTADO GENERAL ADMIN (CORREGIDO Y ACTUALIZADO)
 // ===============================
 export async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");
@@ -94,8 +102,8 @@ export async function cargarListadoAdmin() {
 
   try {
     const [operativos, preventivos] = await Promise.all([
-      supabase.from("operativos").select("*").order("fecha", { ascending: false }),
-      supabase.from("preventivos").select("*").order("fecha", { ascending: false })
+      supabase.from("operativos").select("*").order("fecha_inicio", { ascending: false }),
+      supabase.from("preventivos").select("*").order("fecha_inicio", { ascending: false })
     ]);
 
     cont.innerHTML = "";
@@ -109,12 +117,14 @@ export async function cargarListadoAdmin() {
           <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:4px;">
             <strong>Título:</strong> ${op.titulo}<br>
             <strong>Lugar:</strong> ${op.lugar || "—"}<br>
-            <strong>Fecha:</strong> ${op.fecha}<br>
+            <strong>Fecha de evento:</strong> ${op.fecha || "—"}<br>
+            <strong>Fecha inicio:</strong> ${op.fecha_inicio ? op.fecha_inicio.substring(0, 16).replace('T', ' ') : "—"}<br>
+            ${estaCerrado ? `<strong>Fecha fin:</strong> \${op.fecha_fin.substring(0, 16).replace('T', ' ')}<br>` : ''}
             <strong>Observaciones:</strong> ${op.descripcion || "Sin observaciones"}<br>
             <small style="color: #666;">Horas totales: ${op.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('${op.id}', 'operativos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${op.id}', 'operativos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
@@ -137,12 +147,14 @@ export async function cargarListadoAdmin() {
           <div class="card" style="opacity: ${estaCerrado ? '0.7' : '1'}; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:4px;">
             <strong>Título:</strong> ${pr.titulo}<br>
             <strong>Lugar:</strong> ${pr.lugar || "—"}<br>
-            <strong>Fecha:</strong> ${pr.fecha}<br>
+            <strong>Fecha de evento:</strong> ${pr.fecha || "—"}<br>
+            <strong>Fecha inicio:</strong> ${pr.fecha_inicio ? pr.fecha_inicio.substring(0, 16).replace('T', ' ') : "—"}<br>
+            ${estaCerrado ? `<strong>Fecha fin:</strong> \${pr.fecha_fin.substring(0, 16).replace('T', ' ')}<br>` : ''}
             <strong>Observaciones:</strong> ${pr.descripcion || "Sin observaciones"}<br>
             <small style="color: #666;">Horas totales: ${pr.duracion_horas || 0}</small><br>
             
             ${!estaCerrado ? `
-              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('${pr.id}', 'preventivos')">
+              <button class="btn-danger" style="margin-top:8px; padding:4px 8px; font-size:12px;" onclick="window.ejecutarCierreEvento('\${pr.id}', 'preventivos')">
                 Cerrar y Contar Horas
               </button>
             ` : `<span style="color:green; font-weight:bold; font-size:12px; display:inline-block; margin-top:8px;">✓ Cerrado</span>`}
@@ -184,7 +196,8 @@ async function cargarEmergenciasAdmin() {
       activas.data.forEach(emg => {
         cont.innerHTML += `
           <div class="card" style="margin-bottom:10px; padding:10px; border:1px solid #ffcccc; background:#fff5f5;">
-            <strong>${emg.titulo}</strong> - Nivel: ${String(emg.nivel).toUpperCase()}<br>
+            <strong>${emg.lugar}</strong> - ${emg.descripcion || "Sin descripción"}<br>
+            ${emg.fecha_inicio ? `<small>Inicio: \${emg.fecha_inicio.substring(0, 16).replace('T', ' ')}</small><br>` : ''}
             <button class="btn-danger" style="margin-top:5px;" onclick="window.ejecutarCierreEvento('${emg.id}', 'emergencias')">
               Cerrar emergencia
             </button>
@@ -200,7 +213,8 @@ async function cargarEmergenciasAdmin() {
       finalizadas.data.forEach(emg => {
         cont.innerHTML += `
           <div class="card" style="opacity:0.7; margin-bottom:10px; padding:10px; border:1px solid #ddd;">
-            <strong>${emg.titulo}</strong> - Nivel: ${String(emg.nivel).toUpperCase()}<br>
+            <strong>${emg.lugar}</strong> - ${emg.descripcion || "Sin descripción"}<br>
+            <small>Fin: ${emg.fecha_fin ? emg.fecha_fin.substring(0, 16).replace('T', ' ') : "—"}</small><br>
             <button class="btn-secondary" style="margin-top:5px; padding:4px 8px; font-size:12px; background-color:#777;" onclick="window.ejecutarEliminacionElemento('emergencias', '${emg.id}')">
               Eliminar registro
             </button>
@@ -225,7 +239,7 @@ export async function cargarUsuariosAdmin() {
   try {
     const { data: usuarios, error } = await supabase
       .from("usuarios")
-      .select("id, nombre, telefono, dispositivos(rol)")
+      .select("id, nombre, telefono, cumple_mes, cumple_dia, horas, dispositivos(rol)")
       .order("nombre", { ascending: true });
 
     if (error) throw error;
@@ -236,14 +250,28 @@ export async function cargarUsuariosAdmin() {
       return;
     }
 
-    let html = `<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px;"><tbody>`;
+    let html = `<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px;">
+                  <thead>
+                    <tr style="background:#f4f4f4; border-bottom:2px solid #ccc; text-align:left;">
+                      <th style="padding:8px;">Nombre</th>
+                      <th style="padding:8px;">Cumpleaños</th>
+                      <th style="padding:8px;">Rol</th>
+                      <th style="padding:8px; text-align:center;">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
     usuarios.forEach(usr => {
       const rolReal = usr.dispositivos?.rol || "Sin dispositivo";
+      const cumpleStr = (usr.cumple_dia && usr.cumple_mes) ? `${String(usr.cumple_dia).padStart(2, '0')}/${String(usr.cumple_mes).padStart(2, '0')}` : "—";
       html += `
         <tr style="border-bottom:1px solid #eee;">
           <td style="padding:8px; font-weight:bold;">${usr.nombre}</td>
+          <td style="padding:8px;">${cumpleStr}</td>
           <td style="padding:8px;">${rolReal.toUpperCase()}</td>
           <td style="padding:8px; text-align:center;">
+            <button class="btn-primary" style="padding:2px 6px; font-size:12px; margin-right:4px;" onclick="window.abrirModalEdicionUsuario('${usr.id}')">
+              Editar
+            </button>
             <button class="btn-secondary" style="padding:2px 6px; font-size:12px; background:#777;" onclick="window.ejecutarEliminacionElemento('usuarios', '${usr.id}')">
               Baja
             </button>
@@ -257,12 +285,14 @@ export async function cargarUsuariosAdmin() {
     console.error(err);
   }
 }
+
+
 // =========================================================================
-// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3 - ACTUALIZADA)
+// APP AVPCEA - PANEL DE ADMINISTRACIÓN (PARTE 3 DE 3 - COMPLETADA Y SANEADA)
 // =========================================================================
 function initAdminEventListeners() {
   
-  // 1. CREAR USUARIO CON FECHA DE NACIMIENTO, HORAS INICIALES Y ADMIN_ID (BLINDADO)
+  // 1. CREAR USUARIO CON CUMPLEAÑOS HOMOGENEIZADO Y SALDO INICIAL
   const btnCrearUsuario = document.getElementById("btn-crear-usuario");
   if (btnCrearUsuario) {
     btnCrearUsuario.addEventListener("click", async (e) => {
@@ -273,16 +303,14 @@ function initAdminEventListeners() {
       const fechaNacimientoInput = document.getElementById("usr-fecha-nacimiento")?.value;
       const horasInicialesInput = document.getElementById("usr-horas-iniciales")?.value;
       
-      // CAPTURA DEFENSIVA: Si no encuentra el usuario_id en localStorage, busca en la sesión activa de Supabase
       let admin_id = localStorage.getItem("usuario_id");
       if (!admin_id) {
         const { data: sessionData } = await supabase.auth.getSession();
         admin_id = sessionData?.session?.user?.id;
       }
 
-      // Si aun así está vacío, obligamos a detener el flujo para que no rompa la Edge Function
       if (!admin_id) {
-        return alert("Error de sesión: No se ha detectado tu ID de Administrador en el dispositivo. Por favor, recarga la página.");
+        return alert("Error de sesión: No se ha detectado tu ID de Administrador. Por favor, recarga la página.");
       }
 
       if (!nombre || !telefono || !rol) return alert("Rellena nombre, teléfono y rol.");
@@ -298,7 +326,6 @@ function initAdminEventListeners() {
           horas: horasInicialesInput ? parseFloat(horasInicialesInput) : 0.00
         };
 
-        // Procesamos la fecha del selector y la transformamos directamente a los enteros correspondientes
         if (fechaNacimientoInput) {
           const fechaParseada = new Date(fechaNacimientoInput);
           if (!isNaN(fechaParseada.getTime())) {
@@ -306,7 +333,6 @@ function initAdminEventListeners() {
             payload.cumple_dia = fechaParseada.getDate();
           }
         }
-
 
         const response = await fetch(`${BASE_FN}/admin-create-user-ts`, {
           method: "POST",
@@ -321,19 +347,20 @@ function initAdminEventListeners() {
           document.getElementById("usr-fecha-nacimiento").value = "";
           document.getElementById("usr-horas-iniciales").value = "0.00";
           await cargarUsuariosAdmin();
+          await cargarListadoHorasVoluntarios();
         } else {
           const err = await response.json();
-          alert("Error: " + err.error);
+          alert("Error al crear usuario: " + err.error);
         }
       } catch (error) {
-        alert("Error de conexión.");
+        alert("Error de conexión al crear usuario.");
       } finally {
         btnCrearUsuario.disabled = false;
       }
     });
   }
 
-  // 2. CREAR OPERATIVO
+  // 2. CREAR OPERATIVO (CORREGIDO CON NOMENCLATURAS EXPLICITAS DE FECHA)
   const btnCrearOperativo = document.getElementById("btn-crear-operativo");
   if (btnCrearOperativo) {
     btnCrearOperativo.addEventListener("click", async (e) => {
@@ -341,15 +368,15 @@ function initAdminEventListeners() {
       const titulo = document.getElementById("op-titulo")?.value.trim();
       const lugar = document.getElementById("op-lugar")?.value.trim();
       const descripcion = document.getElementById("op-descripcion")?.value.trim();
-      const fechaInput = document.getElementById("op-fecha")?.value;
+      const fechaInput = document.getElementById("op-fecha")?.value; // Selector del formulario
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha.");
+      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha de evento.");
 
       try {
         btnCrearOperativo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Regla Crítica 3: Exclusivamente YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10); // Regla Crítica 3: YYYY-MM-DD para columna DATE
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
@@ -357,20 +384,23 @@ function initAdminEventListeners() {
           body: JSON.stringify({
             tipo: "operativos",
             admin_id,
-            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO, creado_en: new Date().toISOString() }
+            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO }
           })
         });
 
         if (response.ok) {
-          alert("Operativo creado.");
-          document.getElementById("form-crear-operativo")?.reset();
+          alert("¡Fecha de evento y operativo guardados correctamente!");
+          document.getElementById("op-titulo").value = "";
+          document.getElementById("op-lugar").value = "";
+          document.getElementById("op-descripcion").value = "";
+          document.getElementById("op-fecha").value = "";
           await cargarListadoAdmin();
         } else {
           const err = await response.json();
           alert("Error: " + err.error);
         }
       } catch (error) {
-        alert("Error al procesar.");
+        alert("Error al procesar la creación del operativo.");
       } finally {
         btnCrearOperativo.disabled = false;
       }
@@ -388,12 +418,12 @@ function initAdminEventListeners() {
       const fechaInput = document.getElementById("prev-fecha")?.value;
       const admin_id = localStorage.getItem("usuario_id");
 
-      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha.");
+      if (!titulo || !fechaInput) return alert("Introduce Título y Fecha de evento.");
 
       try {
         btnCrearPreventivo.disabled = true;
         const fechaISO = new Date(fechaInput).toISOString();
-        const fechaSoloDate = fechaISO.substring(0, 10); // Regla Crítica 3: Exclusivamente YYYY-MM-DD
+        const fechaSoloDate = fechaISO.substring(0, 10);
 
         const response = await fetch(`${BASE_FN}/admin-create-element-ts`, {
           method: "POST",
@@ -401,114 +431,108 @@ function initAdminEventListeners() {
           body: JSON.stringify({
             tipo: "preventivos",
             admin_id,
-            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO, creado_en: new Date().toISOString() }
+            values: { titulo, lugar, descripcion, fecha: fechaSoloDate, fecha_inicio: fechaISO }
           })
         });
 
         if (response.ok) {
-          alert("Preventivo creado.");
-          document.getElementById("form-crear-preventivo")?.reset();
+          alert("Preventivo creado con éxito.");
+          document.getElementById("prev-titulo").value = "";
+          document.getElementById("prev-lugar").value = "";
+          document.getElementById("prev-descripcion").value = "";
+          document.getElementById("prev-fecha").value = "";
           await cargarListadoAdmin();
         } else {
           const err = await response.json();
           alert("Error: " + err.error);
         }
       } catch (error) {
-        alert("Error al procesar.");
+        alert("Error al procesar la creación del preventivo.");
       } finally {
         btnCrearPreventivo.disabled = false;
       }
     });
   }
 
-  // 4. CREAR EMERGENCIA
+  // 4. CREAR EMERGENCIA (CORREGIDO Y BLINDADO SIN ERRORES AL PROCESAR)
   const btnCrearEmergencia = document.getElementById("btn-crear-emergencia");
   if (btnCrearEmergencia) {
     btnCrearEmergencia.addEventListener("click", async (e) => {
       e.preventDefault();
-      const titulo = document.getElementById("em-titulo")?.value.trim();
-      const nivel = document.getElementById("em-nivel")?.value;
-      const fechaInput = document.getElementById("em-fecha")?.value;
-      const admin_id = localStorage.getItem("usuario_id");
+      const lugarInput = document.getElementById("em-lugar") || document.getElementById("input-lugar-emergencia");
+      const descInput = document.getElementById("em-descripcion") || document.getElementById("input-desc-emergencia");
+      
+      let admin_id = localStorage.getItem("usuario_id");
+      if (!admin_id) {
+        const { data: s } = await supabase.auth.getSession();
+        admin_id = s?.session?.user?.id;
+      }
 
-      if (!titulo || !nivel || !fechaInput) return alert("Rellene todos los campos.");
+      if (!lugarInput?.value.trim() || !descInput?.value.trim()) {
+        return alert("Introduce el lugar y la descripción detallada de la emergencia.");
+      }
 
       try {
         btnCrearEmergencia.disabled = true;
-        const fechaISO = new Date(fechaInput).toISOString();
+        const token = (await supabase.auth.getSession()).data.session?.access_token || "";
 
         const response = await fetch(`${BASE_FN}/emergencia-ts`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apiKey': supabase.supabaseKey,
-            'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            lugar: document.getElementById('input-lugar-emergencia').value,
-            descripcion: document.getElementById('input-desc-emergencia').value,
-            admin_id: usuarioGlobalId // El ID del administrador activo
+            lugar: lugarInput.value.trim(),
+            descripcion: descInput.value.trim(),
+            admin_id: admin_id
           })
         });
 
-        if (response.ok) {
-          alert("Emergencia reportada.");
-          document.getElementById("form-crear-emergencia")?.reset();
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          alert("🚨 ¡Alerta de Emergencia enviada a todos los terminales!");
+          lugarInput.value = "";
+          descInput.value = "";
           await cargarListadoAdmin();
         } else {
-          const err = await response.json();
-          alert("Error: " + err.error);
+          throw new Error(result.error || `Servidor respondió con código ${response.status}`);
         }
       } catch (error) {
-        alert("Error al procesar.");
+        console.error("Fallo detallado en enviarEmergencia:", error);
+        alert(`Error al procesar la emergencia: ${error.message}`);
       } finally {
         btnCrearEmergencia.disabled = false;
       }
     });
   }
+}
 
+// =========================================================================
+// MOTOR ADICIONAL: CONTABILIDAD DE HORAS Y EDICIÓN DE USUARIOS
+// =========================================================================
 
+// LISTADO EXTENDIDO PARA VER LAS HORAS DE CADA VOLUNTARIO
+export async function cargarListadoHorasVoluntarios() {
+  const cont = document.getElementById("admin-contabilidad-horas");
+  if (!cont) return;
 
-  
-  window.enviarEmergencia = async function() {
   try {
-    const lugarInput = document.getElementById('input-lugar-emergencia').value;
-    const descripcionInput = document.getElementById('input-desc-emergencia').value;
+    const { data: registros, error } = await supabase
+      .from("horas")
+      .select("usuario_id, tipo, horas, anio, usuarios(nombre)")
+      .order("anio", { ascending: false });
 
-    const response = await fetch(`${BASE_FN}/emergencia-ts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apiKey': supabase.supabaseKey,
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-      },
-      body: JSON.stringify({
-        lugar: lugarInput,
-        descripcion: descripcionInput,
-        admin_id: window.usuarioGlobalId // Ajusta esta variable según tu estado global
-      })
-    });
+    if (error) throw error;
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      // Si el servidor responde con error, lo lanzamos para capturarlo en el catch
-      throw new Error(result.error || `Error del servidor con código ${response.status}`);
+    if (!registros || registros.length === 0) {
+      cont.innerHTML = "<p>No hay desgloses de horas registrados este año.</p>";
+      return;
     }
 
-    alert("¡Emergencia creada con éxito!");
-    console.log("Datos de la emergencia:", result.data);
-
-  } catch (error) {
-    // Imprime el error detallado en la consola del desarrollador (F12) para no perder rastro
-    console.error("Fallo detallado en enviarEmergencia:", error);
-    alert(`Error al procesar: ${error.message}`);
-  }
-};
-
-
-
-
-
-
-}
+    let html = `<table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; text-align:left;">
+                  <thead>
+                    <tr style="background:#e8f4fd; border-bottom:2px solid #bce0fd;">
+                      <th style="padding:8px;">Voluntario</th>
