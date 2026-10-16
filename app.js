@@ -425,3 +425,68 @@ window.estaSuscrito = estaSuscrito;
 window.showScreen = showScreen;
 window.esAdmin = esAdmin;
 window.registrarDispositivo = registrarDispositivo;
+
+
+
+
+// =========================================================================
+// SISTEMA DE ALARMA ELECTRÓNICA PARA EMERGENCIAS (Al final de app.js)
+// =========================================================================
+let ecgAudioContext = null;
+let ecgOscillator = null;
+
+// Función para encender el pitido continuo
+window.activarPitidoEmergencia = function() {
+  if (ecgOscillator) return; // Si ya está sonando, no hace nada
+
+  try {
+    ecgAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    ecgOscillator = ecgAudioContext.createOscillator();
+    const gainNode = ecgAudioContext.createGain();
+
+    ecgOscillator.type = 'sine';
+    ecgOscillator.frequency.setValueAtTime(880, ecgAudioContext.currentTime); // Tono de alarma agudo
+    gainNode.gain.setValueAtTime(0.4, ecgAudioContext.currentTime); // Volumen intermedio
+
+    ecgOscillator.connect(gainNode);
+    gainNode.connect(ecgAudioContext.destination);
+
+    ecgOscillator.start();
+    console.log("🚨 Pitido continuo de emergencia iniciado.");
+  } catch (e) {
+    console.warn("Audio bloqueado automáticamente por el navegador. Esperando click del usuario.", e);
+  }
+};
+
+// Función para apagar el pitido
+window.detenerPitidoEmergencia = function() {
+  if (ecgOscillator) {
+    try {
+      ecgOscillator.stop();
+      ecgOscillator.disconnect();
+      if (ecgAudioContext && ecgAudioContext.state !== 'closed') {
+        ecgAudioContext.close();
+      }
+    } catch (e) {
+      console.error("Error al detener el contexto de audio:", e);
+    }
+    ecgOscillator = null;
+    ecgAudioContext = null;
+    console.log("🔊 Alarma de emergencia silenciada.");
+  }
+};
+
+// Acciones de los botones de la tarjeta de emergencia en la pantalla del voluntario
+window.suscribirseAEmergencia = async function(emergenciaId) {
+  // Aquí irá tu lógica para insertar al voluntario en la tabla 'suscripciones'
+  
+  // Apagamos el sonido inmediatamente al interactuar
+  window.detenerPitidoEmergencia();
+  alert("Te has suscrito a la emergencia. Acude de inmediato.");
+};
+
+window.declinarEmergencia = function() {
+  // Apagamos el sonido inmediatamente al interactuar
+  window.detenerPitidoEmergencia();
+  alert("Has declinado la emergencia.");
+};
