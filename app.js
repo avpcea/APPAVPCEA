@@ -459,7 +459,9 @@ window.abrirModalEdicionUsuario = async function(id) {
     }
     await supabase.from("usuarios").update(datos).eq("id", id);
     alert("Actualizado."); await cargarUsuariosAdmin(); await cargarListadoHorasVoluntarios();
-  } catch (e) {}
+  } catch (e) {
+    console.error("Error al editar usuario:", e);
+  }
 };
 
 // =========================================================================
@@ -496,20 +498,16 @@ export function showScreen(name) {
 }
 
 async function inicializarAplicacionVoluntario() {
-  const uid = localStorage.getItem("usuario_id");
-  if (uid && uid.trim() !== "") {
-    const esAdministrador = await esAdmin();
-    if (esAdministrador) {
-      console.log("Perfil administrativo verificado. Herramientas del panel unificado listas.");
-      // CORRECTO: Ya no hacemos ningún 'import' dinámico de archivos locales aquí.
-      // Todas las funciones (cargarListadoAdmin, etc.) ya viven de forma nativa en este mismo archivo.
-    }
-    
-    const welcomeScreen = document.getElementById("welcome-screen");
-    const welcomeHeader = document.getElementById("welcome-header");
-    if (welcomeScreen) welcomeScreen.style.display = "none";
-    if (welcomeHeader) welcomeHeader.style.display = "none";
-    showScreen("inicio");
+  const appContainer = document.getElementById("app-container");
+  if (appContainer) appContainer.style.display = "block";
+
+  const TOKEN_SECRETO = "v3";
+  const tokenGuardado = localStorage.getItem("avpcea_token");
+  window.AVPCEA_AUTORIZADO = false;
+
+  if (tokenGuardado === TOKEN_SECRETO) {
+    window.AVPCEA_AUTORIZADO = true;
+    await registrarDispositivo();
   } else {
     let autorizado = false;
     while (!autorizado) {
@@ -529,8 +527,9 @@ async function inicializarAplicacionVoluntario() {
     return;
   }
 
-  const uid = localStorage.getItem("usuario_id");
-  if (uid && uid.trim() !== "") {
+  // CORRECTO: Quitamos el 'const' redundante si ya tenías la variable declarada arriba en el ámbito
+  const uidPersistido = localStorage.getItem("usuario_id");
+  if (uidPersistido && uidPersistido.trim() !== "") {
     const welcomeScreen = document.getElementById("welcome-screen");
     const welcomeHeader = document.getElementById("welcome-header");
     if (welcomeScreen) welcomeScreen.style.display = "none";
