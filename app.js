@@ -57,13 +57,20 @@ export async function cargarEmergencias(){
   const{data:ems}=await supabase.from("emergencias").select("*").eq("activa",true);
   if(!ems||ems.length===0){c.innerHTML="<p>Sin emergencias.</p>";detenerPitidoEmergencia();cg.emergencias=false;return;}
   c.innerHTML="";activarPitidoEmergencia();
-  ems.forEach(e=>{c.innerHTML+=`<div class="card" style="border:2px solid red;background:#fff5f5;padding:10px;"><h3>🚨 EMERGENCIA</h3><p>Lugar: ${e.lugar||"—"}</p><p>${e.descripcion||"—"}</p><button onclick="window.responderAAlerta('${e.id}','aceptar')">Aceptar</button><button onclick="window.responderAAlerta('${e.id}','declinar')">Declinar</button></div>`;});
+  
+  ems.forEach(e=>{
+    let htmlEmg = "<div class='card' style='border:2px solid red;background:#fff5f5;padding:10px;'>";
+    htmlEmg += "<h3>🚨 EMERGENCIA</h3>";
+    htmlEmg += "<p>Lugar: " + (e.lugar||"—") + "</p>";
+    htmlEmg += "<p>" + (e.descripcion||"—") + "</p>";
+    htmlEmg += "<button onclick=\"window.responderAAlerta('" + e.id + "','aceptar')\">Aceptar</button>";
+    htmlEmg += "<button onclick=\"window.responderAAlerta('" + e.id + "','declinar')\">Declinar</button>";
+    htmlEmg += "</div>";
+    
+    c.innerHTML += htmlEmg;
+  });
   cg.emergencias=false;
 }
-window.responderAAlerta=async function(id,act){
-  detenerPitidoEmergencia();if(act==='aceptar'){const u=localStorage.getItem("usuario_id");await supabase.from("suscripciones").insert([{usuario_id:u,evento_id:String(id),tipo:"EMG"}]);alert("Registrado.");}
-  await cargarEmergencias();await cargarFichaVoluntario();
-};
 export async function estaSuscrito(t,id){
   const u=localStorage.getItem("usuario_id"),tc=t==="operativos"?"OPR":"NRP";
   const{data:d}=await supabase.from("suscripciones").select("*").eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id)).maybeSingle();return!!d;
