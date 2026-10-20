@@ -10,7 +10,8 @@ export async function cargarOperativos(){
   if(!ops||ops.length===0){c.innerHTML="<p>No hay operativos activos.</p>";}else{
     for(const o of ops){
       const s=await estaSuscrito("operativos",o.id),f=o.fecha_inicio?o.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      c.innerHTML+=`<div class="card"><h3><a href="#/evento/operativos/${o.id}">${o.titulo} ↗</a></h3><p>Lugar: ${o.lugar||"—"}</p><p>Fecha inicio: ${f}</p><button onclick="window.toggleSuscripcion('operativos','${o.id}')">${s?"Cancelar":"Suscribirme"}</button></div>`;
+      // CORRECCIÓN: Limpieza absoluta de comillas y variables del literal de plantilla
+      c.innerHTML+="<div class='card'><h3><a href='#/evento/operativos/"+o.id+"'>"+o.titulo+" ↗</a></h3><p>Lugar: "+(o.lugar||"—")+"</p><p>Fecha inicio: "+f+"</p><button onclick=\"window.toggleSuscripcion('operativos','"+o.id+"')\">"+(s?"Cancelar":"Suscribirme")+"</button></div>";
     }
   }cg.operativos=false;
 }
@@ -22,7 +23,8 @@ export async function cargarPreventivos(){
   if(!prs||prs.length===0){c.innerHTML="<p>No hay preventivos activos.</p>";}else{
     for(const p of prs){
       const s=await estaSuscrito("preventivos",p.id),f=p.fecha_inicio?p.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      c.innerHTML+=`<div class="card"><h3><a href="#/evento/preventivos/${p.id}">${p.titulo} ↗</a></h3><p>Lugar: ${p.lugar||"—"}</p><p>Fecha inicio: ${f}</p><button onclick="window.toggleSuscripcion('preventivos','${p.id}')">${s?"Cancelar":"Suscribirme"}</button></div>`;
+      // CORRECCIÓN: Limpieza absoluta de comillas y variables del literal de plantilla
+      c.innerHTML+="<div class='card'><h3><a href='#/evento/preventivos/"+p.id+"'>"+p.titulo+" ↗</a></h3><p>Lugar: "+(p.lugar||"—")+"</p><p>Fecha inicio: "+f+"</p><button onclick=\"window.toggleSuscripcion('preventivos','"+p.id+"')\">"+(s?"Cancelar":"Suscribirme")+"</button></div>";
     }
   }cg.preventivos=false;
 }
