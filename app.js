@@ -1,4 +1,7 @@
-import{createClient}from"https://esm.sh";
+// Inicialización clásica global para saltarse las restricciones de red de GitHub Pages
+const { createClient } = window.supabase || {};
+
+// import{createClient}from"https://esm.sh";
 const URL="https://supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 export const supabase=createClient(URL,KEY),BASE_FN=`${URL}/functions/v1`;
 let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:false};
