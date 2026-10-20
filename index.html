@@ -162,8 +162,11 @@
 
 </div>
 
-<!-- CARGA DE LA APP -->
-<script src="app.js"></script>
+    <!-- 1. Forzamos la carga diferida secuencial de la librería global de Supabase -->
+    <script defer src="https://jsdelivr.net"></script>
+
+    <!-- 2. Forzamos la carga diferida secuencial de tu aplicación clásica -->
+    <script defer src="app.js"></script>
 
 </body>
 </html>
