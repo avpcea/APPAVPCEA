@@ -1,8 +1,8 @@
-import{createClient}from"https://esm.sh";
-const URL="https://supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
-export const supabase=createClient(URL,KEY),BASE_FN=`${URL}/functions/v1`;
+const { createClient } = window.supabase || {};
+const URL = "https://supabase.co", KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
+const supabase = createClient(URL, KEY), BASE_FN = `${URL}/functions/v1`;
 let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:false};
-export async function cargarOperativos(){
+async function cargarOperativos(){
   if(cg.operativos)return;cg.operativos=true;const c=document.getElementById("lista-operativos");
   if(!c){cg.operativos=false;return;}c.innerHTML="<p>Cargando...</p>";
   const{data:ops}=await supabase.from("operativos").select("*").is("fecha_fin",null).order("fecha_inicio",{ascending:false});
@@ -24,7 +24,7 @@ export async function cargarOperativos(){
     }
   }cg.operativos=false;
 }
-export async function cargarPreventivos(){
+async function cargarPreventivos(){
   if(cg.preventivos)return;cg.preventivos=true;const c=document.getElementById("lista-preventivos");
   if(!c){cg.preventivos=false;return;}c.innerHTML="<p>Cargando...</p>";
   const{data:prs}=await supabase.from("preventivos").select("*").is("fecha_fin",null).order("fecha_inicio",{ascending:false});
@@ -46,13 +46,13 @@ export async function cargarPreventivos(){
     }
   }cg.preventivos=false;
 }
-export function activarPitidoEmergencia(){
+function activarPitidoEmergencia(){
   if(os)return;try{ac=new(window.AudioContext||window.webkitAudioContext)();os=ac.createOscillator();const g=ac.createGain();os.type='sine';os.frequency.setValueAtTime(880,ac.currentTime);g.gain.setValueAtTime(0.4,ac.currentTime);os.connect(g);g.connect(ac.destination);os.start();}catch(e){}
 }
-export function detenerPitidoEmergencia(){
+function detenerPitidoEmergencia(){
   if(os){try{os.stop();os.disconnect();if(ac&&ac.state!=='closed')ac.close();}catch(e){}os=null;ac=null;}
 }
-export async function cargarEmergencias(){
+async function cargarEmergencias(){
   if(cg.emergencias)return;cg.emergencias=true;const c=document.getElementById("lista-emergencias");if(!c){cg.emergencias=false;return;}
   const{data:ems}=await supabase.from("emergencias").select("*").eq("activa",true);
   if(!ems||ems.length===0){c.innerHTML="<p>Sin emergencias.</p>";detenerPitidoEmergencia();cg.emergencias=false;return;}
@@ -71,7 +71,7 @@ export async function cargarEmergencias(){
   });
   cg.emergencias=false;
 }
-export async function estaSuscrito(t,id){
+async function estaSuscrito(t,id){
   const u=localStorage.getItem("usuario_id"),tc=t==="operativos"?"OPR":"NRP";
   const{data:d}=await supabase.from("suscripciones").select("*").eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id)).maybeSingle();return!!d;
 }
@@ -83,7 +83,7 @@ window.toggleSuscripcion=async function(t,id){
   }else{await supabase.from("suscripciones").delete().eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id));alert("Cancelado.");}
   if(t==="preventivos")cargarPreventivos();if(t==="operativos")cargarOperativos();await cargarFichaVoluntario();
 };
-export async function cargarFichaVoluntario(){
+async function cargarFichaVoluntario(){
   const c=document.getElementById("screen-ficha-voluntario")||document.getElementById("screen-inicio");if(!c)return;const u=localStorage.getItem("usuario_id");
   const{data:usr}=await supabase.from("usuarios").select("nombre,telefono,cumple_mes,cumple_dia,horas").eq("id",u).maybeSingle();
   if(!usr){c.innerHTML="<p>Terminal No Enlazado.</p>";return;}
@@ -100,12 +100,12 @@ export async function cargarFichaVoluntario(){
   hFicha += "</div>";
   c.innerHTML = hFicha;
 }
-export function showScreen(n){
+function showScreen(n){
   if(n==="inicio"||n==="ficha")cargarFichaVoluntario();if(n==="preventivos")cargarPreventivos();if(n==="operativos")cargarOperativos();if(n==="emergencias")cargarEmergencias();
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));document.querySelectorAll("#app-screens .screen").forEach(s=>s.style.display="none");
   const s=document.getElementById(n==="admin"?"screen-administracion":(n==="inicio"?"screen-ficha-voluntario"?"screen-ficha-voluntario":"screen-inicio":"screen-"+n));if(s)s.style.display="block";
 }
-export async function cargarListadoAdmin() {
+async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");if (!cont) return;cont.innerHTML = "<p>Cargando listados...</p>";
   try {
     const [operativos, preventivos] = await Promise.all([
@@ -136,7 +136,7 @@ export async function cargarListadoAdmin() {
     });
   } catch (e) {}
 }
-export async function cargarUsuariosAdmin() {
+async function cargarUsuariosAdmin() {
   const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");if (!cont) return;
   try {
     const { data: usuarios } = await supabase.from("usuarios").select("id, nombre, telefono, cumple_mes, cumple_dia, dispositivos(rol)").order("nombre", { ascending: true });
@@ -148,7 +148,7 @@ export async function cargarUsuariosAdmin() {
     });
   } catch (e) {}
 }
-export async function cargarListadoHorasVoluntarios() {
+async function cargarListadoHorasVoluntarios() {
   const cont = document.getElementById("admin-contabilidad-horas");if (!cont) return;
   try {
     const { data: registros } = await supabase.from("horas").select("usuario_id, tipo, horas, anio, usuarios(nombre)").order("anio", { ascending: false });
