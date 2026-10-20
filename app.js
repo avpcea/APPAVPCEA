@@ -9,9 +9,18 @@ export async function cargarOperativos(){
   c.innerHTML="";
   if(!ops||ops.length===0){c.innerHTML="<p>No hay operativos activos.</p>";}else{
     for(const o of ops){
-      const s=await estaSuscrito("operativos",o.id),f=o.fecha_inicio?o.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      // CORRECCIÓN: Limpieza absoluta de comillas y variables del literal de plantilla
-      c.innerHTML+="<div class='card'><h3><a href='#/evento/operativos/"+o.id+"'>"+o.titulo+" ↗</a></h3><p>Lugar: "+(o.lugar||"—")+"</p><p>Fecha inicio: "+f+"</p><button onclick=\"window.toggleSuscripcion('operativos','"+o.id+"')\">"+(s?"Cancelar":"Suscribirme")+"</button></div>";
+      const s=await estaSuscrito("operativos",o.id);
+      const f=o.fecha_inicio?o.fecha_inicio.substring(0,16).replace('T',' '):"—";
+      const textoBoton=s?"Cancelar":"Suscribirme";
+      
+      let htmlCard = "<div class='card'>";
+      htmlCard += "<h3><a href='#/evento/operativos/" + o.id + "'>" + o.titulo + " ↗</a></h3>";
+      htmlCard += "<p>Lugar: " + (o.lugar||"—") + "</p>";
+      htmlCard += "<p>Fecha inicio: " + f + "</p>";
+      htmlCard += "<button onclick=\"window.toggleSuscripcion('operativos','" + o.id + "')\">" + textoBoton + "</button>";
+      htmlCard += "</div>";
+      
+      c.innerHTML += htmlCard;
     }
   }cg.operativos=false;
 }
@@ -22,9 +31,18 @@ export async function cargarPreventivos(){
   c.innerHTML="";
   if(!prs||prs.length===0){c.innerHTML="<p>No hay preventivos activos.</p>";}else{
     for(const p of prs){
-      const s=await estaSuscrito("preventivos",p.id),f=p.fecha_inicio?p.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      // CORRECCIÓN: Limpieza absoluta de comillas y variables del literal de plantilla
-      c.innerHTML+="<div class='card'><h3><a href='#/evento/preventivos/"+p.id+"'>"+p.titulo+" ↗</a></h3><p>Lugar: "+(p.lugar||"—")+"</p><p>Fecha inicio: "+f+"</p><button onclick=\"window.toggleSuscripcion('preventivos','"+p.id+"')\">"+(s?"Cancelar":"Suscribirme")+"</button></div>";
+      const s=await estaSuscrito("preventivos",p.id);
+      const f=p.fecha_inicio?p.fecha_inicio.substring(0,16).replace('T',' '):"—";
+      const textoBoton=s?"Cancelar":"Suscribirme";
+      
+      let htmlCard = "<div class='card'>";
+      htmlCard += "<h3><a href='#/evento/preventivos/" + p.id + "'>" + p.titulo + " ↗</a></h3>";
+      htmlCard += "<p>Lugar: " + (p.lugar||"—") + "</p>";
+      htmlCard += "<p>Fecha inicio: " + f + "</p>";
+      htmlCard += "<button onclick=\"window.toggleSuscripcion('preventivos','" + p.id + "')\">" + textoBoton + "</button>";
+      htmlCard += "</div>";
+      
+      c.innerHTML += htmlCard;
     }
   }cg.preventivos=false;
 }
