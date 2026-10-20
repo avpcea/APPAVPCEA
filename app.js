@@ -88,47 +88,97 @@ export async function cargarFichaVoluntario(){
   const{data:usr}=await supabase.from("usuarios").select("nombre,telefono,cumple_mes,cumple_dia,horas").eq("id",u).maybeSingle();
   if(!usr){c.innerHTML="<p>Terminal No Enlazado.</p>";return;}
   const{data:subs}=await supabase.from("suscripciones").select("evento_id,tipo").eq("usuario_id",u);
-  const cp=(usr.cumple_dia&&usr.cumple_mes)?`${String(usr.cumple_dia).padStart(2,'0')}/${String(usr.cumple_mes).padStart(2,'0')}`:"—";
-  let sh="<ul>";subs?.forEach(s=>{sh+=`<li>[${s.tipo}] <a href="#/evento/${s.tipo}/${s.evento_id}">Ver Evento ↗</a></li>`;});sh+="</ul>";
-  c.innerHTML=`<div style="max-width:400px;margin:10px auto;padding:15px;border:1px solid #eee;font-family:sans-serif;"><h2>${usr.nombre}</h2><p>📞 Teléfono: ${usr.telefono||"—"}</p><p>🎂 Cumpleaños: ${cp}</p><p>⏳ Saldo: ${parseFloat(usr.horas||0).toFixed(2)} hs</p><h4>Suscripciones:</h4>${subs?.length?sh:'<p>Ninguna</p>'}</div>`;
+  const cp=(usr.cumple_dia&&usr.cumple_mes)?(String(usr.cumple_dia).padStart(2,'0')+"/"+String(usr.cumple_mes).padStart(2,'0')):"—";
+  let sh="<ul>";subs?.forEach(s=>{sh+="<li>["+s.tipo+"] <a href='#/evento/"+s.tipo+"/"+s.evento_id+"'>Ver Evento ↗</a></li>";});sh+="</ul>";
+  
+  let hFicha = "<div style='max-width:400px;margin:10px auto;padding:15px;border:1px solid #eee;font-family:sans-serif;'>";
+  hFicha += "<h2>" + usr.nombre + "</h2>";
+  hFicha += "<p>📞 Teléfono: " + (usr.telefono||"—") + "</p>";
+  hFicha += "<p>🎂 Cumpleaños: " + cp + "</p>";
+  hFicha += "<p>⏳ Saldo: " + parseFloat(usr.horas||0).toFixed(2) + " hs</p>";
+  hFicha += "<h4>Suscripciones:</h4>" + (subs?.length?sh:"<p>Ninguna</p>");
+  hFicha += "</div>";
+  c.innerHTML = hFicha;
 }
 export function showScreen(n){
   if(n==="inicio"||n==="ficha")cargarFichaVoluntario();if(n==="preventivos")cargarPreventivos();if(n==="operativos")cargarOperativos();if(n==="emergencias")cargarEmergencias();
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));document.querySelectorAll("#app-screens .screen").forEach(s=>s.style.display="none");
-  const s=document.getElementById(n==="admin"?"screen-administracion":(n==="inicio"?"screen-ficha-voluntario":"screen-"+n));if(s)s.style.display="block";
+  const s=document.getElementById(n==="admin"?"screen-administracion":(n==="inicio"?"screen-ficha-voluntario"?"screen-ficha-voluntario":"screen-inicio":"screen-"+n));if(s)s.style.display="block";
 }
+export async function cargarListadoAdmin() {
+  const cont = document.getElementById("admin-listado");if (!cont) return;cont.innerHTML = "<p>Cargando listados...</p>";
+  try {
+    const [operativos, preventivos] = await Promise.all([
+      supabase.from("operativos").select("*").order("fecha_inicio", { ascending: false }),
+      supabase.from("preventivos").select("*").order("fecha_inicio", { ascending: false })
+    ]);
+    cont.innerHTML = "<h3>Operativos</h3>";
+    operativos.data?.forEach(op => {
+      const estaCerrado = op.fecha_fin !== null;
+      let hOp = "<div class='card' style='margin-bottom:10px; padding:10px; border:1px solid #ddd; opacity:"+(estaCerrado ? "0.6":"1")+";'>";
+      hOp += "<strong>"+op.titulo+"</strong> - Lugar: "+(op.lugar || "—")+"<br>";
+      hOp += "Fecha de evento: "+(op.fecha || "—")+" | Inicio: "+(op.fecha_inicio ? op.fecha_inicio.substring(0,16).replace("T"," "):"—")+"<br>";
+      if(estaCerrado) hOp += "Fecha fin: "+op.fecha_fin.substring(0,16).replace("T"," ")+"<br>";
+      hOp += estaCerrado ? "✓ Cerrado " : "<button onclick=\"window.ejecutarCierreEvento('"+op.id+"', 'operativos')\">Cerrar</button> ";
+      hOp += "<button onclick=\"window.ejecutarEliminacionElemento('operativos', '"+op.id+"')\">Eliminar</button></div>";
+      cont.innerHTML += hOp;
+    });
+    cont.innerHTML += "<h3>Preventivos</h3>";
+    preventivos.data?.forEach(pr => {
+      const estaCerrado = pr.fecha_fin !== null;
+      let hPr = "<div class='card' style='margin-bottom:10px; padding:10px; border:1px solid #ddd; opacity:"+(estaCerrado ? "0.6":"1")+";'>";
+      hPr += "<strong>"+pr.titulo+"</strong> - Lugar: "+(pr.lugar || "—")+"<br>";
+      hPr += "Fecha de evento: "+(pr.fecha || "—")+" | Inicio: "+(pr.fecha_inicio ? pr.fecha_inicio.substring(0,16).replace("T"," "):"—")+"<br>";
+      if(estaCerrado) hPr += "Fecha fin: "+pr.fecha_fin.substring(0,16).replace("T"," ")+"<br>";
+      hPr += estaCerrado ? "✓ Cerrado " : "<button onclick=\"window.ejecutarCierreEvento('"+pr.id+"', 'preventivos')\">Cerrar</button> ";
+      hPr += "<button onclick=\"window.ejecutarEliminacionElemento('preventivos', '"+pr.id+"')\">Eliminar</button></div>";
+      cont.innerHTML += hPr;
+    });
+  } catch (e) {}
+}
+export async function cargarUsuariosAdmin() {
+  const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");if (!cont) return;
+  try {
+    const { data: usuarios } = await supabase.from("usuarios").select("id, nombre, telefono, cumple_mes, cumple_dia, dispositivos(rol)").order("nombre", { ascending: true });
+    cont.innerHTML = "";
+    usuarios?.forEach(usr => {
+      const rolReal = usr.dispositivos?.rol || "normal";
+      const cumpleStr = (usr.cumple_dia && usr.cumple_mes) ? (String(usr.cumple_dia).padStart(2,"0")+"/"+String(usr.cumple_mes).padStart(2,"0")) : "—";
+      cont.innerHTML += "<div style='padding:6px; border-bottom:1px solid #eee;'><strong>"+usr.nombre+"</strong> ("+rolReal.toUpperCase()+") - Cumpleaños: "+cumpleStr+" <button onclick=\"window.abrirModalEdicionUsuario('"+usr.id+"')\">Editar</button> <button onclick=\"window.ejecutarEliminacionElemento('usuarios', '"+usr.id+"')\">Baja</button></div>";
+    });
+  } catch (e) {}
+}
+export async function cargarListadoHorasVoluntarios() {
+  const cont = document.getElementById("admin-contabilidad-horas");if (!cont) return;
+  try {
+    const { data: registros } = await supabase.from("horas").select("usuario_id, tipo, horas, anio, usuarios(nombre)").order("anio", { ascending: false });
+    cont.innerHTML = "<h4>Desglose de Horas Anuales</h4>";
+    registros?.forEach(reg => {
+      cont.innerHTML += "<p><strong>"+(reg.usuarios?.nombre || "Voluntario")+"</strong> - "+reg.tipo+": "+parseFloat(reg.horas).toFixed(2)+" hs ("+reg.anio+")</p>";
+    });
+  } catch (e) {}
+}
+window.abrirModalEdicionUsuario = async function(id) {
+  try {
+    const { data: usr } = await supabase.from("usuarios").select("*").eq("id", id).single();
+    const nuevoNombre = prompt("Nombre:", usr.nombre); if (!nuevoNombre) return;
+    const nuevoTelefono = prompt("Teléfono:", usr.telefono); if (!nuevoTelefono) return;
+    const cumpleActual = (usr.cumple_dia && usr.cumple_mes) ? (String(usr.cumple_dia).padStart(2,"0")+"/"+String(usr.cumple_mes).padStart(2,"0")) : "DD/MM";
+    const nuevoCumple = prompt("Cumpleaños (DD/MM):", cumpleActual); if (!nuevoCumple) return;
+    const datos = { nombre: nuevoNombre.trim(), telefono: nuevoTelefono.trim() };
+    if (nuevoCumple.includes("/")) {
+      const p = nuevoCumple.split("/");const d = parseInt(p[0], 10), m = parseInt(p[1], 10);
+      if (!isNaN(d) && !isNaN(m)) { datos.cumple_dia = d; datos.cumple_mes = m; }
+    }
+    await supabase.from("usuarios").update(datos).eq("id", id);
+    alert("Actualizado."); await cargarUsuariosAdmin(); await cargarListadoHorasVoluntarios();
+  } catch (e) {}
+};
 async function inicializarAplicacionVoluntario(){
-  const ac=document.getElementById("app-container");if(ac)ac.style.display="block";
-  localStorage.setItem("avpcea_token","v3");
-  
-  // INYECTAMOS TU ID REAL DE PRUEBAS USANDO TU VARIABLE 'u'
-  // Reemplaza las X por el ID de un voluntario que exista en tu tabla de Supabase
-  localStorage.setItem("usuario_id","async function inicializarAplicacionVoluntario(){
-  const ac=document.getElementById("app-container");if(ac)ac.style.display="block";
-  localStorage.setItem("avpcea_token","v3");
-  
-  // INYECTAMOS TU ID REAL DE PRUEBAS USANDO TU VARIABLE 'u'
-  // Reemplaza las X por el ID de un voluntario que exista en tu tabla de Supabase
-  localStorage.setItem("usuario_id","async function inicializarAplicacionVoluntario(){
-  const ac=document.getElementById("app-container");if(ac)ac.style.display="block";
-  localStorage.setItem("avpcea_token","v3");
-  
-  // INYECTAMOS TU ID REAL DE PRUEBAS USANDO TU VARIABLE 'u'
-  // Reemplaza las X por el ID de un voluntario que exista en tu tabla de Supabase
-  localStorage.setItem("usuario_id","2fa1fce4-aad0-439a-a391-3cd3079556c6");
-  
+  const ac=document.getElementById("app-container");if(ac)ac.style.display="block";localStorage.setItem("avpcea_token","v3");
   const u=localStorage.getItem("usuario_id");
   if(u&&u.trim()!==""){const ws=document.getElementById("welcome-screen"),wh=document.getElementById("welcome-header");if(ws)ws.style.display="none";if(wh)wh.style.display="none";showScreen("inicio");}
-  else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id en localStorage.</p></div>';}
-}");
-  
-  const u=localStorage.getItem("usuario_id");
-  if(u&&u.trim()!==""){const ws=document.getElementById("welcome-screen"),wh=document.getElementById("welcome-header");if(ws)ws.style.display="none";if(wh)wh.style.display="none";showScreen("inicio");}
-  else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id en localStorage.</p></div>';}
-}");
-  
-  const u=localStorage.getItem("usuario_id");
-  if(u&&u.trim()!==""){const ws=document.getElementById("welcome-screen"),wh=document.getElementById("welcome-header");if(ws)ws.style.display="none";if(wh)wh.style.display="none";showScreen("inicio");}
-  else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id en localStorage.</p></div>';}
+  else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicializarAplicacionVoluntario);else inicializarAplicacionVoluntario();
+
