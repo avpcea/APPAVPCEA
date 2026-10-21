@@ -1,6 +1,7 @@
 const { createClient } = window.supabase || {};
 const URL = "https://supabase.co", KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
-const supabase = createClient(URL, KEY), BASE_FN = `${URL}/functions/v1`;
+const supabase = createClient ? createClient(URL, KEY) : null, BASE_FN = `${URL}/functions/v1`;
+
 let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:false};
 async function cargarOperativos(){
   if(cg.operativos)return;cg.operativos=true;const c=document.getElementById("lista-operativos");
