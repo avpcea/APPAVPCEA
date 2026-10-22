@@ -159,7 +159,11 @@
 
 </div>
 
-    <!-- CORRECTO: Modo módulo nativo absoluto para fulminar el bloqueo de seguridad ORB -->
-    <script type="module" src="https://avpcea.github.io/APPAVPCEA/app.js"></script>
+    <!-- 1. Enlace tradicional y estático de Supabase (Igual de directo que tu ejemplo de jQuery) -->
+    <script defer src="https://jsdelivr.net"></script>
+
+    <!-- 2. Tu script de la aplicación cargado de forma secuencial diferida -->
+    <script defer src="app.js"></script>
 </body>
 </html>
+
