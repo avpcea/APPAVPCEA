@@ -1,3 +1,6 @@
+console.log("¡El archivo JS se está ejecutando correctamente!");
+alert("El código JavaScript está vivo");
+
 const { createClient } = window.supabase || {};
 
 const URL = "https://supabase.co";
