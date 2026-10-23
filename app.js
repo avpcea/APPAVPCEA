@@ -1,4 +1,4 @@
-import { createClient } from "https://unpkg.com/@supabase/supabase-js@2.118.0/dist/module/index.js";
+import { createClient } from "https://unpkg.com/@supabase/supabase-js@2.118.0/dist/umd/supabase.js";
 
 
 const URL = "https://supabase.co";
