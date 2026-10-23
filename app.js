@@ -195,4 +195,12 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inicializarAplicacionVoluntario);else inicializarAplicacionVoluntario();
+// Reemplazamos la condición final por un arranque seguro con retardo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(inicializarAplicacionVoluntario, 50);
+    });
+} else {
+    setTimeout(inicializarAplicacionVoluntario, 50);
+}
+
