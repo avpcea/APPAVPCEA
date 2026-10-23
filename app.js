@@ -1,12 +1,10 @@
-console.log("¡El archivo JS se está ejecutando correctamente!");
-alert("El código JavaScript está vivo");
-
 const { createClient } = window.supabase || {};
 
 const URL = "https://supabase.co";
 const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 
-const supabase = createClient ? createClient(URL, KEY) : null;
+// CAMBIAMOS EL NOMBRE AQUÍ PARA EVITAR EL CHOQUE:
+const supabaseClient = createClient ? createClient(URL, KEY) : null;
 const BASE_FN = `${URL}/functions/v1`;
 
 
