@@ -161,10 +161,7 @@
 
 </div>
 
-    <!-- Cargamos la librería obligando a UNPKG a usar un nombre global personalizado -->
-    <script src="https://esm.unpkg.com/@supabase/supabase-js@2.118.0" globalName="supabaseLib"></script>
-    
-    <!-- Tu archivo local vuelve a su estado nativo original -->
-    <script defer src="app.js"></script>
+    <!-- Dejamos ÚNICAMENTE tu archivo local aislado como módulo moderno -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
