@@ -197,11 +197,32 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-// Reemplaza tu if/else final de readyState por este arrancador directo:
+// Reemplazamos el final de app.js por este arrancador de estabilización visual
+function arrancarYMostrarInterfaz() {
+    // 1. Ejecuta la lógica interna original de la app
+    inicializarAplicacionVoluntario();
+    
+    // 2. FORZADO PERMANENTE: Obligamos al esqueleto a quedarse visible
+    const contenedor = document.getElementById("app-container");
+    if (contenedor) {
+        contenedor.style.display = "block";
+        contenedor.style.visibility = "visible";
+        contenedor.style.opacity = "1";
+        
+        // Buscamos los sub-bloques internos (como el panel de administración) y los encendemos
+        const bloques internos = contenedor.querySelectorAll("div");
+        bloquesInternos.forEach(div => {
+            div.style.display = "block";
+            div.style.visibility = "visible";
+        });
+    }
+}
+
+// Lanzamiento seguro al cargar el documento
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(inicializarAplicacionVoluntario, 50);
+        setTimeout(arrancarYMostrarInterfaz, 50);
     });
 } else {
-    setTimeout(inicializarAplicacionVoluntario, 50);
+    setTimeout(arrancarYMostrarInterfaz, 50);
 }
