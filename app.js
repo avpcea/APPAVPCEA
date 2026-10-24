@@ -195,7 +195,7 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-// Reemplazamos la condición final por un arranque seguro con retardo
+// Reemplaza tu if/else final de readyState por este arrancador directo:
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(inicializarAplicacionVoluntario, 50);
@@ -203,4 +203,3 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(inicializarAplicacionVoluntario, 50);
 }
-
