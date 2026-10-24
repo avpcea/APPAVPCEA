@@ -184,6 +184,8 @@ window.abrirModalEdicionUsuario = async function(id) {
   } catch (e) {}
 };
 async function inicializarAplicacionVoluntario(){
+  window.inicializarAplicacionVoluntario = inicializarAplicacionVoluntario;
+
   const ac=document.getElementById("app-container");if(ac)ac.style.display="block";
   localStorage.setItem("avpcea_token","v3");
   
