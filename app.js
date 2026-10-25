@@ -13,7 +13,6 @@ window.cargarFichaVoluntario = async function(...args) {
 };
 
 const BASE_FN = `${URL}/functions/v1`;
-// ... a partir de aquí continúa todo tu código complejo original intacto
 
 
 let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:false};
