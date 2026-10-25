@@ -197,46 +197,29 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-function arrancarYMostrarInterfaz() {
-    console.log("Iniciando estabilización visual forzada...");
+// ... Aquí arriba terminan tus funciones originales de la app, como cargarFichaVoluntario, etc.
 
-    // 1. FORZADO INMEDIATO: Despertamos el contenedor principal pase lo que pase por dentro
-    const contenedor = document.getElementById("app-container");
-    if (contenedor) {
-        contenedor.style.setProperty("display", "block", "important");
-        contenedor.style.setProperty("visibility", "visible", "important");
-        contenedor.style.setProperty("opacity", "1", "important");
+function arrancarConBanderas() {
+    console.log("🚩 BANDERA 1: El cargador de la página funciona. Entrando en inicializar...");
+    
+    try {
+        inicializarAplicacionVoluntario();
+        console.log("🚩 BANDERA 2: inicializarAplicacionVoluntario() se ejecutó sin quedarse colgada.");
+    } catch (err) {
+        console.log("❌ ERROR EN BANDERA 2:", err.message);
     }
 
-    // 2. BUSQUEDA Y DESBLOQUEO DE LA FICHA: 
-    // Buscamos cualquier sección o div que hable de la ficha de voluntario para encenderla directamente
-    const todosLosDivs = document.querySelectorAll("div, section");
-    todosLosDivs.forEach(el => {
-        const idLower = el.id ? el.id.toLowerCase() : "";
-        if (idLower.includes("ficha") || idLower.includes("voluntario") || idLower.includes("perfil")) {
-            el.style.setProperty("display", "block", "important");
-            el.style.setProperty("visibility", "visible", "important");
-        }
-        // Aprovechamos para ocultar la bienvenida que queríamos quitar
-        if (idLower.includes("welcome")) {
-            el.style.setProperty("display", "none", "important");
-        }
-    });
-
-    // 3. EJECUCIÓN POSTERIOR: Ahora que la pantalla ya tiene el dibujo fijo, 
-    // dejamos que la app intente conectar con la base de datos de fondo
-    console.log("Interfaz dibujada. Lanzando lógicas internas...");
-    inicializarAplicacionVoluntario();
-    if (typeof cargarFichaVoluntario === "function") {
-        cargarFichaVoluntario();
+    console.log("🚩 BANDERA 3: Buscando el contenedor principal...");
+    const ac = document.getElementById("app-container");
+    if (ac) {
+        console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
+    } else {
+        console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
     }
 }
 
-// Lanzamiento seguro al cargar el documento
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(arrancarYMostrarInterfaz, 50);
-    });
+    document.addEventListener('DOMContentLoaded', arrancarConBanderas);
 } else {
-    setTimeout(arrancarYMostrarInterfaz, 50);
+    arrancarConBanderas();
 }
