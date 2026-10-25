@@ -7,82 +7,96 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body style="display: block !important; background: #ffffff !important;">
+<body>
 
-    <!-- El contenedor principal arranca visible por defecto -->
-    <div id="app-container" class="app-container" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+    <!-- Contenedor móvil centrado oficial -->
+    <div class="app-container">
         
-        <!-- El contenedor interno también se fuerza de forma nativa a modo bloque -->
-        <main class="app-content" style="display: block !important; visibility: visible !important; height: auto !important; min-height: 100vh !important;">
-            
-            <header>
-                <h1>Protección Civil El Arenal</h1>
-                <p>Panel de Control Local</p>
-            </header>
+        <!-- Cabecera Normal con el color Naranja corporativo -->
+        <header class="app-header">
+            <!-- Espacio reservado por si tienes el icono en img/logo.png -->
+            <img class="header-logo" src="favicon.ico" alt="Logo" onerror="this.style.display='none'">
+            <span class="header-title">AVPCEA</span>
+        </header>
 
-            <!-- Sección de Administración visible por defecto -->
-            <section id="administracion" style="display: block !important; visibility: visible !important;">
-                <h2>Administración</h2>
+        <!-- Contenido principal con scroll vertical independiente -->
+        <main class="app-content">
+            
+            <!-- Título de Sección Azul Corporativo forzado a verse -->
+            <h2 class="section-title" style="display: block !important;">Panel de Administración</h2>
+
+            <!-- Bloque de Administración -->
+            <section id="administracion" class="screen active">
                 
                 <div class="card">
                     <h3>Crear Operativo</h3>
-                    <label>Fecha y Hora de Inicio:</label>
-                    <input type="datetime-local">
-                    <button>Crear Operativo</button>
+                    <div class="admin-section" style="background: none; padding: 0;">
+                        <label>Fecha y Hora de Inicio:</label>
+                        <input type="datetime-local">
+                        <button class="btn-primary">Crear Operativo</button>
+                    </div>
                 </div>
 
                 <div class="card">
                     <h3>Crear Preventivo</h3>
-                    <label>Fecha y Hora de Inicio:</label>
-                    <input type="datetime-local">
-                    <button>Crear Preventivo</button>
+                    <div class="admin-section" style="background: none; padding: 0;">
+                        <label>Fecha y Hora de Inicio:</label>
+                        <input type="datetime-local">
+                        <button class="btn-primary">Crear Preventivo</button>
+                    </div>
                 </div>
 
                 <div class="card">
                     <h3>Crear Emergencia</h3>
-                    <label>Nivel de Gravedad:</label>
-                    <select>
-                        <option>Bajo</option>
-                        <option>Medio</option>
-                        <option>Alto</option>
-                        <option>Crítico</option>
-                    </select>
-                    <label>Fecha y Hora de Inicio:</label>
-                    <input type="datetime-local">
-                    <button>Crear Emergencia</button>
+                    <div class="admin-section" style="background: none; padding: 0;">
+                        <label>Nivel de Gravedad:</label>
+                        <select style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                            <option>Bajo</option>
+                            <option>Medio</option>
+                            <option>Alto</option>
+                            <option>Crítico</option>
+                        </select>
+                        <label>Fecha y Hora de Inicio:</label>
+                        <input type="datetime-local">
+                        <button class="btn-primary" style="background-color: #d9534f !important; border-color: #d9534f !important;">Crear Emergencia</button>
+                    </div>
                 </div>
 
                 <div class="card">
                     <h3>Crear Usuario</h3>
-                    <label>Fecha de Nacimiento:</label>
-                    <input type="date">
-                    <label>Rol del Dispositivo:</label>
-                    <select>
-                        <option>Usuario</option>
-                        <option>Administrador</option>
-                        <option>Coordinador</option>
-                    </select>
-                    <button>Crear Usuario</button>
+                    <div class="admin-section" style="background: none; padding: 0;">
+                        <label>Fecha de Nacimiento:</label>
+                        <input type="date">
+                        <label>Rol del Dispositivo:</label>
+                        <select style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                            <option>Usuario</option>
+                            <option>Administrador</option>
+                            <option>Coordinador</option>
+                        </select>
+                        <button class="btn-primary">Crear Usuario</button>
+                    </div>
                 </div>
 
                 <div class="card">
                     <h3>Gestión de Usuarios</h3>
-                    <button>🔄 Actualizar usuarios</button>
+                    <button class="btn-secondary">🔄 Actualizar usuarios</button>
                 </div>
             </section>
 
-            <!-- Ficha de Voluntario (Estructura base lista para recibir los datos) -->
-            <section id="ficha-voluntario" style="display: block !important; visibility: visible !important; margin-top: 30px;">
-                <h2>Ficha de Voluntario</h2>
-                <div id="datos-voluntario">
-                    <p>Cargando información del perfil...</p>
+            <!-- Ficha de Voluntario integrada elegantemente como tarjeta -->
+            <section id="ficha-voluntario" class="screen active">
+                <div class="card">
+                    <h3>Ficha de Voluntario</h3>
+                    <div id="datos-voluntario">
+                        <p style="color: #666; font-style: italic;">Cargando información del perfil local...</p>
+                    </div>
                 </div>
             </section>
 
         </main>
 
-        <!-- Barra de navegación inferior nativa visible -->
-        <nav class="app-navigation" style="display: block !important; visibility: visible !important;">
+        <!-- Barra inferior de navegación nativa fija posicionada según tus estilos -->
+        <nav class="bottom-nav">
             <button class="nav-btn">Operativos</button>
             <button class="nav-btn">Preventivos</button>
             <button class="nav-btn">Emergencias</button>
@@ -90,7 +104,7 @@
         </nav>
     </div>
 
-    <!-- Añadimos type="module" para que el navegador entienda el import de la línea 1 de app.js -->
+    <!-- Tu archivo de JavaScript local en formato de módulo -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
