@@ -6,6 +6,9 @@
     <title>APP AVPCEA</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Cargamos Supabase desde un enlace limpio sin caracteres conflictivos -->
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
@@ -106,7 +109,7 @@
         </nav>
     </div>
 
-    <!-- Tu archivo de JavaScript local en formato de módulo -->
-    <script type="module" src="app.js"></script>
+    <!-- Tu archivo local vuelve a cargarse como script clásico normal (SIN type="module") -->
+    <script defer src="app.js"></script>
 </body>
 </html>
