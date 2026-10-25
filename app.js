@@ -208,21 +208,30 @@ function arrancarConBanderas() {
     } catch (err) {
         console.log("❌ ERROR EN BANDERA 2:", err.message);
     }
-
     console.log("🚩 BANDERA 3: Buscando el contenedor principal...");
     const ac = document.getElementById("app-container");
     if (ac) {
         console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
+        
+        // 1. FORZADO DEL CONTENEDOR
         ac.style.setProperty("display", "block", "important");
         ac.style.setProperty("visibility", "visible", "important");
         ac.style.setProperty("opacity", "1", "important");
+        ac.style.setProperty("height", "auto", "important");
+        ac.style.setProperty("min-height", "100vh", "important");
+
+        // 2. DESBLOQUEO DEL PADRE (BODY Y HTML)
+        document.body.style.setProperty("display", "block", "important");
+        document.body.style.setProperty("background", "transparent", "important");
+        document.documentElement.style.setProperty("display", "block", "important");
         
-        // CHIVATO DE CONTENIDO: Medimos cuántos caracteres de texto hay dentro
+        // 3. APAGAMOS LA BIENVENIDA SI EXISTE PARA QUE NO ESTORBE
+        const ws = document.getElementById("welcome-screen");
+        if (ws) ws.style.setProperty("display", "none", "important");
+
         const caracteres = ac.innerHTML.trim().length;
         console.log("📊 CHIVATO: El contenedor tiene dentro exactamente " + caracteres + " caracteres de código.");
-        console.log("📝 CONTENIDO REAL:", ac.innerHTML);
     } else {
-
         console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
     }
 }
