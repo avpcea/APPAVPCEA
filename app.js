@@ -201,21 +201,30 @@ function arrancarYMostrarInterfaz() {
     // 1. Ejecuta la lógica interna original de la app
     inicializarAplicacionVoluntario();
     
-    // 2. FORZADO COMPLETO: Encendemos el esqueleto exterior
-    const contenedor = document.getElementById("app-container") || document.body;
-    if (contenedor) {
-        contenedor.style.display = "block";
-        contenedor.style.visibility = "visible";
-        contenedor.style.opacity = "1";
-    }
+    // 2. APAGADO DE BIENVENIDA: Ocultamos los bloques que queremos quitar
+    const bienvenidaPantalla = document.getElementById("welcome-screen");
+    const bienvenidaCabecera = document.getElementById("welcome-header");
+    if (bienvenidaPantalla) bienvenidaPantalla.style.setProperty("display", "none", "important");
+    if (bienvenidaCabecera) bienvenidaCabecera.style.setProperty("display", "none", "important");
 
-    // 3. DESBLOQUEO DE MENÚS Y PESTAÑAS: 
-    // Buscamos cualquier elemento oculto por el CSS original y lo obligamos a despertar
-    const elementosOcultos = document.querySelectorAll('[style*="display: none"], .oculto');
-    elementosOcultos.forEach(el => {
-        el.style.setProperty("display", "block", "important");
-        el.style.setProperty("visibility", "visible", "important");
-    });
+    // 3. FORZADO DE LA FICHA DE VOLUNTARIO Y MENÚS:
+    // Activamos de forma fija el contenedor principal de la aplicación
+    const contenedor = document.getElementById("app-container");
+    if (contenedor) {
+        contenedor.style.setProperty("display", "block", "important");
+        contenedor.style.setProperty("visibility", "visible", "important");
+        contenedor.style.setProperty("opacity", "1", "important");
+        
+        // Buscamos los bloques internos (donde se estructuran las fichas y pestañas) y los encendemos
+        const bloquesInternos = contenedor.querySelectorAll("div");
+        bloquesInternos.forEach(div => {
+            // Evitamos encender cosas de la pantalla de bienvenida por si acaso
+            if (!div.closest("#welcome-screen")) {
+                div.style.setProperty("display", "block", "important");
+                div.style.setProperty("visibility", "visible", "important");
+            }
+        });
+    }
 }
 
 
