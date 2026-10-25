@@ -213,25 +213,32 @@ function arrancarConBanderas() {
     if (ac) {
         console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
         
-        // 1. FORZADO DEL CONTENEDOR
+        // 1. Encendemos el contenedor exterior (Azul)
         ac.style.setProperty("display", "block", "important");
         ac.style.setProperty("visibility", "visible", "important");
         ac.style.setProperty("opacity", "1", "important");
-        ac.style.setProperty("height", "auto", "important");
-        ac.style.setProperty("min-height", "100vh", "important");
 
-        // 2. DESBLOQUEO DEL PADRE (BODY Y HTML)
+        // 2. CORRECCIÓN DEL CONTENEDOR INTERNO (Verde colapsado)
+        // Buscamos el elemento main que viste en el inspector y lo expandimos
+        const mainContent = ac.querySelector("main.app-content") || document.querySelector("main");
+        if (mainContent) {
+            mainContent.style.setProperty("display", "block", "important");
+            mainContent.style.setProperty("visibility", "visible", "important");
+            mainContent.style.setProperty("opacity", "1", "important");
+            mainContent.style.setProperty("height", "auto", "important");
+            mainContent.style.setProperty("min-height", "100vh", "important");
+            mainContent.style.setProperty("padding", "20px", "important"); // Aseguramos un margen limpio
+        }
+
+        // 3. Desbloqueo base del body
         document.body.style.setProperty("display", "block", "important");
-        document.body.style.setProperty("background", "transparent", "important");
-        document.documentElement.style.setProperty("display", "block", "important");
         
-        // 3. APAGAMOS LA BIENVENIDA SI EXISTE PARA QUE NO ESTORBE
+        // Apagamos la bienvenida por si acaso
         const ws = document.getElementById("welcome-screen");
         if (ws) ws.style.setProperty("display", "none", "important");
-
-        const caracteres = ac.innerHTML.trim().length;
-        console.log("📊 CHIVATO: El contenedor tiene dentro exactamente " + caracteres + " caracteres de código.");
     } else {
+
+
         console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
     }
 }
