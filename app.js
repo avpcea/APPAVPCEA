@@ -201,21 +201,21 @@ function arrancarYMostrarInterfaz() {
     // 1. Ejecuta la lógica interna original de la app
     inicializarAplicacionVoluntario();
     
-    // 2. FORZADO LIMPIO: Encendemos el contenedor principal
-    const contenedor = document.getElementById("app-container");
+    // 2. FORZADO COMPLETO: Encendemos el esqueleto exterior
+    const contenedor = document.getElementById("app-container") || document.body;
     if (contenedor) {
         contenedor.style.display = "block";
         contenedor.style.visibility = "visible";
         contenedor.style.opacity = "1";
     }
 
-    // 3. LLAMADA DE CONTROL: Forzamos a la app a renderizar la navegación base
-    // Si tu función nativa para cambiar de pantalla es showScreen, la despertamos aquí
-    if (typeof showScreen === "function") {
-        showScreen("inicio"); 
-    } else if (window.showScreen === "function") {
-        window.showScreen("inicio");
-    }
+    // 3. DESBLOQUEO DE MENÚS Y PESTAÑAS: 
+    // Buscamos cualquier elemento oculto por el CSS original y lo obligamos a despertar
+    const elementosOcultos = document.querySelectorAll('[style*="display: none"], .oculto');
+    elementosOcultos.forEach(el => {
+        el.style.setProperty("display", "block", "important");
+        el.style.setProperty("visibility", "visible", "important");
+    });
 }
 
 
