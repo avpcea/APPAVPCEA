@@ -98,6 +98,11 @@ window.toggleSuscripcion=async function(t,id){
   if(t==="preventivos")cargarPreventivos();if(t==="operativos")cargarOperativos();await cargarFichaVoluntario();
 };
 async function cargarFichaVoluntario(){
+  // 🌟 EL CONEJO DE LA CHISTERA: La función se hace visible a sí misma a nivel global
+  window.cargarFichaVoluntario = cargarFichaVoluntario;
+
+  // ... a partir de aquí continúa todo tu código complejo original intacto
+
   const c=document.getElementById("screen-ficha-voluntario")||document.getElementById("screen-inicio");if(!c)return;const u=localStorage.getItem("usuario_id");
   const{data:usr}=await supabase.from("usuarios").select("nombre,telefono,cumple_mes,cumple_dia,horas").eq("id",u).maybeSingle();
   if(!usr){c.innerHTML="<p>Terminal No Enlazado.</p>";return;}
