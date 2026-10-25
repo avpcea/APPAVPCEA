@@ -201,30 +201,42 @@ function arrancarYMostrarInterfaz() {
     // 1. Ejecuta la lógica interna original de la app
     inicializarAplicacionVoluntario();
     
-    // 2. APAGADO DE BIENVENIDA: Ocultamos los bloques que queremos quitar
-    const bienvenidaPantalla = document.getElementById("welcome-screen");
-    const bienvenidaCabecera = document.getElementById("welcome-header");
-    if (bienvenidaPantalla) bienvenidaPantalla.style.setProperty("display", "none", "important");
-    if (bienvenidaCabecera) bienvenidaCabecera.style.setProperty("display", "none", "important");
+    // 2. APAGAMOS LO QUE NO QUEREMOS VER AHORA (Bienvenida y Administración)
+    const elementosAOcultar = [
+        "welcome-screen", 
+        "welcome-header", 
+        "administracion", 
+        "panel-admin", 
+        "seccion-admin"
+    ];
+    elementosAOcultar.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.setProperty("display", "none", "important");
+    });
 
-    // 3. FORZADO DE LA FICHA DE VOLUNTARIO Y MENÚS:
-    // Activamos de forma fija el contenedor principal de la aplicación
+    // 3. ENCENDEMOS EL CONTENEDOR PRINCIPAL
     const contenedor = document.getElementById("app-container");
     if (contenedor) {
         contenedor.style.setProperty("display", "block", "important");
         contenedor.style.setProperty("visibility", "visible", "important");
-        contenedor.style.setProperty("opacity", "1", "important");
-        
-        // Buscamos los bloques internos (donde se estructuran las fichas y pestañas) y los encendemos
-        const bloquesInternos = contenedor.querySelectorAll("div");
-        bloquesInternos.forEach(div => {
-            // Evitamos encender cosas de la pantalla de bienvenida por si acaso
-            if (!div.closest("#welcome-screen")) {
-                div.style.setProperty("display", "block", "important");
-                div.style.setProperty("visibility", "visible", "important");
-            }
-        });
     }
+
+    // 4. FORZAMOS LA VISUALIZACIÓN DE LA FICHA DE VOLUNTARIO
+    // Buscamos cualquier elemento en el HTML que contenga la palabra "voluntario" o "usuario"
+    const divs = document.querySelectorAll("div, section");
+    divs.forEach(el => {
+        const idLower = el.id ? el.id.toLowerCase() : "";
+        const classLower = el.className ? String(el.className).toLowerCase() : "";
+        
+        // Si el elemento parece ser la ficha del voluntario, lo encendemos con prioridad
+        if (idLower.includes("voluntario") || idLower.includes("usuario") || 
+            classLower.includes("voluntario") || classLower.includes("usuario") ||
+            idLower.includes("ficha") || idLower.includes("perfil")) {
+            
+            el.style.setProperty("display", "block", "important");
+            el.style.setProperty("visibility", "visible", "important");
+        }
+    });
 }
 
 
