@@ -213,13 +213,16 @@ function arrancarConBanderas() {
     const ac = document.getElementById("app-container");
     if (ac) {
         console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
-        
-        // CORRECCIÓN QUIRÚRGICA: Le quitamos el candado de visibilidad por CSS
         ac.style.setProperty("display", "block", "important");
         ac.style.setProperty("visibility", "visible", "important");
         ac.style.setProperty("opacity", "1", "important");
         
+        // CHIVATO DE CONTENIDO: Medimos cuántos caracteres de texto hay dentro
+        const caracteres = ac.innerHTML.trim().length;
+        console.log("📊 CHIVATO: El contenedor tiene dentro exactamente " + caracteres + " caracteres de código.");
+        console.log("📝 CONTENIDO REAL:", ac.innerHTML);
     } else {
+
         console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
     }
 }
