@@ -209,27 +209,25 @@ async function inicializarAplicacionVoluntario(){
 
 // ... Aquí arriba terminan tus funciones originales de la app, como cargarFichaVoluntario, etc.
 
-async function arrancarConBanderas() {
-    console.log("🚩 BANDERA 1: Estructura HTML limpia cargada. Inicializando app...");
-    
+// Arrancador nativo optimizado para producción (Sin banderas de consola)
+async function arrancarAplicacion() {
     try {
-        // 1. Inicializa la app (inyecta el ID, etc.)
+        // 1. Inicializa la lógica nativa original de la app (ID, etc.)
         inicializarAplicacionVoluntario();
-        console.log("🚩 BANDERA 2: inicializarAplicacionVoluntario() completado.");
         
-        // 2. FORZADO DIRECTO DE DATOS: Llamamos a la ficha inmediatamente
-        console.log("🚩 BANDERA 3: Invocando la carga de datos de Supabase...");
+        // 2. Invoca la carga y renderizado asíncrono de los datos de Supabase
         if (typeof cargarFichaVoluntario === "function") {
             await cargarFichaVoluntario();
-            console.log("🚩 BANDERA 4: ¡cargarFichaVoluntario() ejecutada con éxito!");
         }
-    } catch (err) {
-        console.log("❌ ERROR EN ARRANQUE:", err.message);
+    } catch (error) {
+        // Único log de seguridad en caso de fallo crítico de red
+        console.error("Fallo al inicializar el perfil de voluntario:", error.message);
     }
 }
 
+// Lanzamiento directo y seguro al cargar el documento
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', arrancarConBanderas);
+    document.addEventListener('DOMContentLoaded', arrancarAplicacion);
 } else {
-    arrancarConBanderas();
+    arrancarAplicacion();
 }
