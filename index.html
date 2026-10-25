@@ -14,29 +14,24 @@
         
         <!-- Cabecera Normal con el color Naranja corporativo e icono oficial -->
         <header class="app-header">
-            <!-- Cargamos tu icono oficial con la ruta correspondiente -->
-            <img class="header-logo" src="icons/icon-192.png" alt="Logo Protección Civil" onerror="this.src='./icons/icon-192.png';">
+            <img class="header-logo" src="icons/icon-192.png" alt="Logo" onerror="this.src='./icons/icon-192.png';">
             <span class="header-title">AVPCEA</span>
         </header>
-
 
         <!-- Contenido principal con scroll vertical independiente -->
         <main class="app-content">
             
-            <!-- PANTALLA 1: FICHA DE VOLUNTARIO (Ahora sale la primera en solitario) -->
-            <section id="inicio" class="screen active">
-                <h2 class="section-title" style="display: block !important;">Mi Perfil</h2>
+            <!-- 🌟 CAMBIO CRÍTICO AQUÍ: Ajustamos el ID al nombre que tu función exige -->
+            <section id="screen-ficha-voluntario" class="screen active">
                 <div class="card">
                     <h3>Ficha de Voluntario</h3>
-                    <div id="datos-voluntario">
-                        <p style="color: #666; font-style: italic; text-align: center; padding: 20px 0;">
-                            Cargando información del perfil local...
-                        </p>
+                    <div style="color: #666; font-style: italic; text-align: center; padding: 20px 0;">
+                        Conectando con Supabase...
                     </div>
                 </div>
             </section>
 
-            <!-- PANTALLA 2: PANEL DE ADMINISTRACIÓN (Oculto al inicio mediante la clase screen sin active) -->
+            <!-- PANEL DE ADMINISTRACIÓN (Oculto al inicio) -->
             <section id="administracion" class="screen">
                 <h2 class="section-title" style="display: block !important;">Panel de Administración</h2>
                 
@@ -106,7 +101,6 @@
         </nav>
     </div>
 
-    <!-- Dejamos únicamente tu archivo local configurado como módulo moderno -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
