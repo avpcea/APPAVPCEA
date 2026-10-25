@@ -197,47 +197,41 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-function arrancarYMostrarInterfaz() {
-    // 1. Ejecuta la lógica interna original de la app
-    inicializarAplicacionVoluntario();
+async function arrancarYMostrarInterfaz() {
+    // 1. Inicializa la aplicación original (versión, clave, etc.)
+    await inicializarAplicacionVoluntario();
     
-    // 2. APAGAMOS LO QUE NO QUEREMOS VER AHORA (Bienvenida y Administración)
-    const elementosAOcultar = [
-        "welcome-screen", 
-        "welcome-header", 
-        "administracion", 
-        "panel-admin", 
-        "seccion-admin"
-    ];
-    elementosAOcultar.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.setProperty("display", "none", "important");
-    });
-
-    // 3. ENCENDEMOS EL CONTENEDOR PRINCIPAL
+    // 2. Aseguramos que el contenedor base esté visible
     const contenedor = document.getElementById("app-container");
     if (contenedor) {
-        contenedor.style.setProperty("display", "block", "important");
-        contenedor.style.setProperty("visibility", "visible", "important");
+        contenedor.style.display = "block";
+        contenedor.style.visibility = "visible";
+        contenedor.style.opacity = "1";
     }
 
-    // 4. FORZAMOS LA VISUALIZACIÓN DE LA FICHA DE VOLUNTARIO
-    // Buscamos cualquier elemento en el HTML que contenga la palabra "voluntario" o "usuario"
-    const divs = document.querySelectorAll("div, section");
-    divs.forEach(el => {
-        const idLower = el.id ? el.id.toLowerCase() : "";
-        const classLower = el.className ? String(el.className).toLowerCase() : "";
-        
-        // Si el elemento parece ser la ficha del voluntario, lo encendemos con prioridad
-        if (idLower.includes("voluntario") || idLower.includes("usuario") || 
-            classLower.includes("voluntario") || classLower.includes("usuario") ||
-            idLower.includes("ficha") || idLower.includes("perfil")) {
-            
-            el.style.setProperty("display", "block", "important");
-            el.style.setProperty("visibility", "visible", "important");
-        }
-    });
+    // 3. Forzamos a la app a saltar directamente a la Ficha de Voluntario
+    // Primero llamamos a tu función nativa para renderizar la estructura
+    if (typeof cargarFichaVoluntario === "function") {
+        await cargarFichaVoluntario();
+    }
+
+    // Luego le decimos al navegador que muestre esa pantalla específica
+    if (typeof showScreen === "function") {
+        showScreen("ficha"); // Si tu pantalla de la ficha tiene otro nombre (ej: "perfil" o "voluntario"), se cambia aquí
+    } else if (window.showScreen === "function") {
+        window.showScreen("ficha");
+    }
 }
+
+// Lanzamiento seguro al cargar el documento
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(arrancarYMostrarInterfaz, 50);
+    });
+} else {
+    setTimeout(arrancarYMostrarInterfaz, 50);
+}
+
 
 
 // Lanzamiento seguro al cargar el documento
