@@ -12,14 +12,13 @@
     <!-- Contenedor móvil centrado oficial -->
     <div class="app-container">
         
-        <!-- Cabecera Normal con el color Naranja corporativo -->
+        <!-- Cabecera Normal con el color Naranja corporativo e icono oficial -->
         <header class="app-header">
-            <!-- 1. SOLUCIÓN ICONO: Usamos un icono SVG universal nativo por si tu favicon.ico no está en la raíz -->
-            <svg class="header-logo" viewBox="0 0 24 24" fill="currentColor" style="height: 35px; width: 35px; margin-left: 10px; color: #22349a;">
-                <path d="M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
-            </svg>
+            <!-- Cargamos tu icono oficial con la ruta correspondiente -->
+            <img class="header-logo" src="icons/icon-192.png" alt="Logo Protección Civil" onerror="this.src='./icons/icon-192.png';">
             <span class="header-title">AVPCEA</span>
         </header>
+
 
         <!-- Contenido principal con scroll vertical independiente -->
         <main class="app-content">
