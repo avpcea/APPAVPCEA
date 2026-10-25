@@ -1,12 +1,18 @@
-import { createClient } from "https://esm.unpkg.com/@supabase/supabase-js@2.118.0";
-
+import { createClient } from "https://unpkg.com";
 
 const URL = "https://supabase.co";
 const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 
-// CAMBIAMOS EL NOMBRE AQUÍ PARA EVITAR EL CHOQUE:
-const supabaseClient = createClient ? createClient(URL, KEY) : null;
+// Inicializamos el cliente de Supabase de forma interna
+const clienteInterno = createClient(URL, KEY);
+
+// 🌟 AQUÍ ESTÁ EL TRUCO: Exponemos el cliente con los dos nombres posibles a nivel global
+window.supabase = clienteInterno;
+window.supabaseClient = clienteInterno;
+
 const BASE_FN = `${URL}/functions/v1`;
+// ... a partir de aquí sigue todo tu código complejo intacto
+
 
 
 
