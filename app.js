@@ -201,23 +201,21 @@ function arrancarYMostrarInterfaz() {
     // 1. Ejecuta la lógica interna original de la app
     inicializarAplicacionVoluntario();
     
-    // 2. FORZADO LIMPIO: Encendemos el contenedor principal
+    // 2. FORZADO PERMANENTE: Obligamos al esqueleto a quedarse visible
     const contenedor = document.getElementById("app-container");
     if (contenedor) {
         contenedor.style.display = "block";
         contenedor.style.visibility = "visible";
         contenedor.style.opacity = "1";
-    }
-
-    // 3. LLAMADA DE CONTROL: Forzamos a la app a renderizar la navegación base
-    // Si tu función nativa para cambiar de pantalla es showScreen, la despertamos aquí
-    if (typeof showScreen === "function") {
-        showScreen("inicio"); 
-    } else if (window.showScreen === "function") {
-        window.showScreen("inicio");
+        
+        // Buscamos los sub-bloques internos (como el panel de administración) y los encendemos
+        const bloquesInternos = contenedor.querySelectorAll("div");
+        bloquesInternos.forEach(div => {
+            div.style.display = "block";
+            div.style.visibility = "visible";
+        });
     }
 }
-
 
 // Lanzamiento seguro al cargar el documento
 if (document.readyState === 'loading') {
