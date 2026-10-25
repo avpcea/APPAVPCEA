@@ -1,17 +1,16 @@
-import { createClient } from "https://unpkg.com";
+// EXTRAEMOS LA FUNCIÓN DE CREAR CLIENTE DEL OBJETO GLOBAL INYECTADO
+const { createClient } = window.supabase || {};
 
 const URL = "https://supabase.co";
 const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdG5hb2xpaXljaGdreHNha3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3Mjc0MzAsImV4cCI6MjA5NzMwMzQzMH0.ib30dyYwPY4l8f4vSn2OBf7EkChVzRjwzDR_dGF3524";
 
-// Inicializamos el cliente de Supabase de forma interna
-const clienteInterno = createClient(URL, KEY);
-
-// 🌟 AQUÍ ESTÁ EL TRUCO: Exponemos el cliente con los dos nombres posibles a nivel global
-window.supabase = clienteInterno;
-window.supabaseClient = clienteInterno;
+// Inicializamos tu cliente local con el nombre exacto que tus funciones complejas esperan
+const supabase = createClient ? createClient(URL, KEY) : null;
+const supabaseClient = supabase; // Por seguridad, si el código usa el otro nombre
 
 const BASE_FN = `${URL}/functions/v1`;
-// ... a partir de aquí sigue todo tu código complejo intacto
+// ... a partir de aquí continúa todo tu código complejo original intacto
+
 
 
 
