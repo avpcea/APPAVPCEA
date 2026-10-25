@@ -200,46 +200,13 @@ async function inicializarAplicacionVoluntario(){
 // ... Aquí arriba terminan tus funciones originales de la app, como cargarFichaVoluntario, etc.
 
 function arrancarConBanderas() {
-    console.log("🚩 BANDERA 1: El cargador de la página funciona. Entrando en inicializar...");
+    console.log("🚩 BANDERA 1: Estructura HTML limpia cargada. Inicializando app...");
     
     try {
         inicializarAplicacionVoluntario();
-        console.log("🚩 BANDERA 2: inicializarAplicacionVoluntario() se ejecutó sin quedarse colgada.");
+        console.log("🚩 BANDERA 2: inicializarAplicacionVoluntario() completado.");
     } catch (err) {
-        console.log("❌ ERROR EN BANDERA 2:", err.message);
-    }
-    console.log("🚩 BANDERA 3: Buscando el contenedor principal...");
-    const ac = document.getElementById("app-container");
-    if (ac) {
-        console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
-        
-        // 1. Encendemos el contenedor exterior (Azul)
-        ac.style.setProperty("display", "block", "important");
-        ac.style.setProperty("visibility", "visible", "important");
-        ac.style.setProperty("opacity", "1", "important");
-
-        // 2. CORRECCIÓN DEL CONTENEDOR INTERNO (Verde colapsado)
-        // Buscamos el elemento main que viste en el inspector y lo expandimos
-        const mainContent = ac.querySelector("main.app-content") || document.querySelector("main");
-        if (mainContent) {
-            mainContent.style.setProperty("display", "block", "important");
-            mainContent.style.setProperty("visibility", "visible", "important");
-            mainContent.style.setProperty("opacity", "1", "important");
-            mainContent.style.setProperty("height", "auto", "important");
-            mainContent.style.setProperty("min-height", "100vh", "important");
-            mainContent.style.setProperty("padding", "20px", "important"); // Aseguramos un margen limpio
-        }
-
-        // 3. Desbloqueo base del body
-        document.body.style.setProperty("display", "block", "important");
-        
-        // Apagamos la bienvenida por si acaso
-        const ws = document.getElementById("welcome-screen");
-        if (ws) ws.style.setProperty("display", "none", "important");
-    } else {
-
-
-        console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
+        console.log("❌ ERROR EN ARRANQUE:", err.message);
     }
 }
 
@@ -248,4 +215,3 @@ if (document.readyState === 'loading') {
 } else {
     arrancarConBanderas();
 }
-
