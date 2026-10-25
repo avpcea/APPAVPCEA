@@ -14,19 +14,32 @@
         
         <!-- Cabecera Normal con el color Naranja corporativo -->
         <header class="app-header">
-            <!-- Espacio reservado por si tienes el icono en img/logo.png -->
-            <img class="header-logo" src="favicon.ico" alt="Logo" onerror="this.style.display='none'">
+            <!-- 1. SOLUCIÓN ICONO: Usamos un icono SVG universal nativo por si tu favicon.ico no está en la raíz -->
+            <svg class="header-logo" viewBox="0 0 24 24" fill="currentColor" style="height: 35px; width: 35px; margin-left: 10px; color: #22349a;">
+                <path d="M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99zM13 16h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
+            </svg>
             <span class="header-title">AVPCEA</span>
         </header>
 
         <!-- Contenido principal con scroll vertical independiente -->
         <main class="app-content">
             
-            <!-- Título de Sección Azul Corporativo forzado a verse -->
-            <h2 class="section-title" style="display: block !important;">Panel de Administración</h2>
+            <!-- PANTALLA 1: FICHA DE VOLUNTARIO (Ahora sale la primera en solitario) -->
+            <section id="inicio" class="screen active">
+                <h2 class="section-title" style="display: block !important;">Mi Perfil</h2>
+                <div class="card">
+                    <h3>Ficha de Voluntario</h3>
+                    <div id="datos-voluntario">
+                        <p style="color: #666; font-style: italic; text-align: center; padding: 20px 0;">
+                            Cargando información del perfil local...
+                        </p>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Bloque de Administración -->
-            <section id="administracion" class="screen active">
+            <!-- PANTALLA 2: PANEL DE ADMINISTRACIÓN (Oculto al inicio mediante la clase screen sin active) -->
+            <section id="administracion" class="screen">
+                <h2 class="section-title" style="display: block !important;">Panel de Administración</h2>
                 
                 <div class="card">
                     <h3>Crear Operativo</h3>
@@ -83,24 +96,14 @@
                 </div>
             </section>
 
-            <!-- Ficha de Voluntario integrada elegantemente como tarjeta -->
-            <section id="ficha-voluntario" class="screen active">
-                <div class="card">
-                    <h3>Ficha de Voluntario</h3>
-                    <div id="datos-voluntario">
-                        <p style="color: #666; font-style: italic;">Cargando información del perfil local...</p>
-                    </div>
-                </div>
-            </section>
-
         </main>
 
         <!-- Barra inferior de navegación nativa fija posicionada según tus estilos -->
         <nav class="bottom-nav">
-            <button class="nav-btn">Operativos</button>
+            <button class="nav-btn active">Operativos</button>
             <button class="nav-btn">Preventivos</button>
             <button class="nav-btn">Emergencias</button>
-            <button class="nav-btn active">Administración</button>
+            <button class="nav-btn">Administración</button>
         </nav>
     </div>
 
