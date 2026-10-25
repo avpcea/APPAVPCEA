@@ -213,6 +213,12 @@ function arrancarConBanderas() {
     const ac = document.getElementById("app-container");
     if (ac) {
         console.log("🚩 BANDERA 4: El contenedor 'app-container' EXISTE en el HTML actual.");
+        
+        // CORRECCIÓN QUIRÚRGICA: Le quitamos el candado de visibilidad por CSS
+        ac.style.setProperty("display", "block", "important");
+        ac.style.setProperty("visibility", "visible", "important");
+        ac.style.setProperty("opacity", "1", "important");
+        
     } else {
         console.log("🚩 BANDERA 4: El contenedor 'app-container' NO EXISTE en el HTML.");
     }
