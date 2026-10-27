@@ -92,13 +92,15 @@
 
         </main>
 
-        <!-- Barra inferior de navegación nativa fija posicionada según tus estilos -->
+        <!-- Barra inferior de navegación -->
         <nav class="bottom-nav">
-            <button class="nav-btn active">Operativos</button>
-            <button class="nav-btn">Preventivos</button>
-            <button class="nav-btn">Emergencias</button>
-            <button class="nav-btn">Administración</button>
+          <button class="nav-btn active" data-screen="perfil">Perfil</button>
+          <button class="nav-btn" data-screen="operativos">Operativos</button>
+          <button class="nav-btn" data-screen="preventivos">Preventivos</button>
+          <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+          <button class="nav-btn" data-screen="admin">Admin</button>
         </nav>
+
     </div>
 
     <script type="module" src="app.js"></script>
