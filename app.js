@@ -231,3 +231,41 @@ if (document.readyState === 'loading') {
 } else {
     arrancarAplicacion();
 }
+
+// ==========================================
+// CONFIGURACIÓN DE LA NAVEGACIÓN (BOTTOM-NAV)
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Seleccionar todos los botones de la barra de navegación
+    const navButtons = document.querySelectorAll('.bottom-nav .nav-btn');
+
+    // 2. Escuchar el evento de clic/toque en cada botón
+    navButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            // Evitar comportamientos extraños en scroll móvil
+            e.preventDefault(); 
+
+            const targetScreen = button.getAttribute('data-screen');
+            
+            if (targetScreen) {
+                // Alternar la pantalla usando la función existente de la app
+                // Si showScreen recibe un string ("operativos"), asegúrate de que tu función 
+                // busque por ID (ej: document.getElementById(screenId))
+                showScreen(targetScreen);
+                
+                // Actualizar el estado visual del botón activo
+                updateActiveNavButton(button);
+            }
+        });
+    });
+
+    /**
+     * Actualiza la clase activa en la barra de navegación inferior
+     * @param {HTMLElement} activeButton - El botón que ha sido pulsado
+     */
+    function updateActiveNavButton(activeButton) {
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        activeButton.classList.add('active');
+    }
+});
