@@ -1,108 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APP AVPCEA</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVPCEA - Protección Civil El Arenal</title>
+  <!-- CDN Limpio de Supabase -->
+  <script src="https://jsdelivr.net"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- Contenedor móvil centrado oficial -->
-    <div class="app-container">
+  <!-- CONTENEDOR PRINCIPAL MÓVIL CENTRADO (480px) -->
+  <div class="app-container">
+    
+    <!-- CABECERA FIJA NARANJA -->
+    <header class="app-header">
+      <img src="/icons/icon-192.png" alt="Logo AVPCEA" class="header-logo">
+      <h1>AVPCEA</h1>
+    </header>
+
+    <!-- CONTENIDO DINÁMICO DE LA APLICACIÓN -->
+    <main class="app-content">
+
+      <!-- 1. PANTALLA: PERFIL (Visible por defecto) -->
+      <section id="perfil" class="app-screen">
+        <div class="card">
+          <h3>Ficha de Voluntario</h3>
+          <div id="perfil-datos">
+            <p><strong>Nombre:</strong> <span id="voluntario-nombre">Conectando con Supabase...</span></p>
+            <p><strong>Teléfono:</strong> <span id="voluntario-telefono">-</span></p>
+            <p><strong>Horas Acumuladas:</strong> <span id="voluntario-horas">0</span>h</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. PANTALLA: OPERATIVOS (Oculta al inicio) -->
+      <section id="operativos" class="app-screen" style="display: none;">
+        <div class="card">
+          <h3>Próximos Operativos</h3>
+          <p class="placeholder-text">No hay operativos activos asignados en este momento.</p>
+        </div>
+      </section>
+
+      <!-- 3. PANTALLA: PREVENTIVOS (Oculta al inicio) -->
+      <section id="preventivos" class="app-screen" style="display: none;">
+        <div class="card">
+          <h3>Dispositivos Preventivos</h3>
+          <p class="placeholder-text">Consulta y apúntate a los próximos preventivos de El Arenal.</p>
+        </div>
+      </section>
+
+      <!-- 4. PANTALLA: EMERGENCIAS (Oculta al inicio) -->
+      <section id="emergencias" class="app-screen" style="display: none;">
+        <div class="card card-danger">
+          <h3>Alertas de Emergencia</h3>
+          <p class="placeholder-text">Sin alertas de última hora de la central.</p>
+        </div>
+      </section>
+
+      <!-- 5. PANTALLA: ADMINISTRACIÓN (Oculta al inicio) -->
+      <section id="admin" class="app-screen" style="display: none;">
+        <h2>Panel de Administración</h2>
         
-        <!-- Cabecera Normal con el color Naranja corporativo e icono oficial -->
-        <header class="app-header">
-            <img class="header-logo" src="icons/icon-192.png" alt="Logo" onerror="this.src='./icons/icon-192.png';">
-            <span class="header-title">AVPCEA</span>
-        </header>
+        <div class="card">
+          <h3>Crear Operativo</h3>
+          <label>Fecha y Hora de Inicio:</label>
+          <input type="datetime-local">
+          <button class="btn">Crear Operativo</button>
+        </div>
 
-        <!-- Contenido principal con scroll vertical independiente -->
-        <main class="app-content">
-            
-            <!-- 🌟 CAMBIO CRÍTICO AQUÍ: Ajustamos el ID al nombre que tu función exige -->
-            <section id="screen-ficha-voluntario" class="screen active">
-                <div class="card">
-                    <h3>Ficha de Voluntario</h3>
-                    <div style="color: #666; font-style: italic; text-align: center; padding: 20px 0;">
-                        Conectando con Supabase...
-                    </div>
-                </div>
-            </section>
+        <div class="card">
+          <h3>Crear Preventivo</h3>
+          <label>Fecha y Hora de Inicio:</label>
+          <input type="datetime-local">
+          <button class="btn">Crear Preventivo</button>
+        </div>
 
-            <!-- PANEL DE ADMINISTRACIÓN (Oculto al inicio) -->
-            <section id="administracion" class="screen">
-                <h2 class="section-title" style="display: block !important;">Panel de Administración</h2>
-                
-                <div class="card">
-                    <h3>Crear Operativo</h3>
-                    <div class="admin-section" style="background: none; padding: 0;">
-                        <label>Fecha y Hora de Inicio:</label>
-                        <input type="datetime-local">
-                        <button class="btn-primary">Crear Operativo</button>
-                    </div>
-                </div>
+        <div class="card">
+          <h3>Crear Emergencia</h3>
+          <label>Nivel de Gravedad:</label>
+          <select>
+            <option>Bajo</option>
+            <option>Medio</option>
+            <option>Alto</option>
+            <option>Crítico</option>
+          </select>
+          <label>Fecha y Hora de Inicio:</label>
+          <input type="datetime-local">
+          <button class="btn btn-danger">Crear Emergencia</button>
+        </div>
 
-                <div class="card">
-                    <h3>Crear Preventivo</h3>
-                    <div class="admin-section" style="background: none; padding: 0;">
-                        <label>Fecha y Hora de Inicio:</label>
-                        <input type="datetime-local">
-                        <button class="btn-primary">Crear Preventivo</button>
-                    </div>
-                </div>
+        <div class="card">
+          <h3>Crear Usuario</h3>
+          <label>Fecha de Nacimiento:</label>
+          <input type="date">
+          <label>Rol del Dispositivo:</label>
+          <select>
+            <option>Usuario</option>
+            <option>Administrador</option>
+            <option>Coordinador</option>
+          </select>
+          <button class="btn">Crear Usuario</button>
+        </div>
 
-                <div class="card">
-                    <h3>Crear Emergencia</h3>
-                    <div class="admin-section" style="background: none; padding: 0;">
-                        <label>Nivel de Gravedad:</label>
-                        <select style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
-                            <option>Bajo</option>
-                            <option>Medio</option>
-                            <option>Alto</option>
-                            <option>Crítico</option>
-                        </select>
-                        <label>Fecha y Hora de Inicio:</label>
-                        <input type="datetime-local">
-                        <button class="btn-primary" style="background-color: #d9534f !important; border-color: #d9534f !important;">Crear Emergencia</button>
-                    </div>
-                </div>
+        <div class="card">
+          <h3>Gestión de Usuarios</h3>
+          <button class="btn btn-secondary">🔄 Actualizar usuarios</button>
+        </div>
+      </section>
 
-                <div class="card">
-                    <h3>Crear Usuario</h3>
-                    <div class="admin-section" style="background: none; padding: 0;">
-                        <label>Fecha de Nacimiento:</label>
-                        <input type="date">
-                        <label>Rol del Dispositivo:</label>
-                        <select style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
-                            <option>Usuario</option>
-                            <option>Administrador</option>
-                            <option>Coordinador</option>
-                        </select>
-                        <button class="btn-primary">Crear Usuario</button>
-                    </div>
-                </div>
+    </main>
 
-                <div class="card">
-                    <h3>Gestión de Usuarios</h3>
-                    <button class="btn-secondary">🔄 Actualizar usuarios</button>
-                </div>
-            </section>
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (BOTTOM-NAV) -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="perfil">Perfil</button>
+      <button class="nav-btn" data-screen="operativos">Operativos</button>
+      <button class="nav-btn" data-screen="preventivos">Preventivos</button>
+      <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+      <button class="nav-btn" data-screen="admin">Administración</button>
+    </nav>
 
-        </main>
+  </div>
 
-        <!-- Barra inferior de navegación -->
-        <nav class="bottom-nav">
-          <button class="nav-btn active" data-screen="perfil">Perfil</button>
-          <button class="nav-btn" data-screen="operativos">Operativos</button>
-          <button class="nav-btn" data-screen="preventivos">Preventivos</button>
-          <button class="nav-btn" data-screen="emergencias">Emergencias</button>
-          <button class="nav-btn" data-screen="admin">Admin</button>
-        </nav>
-
-    </div>
-
-    <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
