@@ -119,11 +119,30 @@ async function cargarFichaVoluntario(){
   hFicha += "</div>";
   c.innerHTML = hFicha;
 }
-function showScreen(n){
-  if(n==="inicio"||n==="ficha")cargarFichaVoluntario();if(n==="preventivos")cargarPreventivos();if(n==="operativos")cargarOperativos();if(n==="emergencias")cargarEmergencias();
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));document.querySelectorAll("#app-screens .screen").forEach(s=>s.style.display="none");
-  const s=document.getElementById(n==="admin"?"screen-administracion":(n==="inicio"?"screen-ficha-voluntario"?"screen-ficha-voluntario":"screen-inicio":"screen-"+n));if(s)s.style.display="block";
+
+function showScreen(screenId) {
+    // Selecciona todas tus vistas/pantallas principales
+    const screens = document.querySelectorAll('.app-screen'); 
+    
+    screens.forEach(screen => {
+        // Oculta todas las pantallas
+        screen.style.display = 'none'; 
+        screen.classList.remove('screen-active');
+    });
+
+    // Muestra la pantalla seleccionada
+    const currentScreen = document.getElementById(screenId);
+    if (currentScreen) {
+        currentScreen.style.display = 'block'; // O 'flex' según tu styles.css
+        currentScreen.classList.add('screen-active');
+        
+        // OPTIONAL: Disparar cargas de datos específicas si es necesario
+        // ej: if(screenId === 'operativos') cargarOperativosDesdeSupabase();
+    } else {
+        console.warn(`La pantalla con ID "${screenId}" no existe en el DOM.`);
+    }
 }
+
 async function cargarListadoAdmin() {
   const cont = document.getElementById("admin-listado");if (!cont) return;cont.innerHTML = "<p>Cargando listados...</p>";
   try {
