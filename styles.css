@@ -67,27 +67,25 @@ html, body {
 ============================ */
 
 .app-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 60px; /* ajusta si tu cabecera es más alta */
-  background: #f49404; /* o el color que uses */
-  color: black;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Empuja el logo a la izquierda y el título a la derecha */
+    background-color: #ff6600; /* Tu naranja oficial */
+    padding: 10px 16px;
+    box-sizing: border-box;
 }
 
 .header-logo {
-  position: absolute;
-  left: 10px; /* distancia del borde izquierdo */
-  height: 40px; /* ajusta según tu icono */
+    height: 40px; /* Ajusta según el tamaño de tu icono */
+    width: auto;
 }
 
 .header-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.3em;
-  font-weight: bold;
-  white-space: nowrap;
+    font-size: 1.1rem; /* Tamaño contenido para que no rompa en pantallas de 480px */
+    color: #ffffff;
+    margin: 0;
+    text-align: right; /* Alinea el texto a la derecha dentro de su bloque */
+    font-weight: 600;
 }
 
 /* ============================
