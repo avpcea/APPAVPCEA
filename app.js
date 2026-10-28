@@ -97,27 +97,42 @@ window.toggleSuscripcion=async function(t,id){
   }else{await supabase.from("suscripciones").delete().eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id));alert("Cancelado.");}
   if(t==="preventivos")cargarPreventivos();if(t==="operativos")cargarOperativos();await cargarFichaVoluntario();
 };
-async function cargarFichaVoluntario(){
-  // 🌟 EL CONEJO DE LA CHISTERA: La función se hace visible a sí misma a nivel global
-  window.cargarFichaVoluntario = cargarFichaVoluntario;
+async function cargarFichaVoluntario() {
+    const nombreEL = document.getElementById('voluntario-nombre');
+    const telefonoEL = document.getElementById('voluntario-telefono');
+    const horasEL = document.getElementById('voluntario-horas');
 
-  // ... a partir de aquí continúa todo tu código complejo original intacto
+    try {
+        // 1. Leer el usuario_id guardado
+        const usuarioId = localStorage.getItem('usuario_id');
+        
+        // Simulación o control si el localStorage está vacío en esta pestaña limpia
+        if (!usuarioId) {
+            console.warn("No se encontró 'usuario_id' en el localStorage.");
+            if (nombreEL) nombreEL.textContent = "Sin sesión activa (Introduce ID)";
+            return;
+        }
 
-  const c=document.getElementById("screen-ficha-voluntario")||document.getElementById("screen-inicio");if(!c)return;const u=localStorage.getItem("usuario_id");
-  const{data:usr}=await supabase.from("usuarios").select("nombre,telefono,cumple_mes,cumple_dia,horas").eq("id",u).maybeSingle();
-  if(!usr){c.innerHTML="<p>Terminal No Enlazado.</p>";return;}
-  const{data:subs}=await supabase.from("suscripciones").select("evento_id,tipo").eq("usuario_id",u);
-  const cp=(usr.cumple_dia&&usr.cumple_mes)?(String(usr.cumple_dia).padStart(2,'0')+"/"+String(usr.cumple_mes).padStart(2,'0')):"—";
-  let sh="<ul>";subs?.forEach(s=>{sh+="<li>["+s.tipo+"] <a href='#/evento/"+s.tipo+"/"+s.evento_id+"'>Ver Evento ↗</a></li>";});sh+="</ul>";
-  
-  let hFicha = "<div style='max-width:400px;margin:10px auto;padding:15px;border:1px solid #eee;font-family:sans-serif;'>";
-  hFicha += "<h2>" + usr.nombre + "</h2>";
-  hFicha += "<p>📞 Teléfono: " + (usr.telefono||"—") + "</p>";
-  hFicha += "<p>🎂 Cumpleaños: " + cp + "</p>";
-  hFicha += "<p>⏳ Saldo: " + parseFloat(usr.horas||0).toFixed(2) + " hs</p>";
-  hFicha += "<h4>Suscripciones:</h4>" + (subs?.length?sh:"<p>Ninguna</p>");
-  hFicha += "</div>";
-  c.innerHTML = hFicha;
+        // 2. Consulta limpia a Supabase (Asegúrate de que coincida con tu tabla 'voluntarios')
+        const { data, error } = await supabase
+            .from('voluntarios') 
+            .select('nombre, telefono, horas')
+            .eq('id', usuarioId)
+            .single();
+
+        if (error) throw error;
+
+        // 3. Pintar con éxito en el DOM si los datos existen
+        if (data) {
+            if (nombreEL) nombreEL.textContent = data.nombre || 'Sin nombre';
+            if (telefonoEL) telefonoEL.textContent = data.telefono || '-';
+            if (horasEL) horasEL.textContent = data.horas || '0';
+        }
+
+    } catch (err) {
+        console.error("Error crítico al cargar los datos de Supabase:", err.message);
+        if (nombreEL) nombreEL.textContent = "Error al cargar perfil";
+    }
 }
 
 function showScreen(screenId) {
@@ -226,9 +241,6 @@ async function inicializarAplicacionVoluntario(){
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
-// ... Aquí arriba terminan tus funciones originales de la app, como cargarFichaVoluntario, etc.
-
-// Arrancador nativo optimizado para producción (Sin banderas de consola)
 async function arrancarAplicacion() {
     try {
         // 1. Inicializa la lógica nativa original de la app (ID, etc.)
