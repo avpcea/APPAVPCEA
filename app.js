@@ -222,7 +222,7 @@ async function inicializarAplicacionVoluntario(){
   localStorage.setItem("usuario_id","2fa1fce4-aad0-439a-a391-3cd3079556c6");
 
   const u=localStorage.getItem("usuario_id");
-  if(u&&u.trim()!==""){const ws=document.getElementById("welcome-screen"),wh=document.getElementById("welcome-header");if(ws)ws.style.display="none";if(wh)wh.style.display="none";showScreen("inicio");}
+  if(u&&u.trim()!==""){const ws=document.getElementById("welcome-screen"),wh=document.getElementById("welcome-header");if(ws)ws.style.display="none";if(wh)wh.style.display="none";showScreen("perfil");}
   else{document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif;"><h2>Terminal No Enlazado</h2><p>Falta usuario_id.</p></div>';}
 }
 
