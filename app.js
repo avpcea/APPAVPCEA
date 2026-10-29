@@ -106,14 +106,14 @@ async function cargarFichaVoluntario() {
         // 1. Leer el usuario_id guardado
         const usuarioId = localStorage.getItem('usuario_id');
         
-        // Simulación o control si el localStorage está vacío en esta pestaña limpia
+        // Control preventivo si abrimos la app en una pestaña limpia sin login
         if (!usuarioId) {
             console.warn("No se encontró 'usuario_id' en el localStorage.");
-            if (nombreEL) nombreEL.textContent = "Sin sesión activa (Introduce ID)";
+            if (nombreEL) nombreEL.textContent = "ID no encontrado / Sin sesión";
             return;
         }
 
-        // 2. Consulta limpia a Supabase (Asegúrate de que coincida con tu tabla 'voluntarios')
+        // 2. Consulta limpia a Supabase
         const { data, error } = await supabase
             .from('voluntarios') 
             .select('nombre, telefono, horas')
@@ -122,7 +122,7 @@ async function cargarFichaVoluntario() {
 
         if (error) throw error;
 
-        // 3. Pintar con éxito en el DOM si los datos existen
+        // 3. Pintar con éxito en el DOM
         if (data) {
             if (nombreEL) nombreEL.textContent = data.nombre || 'Sin nombre';
             if (telefonoEL) telefonoEL.textContent = data.telefono || '-';
@@ -130,10 +130,14 @@ async function cargarFichaVoluntario() {
         }
 
     } catch (err) {
-        console.error("Error crítico al cargar los datos de Supabase:", err.message);
-        if (nombreEL) nombreEL.textContent = "Error al cargar perfil";
+        console.error("Error al cargar desde Supabase:", err.message);
+        if (nombreEL) nombreEL.textContent = "Error de conexión";
     }
 }
+
+// 🌟 EL CONEJO DE LA CHISTERA: Exportamos la función al entorno global window
+// Esto permite que el flujo de arranque la ejecute sin restricciones de módulo
+window.cargarFichaVoluntario = cargarFichaVoluntario;
 
 function showScreen(screenId) {
     // Selecciona todas tus vistas/pantallas principales
