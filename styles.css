@@ -82,7 +82,7 @@ html, body {
 
 .header-title {
     font-size: 1.1rem; /* Tamaño contenido para que no rompa en pantallas de 480px */
-    color: #ffffff;
+    color: #000000;    /* 🌟 Cambiado a negro */
     margin: 0;
     text-align: right; /* Alinea el texto a la derecha dentro de su bloque */
     font-weight: 600;
