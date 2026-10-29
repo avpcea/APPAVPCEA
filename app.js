@@ -106,16 +106,15 @@ async function cargarFichaVoluntario() {
         // 1. Leer el usuario_id guardado
         const usuarioId = localStorage.getItem('usuario_id');
         
-        // Control preventivo si abrimos la app en una pestaña limpia sin login
         if (!usuarioId) {
             console.warn("No se encontró 'usuario_id' en el localStorage.");
             if (nombreEL) nombreEL.textContent = "ID no encontrado / Sin sesión";
             return;
         }
 
-        // 2. Consulta limpia a Supabase
+        // 2. Consulta limpia a Supabase apuntando a la tabla correcta: 'usuarios'
         const { data, error } = await supabase
-            .from('voluntarios') 
+            .from('usuarios') // 🌟 ¡Corregido aquí!
             .select('nombre, telefono, horas')
             .eq('id', usuarioId)
             .single();
@@ -134,6 +133,9 @@ async function cargarFichaVoluntario() {
         if (nombreEL) nombreEL.textContent = "Error de conexión";
     }
 }
+
+// 🌟 EL CONEJO DE LA CHISTERA: Exportamos al entorno global
+window.cargarFichaVoluntario = cargarFichaVoluntario;
 
 // 🌟 EL CONEJO DE LA CHISTERA: Exportamos la función al entorno global window
 // Esto permite que el flujo de arranque la ejecute sin restricciones de módulo
