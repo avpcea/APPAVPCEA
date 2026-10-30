@@ -76,63 +76,6 @@ async function cargarPreventivos() {
     }
 }
 
-async function cargarEmergencias() {
-    const contenedor = document.getElementById('emergencias');
-    try {
-        const { data, error } = await supabase
-            .from('emergencias')
-            .select('*')
-            .order('inicio', { ascending: false }); // Las más recientes primero
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            let html = `<div class="card card-danger"><h3>Alertas de Emergencia</h3></div>`;
-            data.forEach(em => {
-                const fecha = new Date(em.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
-                html += `
-                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 10px; background-color: #fff5f5;">
-                        <h4 style="color: #dc3545;">🚨 ${em.titulo || 'EMERGENCIA'}</h4>
-                        <p><strong>Gravedad:</strong> <span style="color: #dc3545; font-weight: bold;">${em.gravedad || 'No especificada'}</span></p>
-                        <p><strong>📅 Inicio:</strong> ${fecha}</p>
-                        <p>${em.descripcion || ''}</p>
-                    </div>`;
-            });
-            contenedor.innerHTML = html;
-        }
-    } catch (err) {
-        console.error("Error al cargar emergencias:", err.message);
-    }
-}
-
-async function cargarPreventivos() {
-    const contenedor = document.getElementById('preventivos');
-    try {
-        const { data, error } = await supabase
-            .from('preventivos')
-            .select('*')
-            .order('inicio', { ascending: true });
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            let html = `<h3>Dispositivos Preventivos</h3>`;
-            data.forEach(prev => {
-                const fecha = new Date(prev.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
-                html += `
-                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 10px;">
-                        <h4>${prev.titulo || 'Preventivo sin título'}</h4>
-                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
-                        <p>${prev.descripcion || 'Sin detalles.'}</p>
-                    </div>`;
-            });
-            contenedor.innerHTML = html;
-        }
-    } catch (err) {
-        console.error("Error al cargar preventivos:", err.message);
-    }
-}
-
 function activarPitidoEmergencia(){
   if(os)return;try{ac=new(window.AudioContext||window.webkitAudioContext)();os=ac.createOscillator();const g=ac.createGain();os.type='sine';os.frequency.setValueAtTime(880,ac.currentTime);g.gain.setValueAtTime(0.4,ac.currentTime);os.connect(g);g.connect(ac.destination);os.start();}catch(e){}
 }
