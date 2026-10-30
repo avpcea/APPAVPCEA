@@ -58,7 +58,8 @@ async function cargarOperativos() {
         }
     } catch (err) {
         console.error("Error al cargar operativos:", err.message);
-        contenedor.innerHTML = `<h3>Próximos Operativos</h3><p style="color: red;">Error al conectar con la base de datos.</p>`;
+        contenedor.innerHTML = `<h3 style="text-align: center;">Próximos Operativos</h3>
+                                <p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
 
@@ -100,7 +101,8 @@ async function cargarPreventivos() {
         }
     } catch (err) {
         console.error("Error al cargar preventivos:", err.message);
-        contenedor.innerHTML = `<h3>Dispositivos Preventivos</h3><p style="color: red;">Error al conectar con la base de datos.</p>`;
+        contenedor.innerHTML = `<h3 style="text-align: center;">Dispositivos Preventivos</h3>
+                                <p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
 
