@@ -265,18 +265,17 @@ html, body {
   to { opacity: 1; }
 }
 
-/* Contenedor para cada fila de formulario (Título + Caja) */
+/* Filas estándar: Título a la izquierda, caja a la derecha */
 .form-group {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
-    gap: 10px; /* Espacio mínimo entre el texto y la caja */
+    gap: 15px;
 }
 
-/* Estilo para los títulos (Izquierda) */
 #admin .form-group label {
-    flex: 0 0 35%;      /* El título ocupa exactamente el 35% del ancho */
+    flex: 0 0 40%; /* Un 40% de espacio fijo para que quepan títulos largos como "Fecha y Hora de Inicio" */
     margin: 0;
     font-weight: bold;
     color: #333333;
@@ -284,27 +283,43 @@ html, body {
     font-size: 0.95rem;
 }
 
-/* Estilo para las cajas de entrada (Derecha) */
-#admin .form-group input[type="text"],
-#admin .form-group input[type="datetime-local"],
-#admin .form-group textarea,
+#admin .form-group input,
 #admin .form-group select {
-    flex: 1;            /* Toma todo el espacio restante (65%) */
+    flex: 1; /* La caja toma el 60% restante */
     padding: 8px 10px;
     border: 1px solid #cccccc;
     border-radius: 4px;
     box-sizing: border-box;
     font-family: inherit;
     font-size: 0.95rem;
-    margin: 0;          /* Limpiamos márgenes antiguos */
 }
 
-/* Ajuste específico para el área de texto */
-#admin .form-group textarea {
-    resize: none;
-    height: 50px;       /* Altura contenida para que no rompa la fila */
+/* 🌟 CLASE ESPECIAL: Título arriba, caja ABAJO (para Descripciones) */
+.form-group-block {
+    display: block;
+    margin-bottom: 12px;
 }
 
+#admin .form-group-block label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #333333;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+#admin .form-group-block textarea {
+    width: 100%;
+    height: 100px; /* Espacio cómodo para escribir observaciones */
+    padding: 8px 10px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+}
 
 /* ============================
    COLORES CORPORATIVOS
