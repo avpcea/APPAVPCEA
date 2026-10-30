@@ -66,28 +66,42 @@ async function cargarOperativos() {
 async function cargarPreventivos() {
     const contenedor = document.getElementById('preventivos');
     try {
+        // 🌟 Modificado para usar 'fecha_inicio' en lugar de 'inicio'
         const { data, error } = await supabase
             .from('preventivos')
-            .select('*')
-            .order('inicio', { ascending: true });
+            .select('titulo, lugar, fecha_inicio, descripcion')
+            .order('fecha_inicio', { ascending: true });
 
         if (error) throw error;
 
         if (data && data.length > 0) {
             let html = `<h3>Dispositivos Preventivos</h3>`;
+            
             data.forEach(prev => {
-                const fecha = new Date(prev.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                // Formateamos la fecha en formato local de España
+                const fecha = new Date(prev.fecha_inicio).toLocaleString('es-ES', { 
+                    dateStyle: 'short', 
+                    timeStyle: 'short' 
+                });
+                
                 html += `
-                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 10px;">
-                        <h4>${prev.titulo || 'Preventivo sin título'}</h4>
-                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
-                        <p>${prev.descripcion || 'Sin detalles.'}</p>
+                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 12px;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${prev.titulo}</h4>
+                        <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
+                        ${prev.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${prev.lugar}</p>` : ''}
+                        ${prev.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${prev.descripcion}</p>` : ''}
                     </div>`;
             });
+            
             contenedor.innerHTML = html;
+        } else {
+            contenedor.innerHTML = `
+                <h3>Dispositivos Preventivos</h3>
+                <p class="placeholder-text">Consulta y apúntate a los próximos preventivos de El Arenal.</p>`;
         }
     } catch (err) {
         console.error("Error al cargar preventivos:", err.message);
+        contenedor.innerHTML = `<h3>Dispositivos Preventivos</h3><p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
 
