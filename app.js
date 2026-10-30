@@ -22,7 +22,6 @@ let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:fal
 async function cargarOperativos() {
     const contenedor = document.getElementById('operativos');
     try {
-        // 🌟 Modificado para usar 'fecha_inicio' que sí existe en tu DDL
         const { data, error } = await supabase
             .from('operativos')
             .select('titulo, lugar, fecha_inicio, descripcion')
@@ -30,20 +29,20 @@ async function cargarOperativos() {
 
         if (error) throw error;
 
-        // Si hay registros, renderizamos las tarjetas nativas
         if (data && data.length > 0) {
-            let html = `<h3>Próximos Operativos</h3>`;
+            // 🌟 Título centrado con text-align: center
+            let html = `<h3 style="text-align: center;">Próximos Operativos</h3>`;
             
             data.forEach(op => {
-                // Formateamos la fecha nativa de Postgres a formato legible en España
                 const fecha = new Date(op.fecha_inicio).toLocaleString('es-ES', { 
                     dateStyle: 'short', 
                     timeStyle: 'short' 
                 });
                 
+                // 🌟 Título del evento más grande (1.3rem) y en azul (#0056b3)
                 html += `
                     <div class="card" style="border-left: 5px solid #ff6600; margin-bottom: 12px;">
-                        <h4 style="margin: 0 0 5px 0; color: #333;">${op.titulo}</h4>
+                        <h4 style="margin: 0 0 5px 0; color: #0056b3; font-size: 1.3rem; font-weight: bold;">${op.titulo}</h4>
                         <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
                         ${op.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${op.lugar}</p>` : ''}
                         ${op.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${op.descripcion}</p>` : ''}
@@ -52,21 +51,19 @@ async function cargarOperativos() {
             
             contenedor.innerHTML = html;
         } else {
+            // Título centrado también en la vista vacía
             contenedor.innerHTML = `
-                <h3>Próximos Operativos</h3>
+                <h3 style="text-align: center;">Próximos Operativos</h3>
                 <p class="placeholder-text">No hay operativos activos asignados en este momento.</p>`;
         }
     } catch (err) {
         console.error("Error al cargar operativos:", err.message);
-        contenedor.innerHTML = `<h3 style="text-align: center;">Próximos Operativos</h3>
-                                <p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
 
 async function cargarPreventivos() {
     const contenedor = document.getElementById('preventivos');
     try {
-        // 🌟 Modificado para usar 'fecha_inicio' en lugar de 'inicio'
         const { data, error } = await supabase
             .from('preventivos')
             .select('titulo, lugar, fecha_inicio, descripcion')
@@ -75,18 +72,19 @@ async function cargarPreventivos() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-            let html = `<h3>Dispositivos Preventivos</h3>`;
+            // 🌟 Título centrado con text-align: center
+            let html = `<h3 style="text-align: center;">Dispositivos Preventivos</h3>`;
             
             data.forEach(prev => {
-                // Formateamos la fecha en formato local de España
                 const fecha = new Date(prev.fecha_inicio).toLocaleString('es-ES', { 
                     dateStyle: 'short', 
                     timeStyle: 'short' 
                 });
                 
+                // 🌟 Título del evento más grande (1.3rem) y en azul (#0056b3)
                 html += `
                     <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 12px;">
-                        <h4 style="margin: 0 0 5px 0; color: #333;">${prev.titulo}</h4>
+                        <h4 style="margin: 0 0 5px 0; color: #0056b3; font-size: 1.3rem; font-weight: bold;">${prev.titulo}</h4>
                         <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
                         ${prev.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${prev.lugar}</p>` : ''}
                         ${prev.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${prev.descripcion}</p>` : ''}
@@ -95,16 +93,16 @@ async function cargarPreventivos() {
             
             contenedor.innerHTML = html;
         } else {
+            // Título centrado también en la vista vacía
             contenedor.innerHTML = `
-                <h3>Dispositivos Preventivos</h3>
+                <h3 style="text-align: center;">Dispositivos Preventivos</h3>
                 <p class="placeholder-text">Consulta y apúntate a los próximos preventivos de El Arenal.</p>`;
         }
     } catch (err) {
         console.error("Error al cargar preventivos:", err.message);
-        contenedor.innerHTML = `<h3 style="text-align: center;">Dispositivos Preventivos</h3>
-                                <p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
+
 
 function activarPitidoEmergencia(){
   if(os)return;try{ac=new(window.AudioContext||window.webkitAudioContext)();os=ac.createOscillator();const g=ac.createGain();os.type='sine';os.frequency.setValueAtTime(880,ac.currentTime);g.gain.setValueAtTime(0.4,ac.currentTime);os.connect(g);g.connect(ac.destination);os.start();}catch(e){}
