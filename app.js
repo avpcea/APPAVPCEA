@@ -15,80 +15,166 @@ window.cargarFichaVoluntario = async function(...args) {
 const BASE_FN = `${URL}/functions/v1`;
 
 
+// ==========================================
+// CARGA DINÁMICA DESDE SUPABASE
+// ==========================================
 let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:false};
-async function cargarOperativos(){
-  if(cg.operativos)return;cg.operativos=true;const c=document.getElementById("lista-operativos");
-  if(!c){cg.operativos=false;return;}c.innerHTML="<p>Cargando...</p>";
-  const{data:ops}=await supabase.from("operativos").select("*").is("fecha_fin",null).order("fecha_inicio",{ascending:false});
-  c.innerHTML="";
-  if(!ops||ops.length===0){c.innerHTML="<p>No hay operativos activos.</p>";}else{
-    for(const o of ops){
-      const s=await estaSuscrito("operativos",o.id);
-      const f=o.fecha_inicio?o.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      const textoBoton=s?"Cancelar":"Suscribirme";
-      
-      let htmlCard = "<div class='card'>";
-      htmlCard += "<h3><a href='#/evento/operativos/" + o.id + "'>" + o.titulo + " ↗</a></h3>";
-      htmlCard += "<p>Lugar: " + (o.lugar||"—") + "</p>";
-      htmlCard += "<p>Fecha inicio: " + f + "</p>";
-      htmlCard += "<button onclick=\"window.toggleSuscripcion('operativos','" + o.id + "')\">" + textoBoton + "</button>";
-      htmlCard += "</div>";
-      
-      c.innerHTML += htmlCard;
+async function cargarOperativos() {
+    const contenedor = document.getElementById('operativos');
+    try {
+        // Consultar la tabla 'operativos' ordenados por fecha próxima
+        const { data, error } = await supabase
+            .from('operativos')
+            .select('*')
+            .order('inicio', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = `<h3>Próximos Operativos</h3>`;
+            data.forEach(op => {
+                const fecha = new Date(op.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="card" style="border-left: 5px solid #ff6600; margin-bottom: 10px;">
+                        <h4>${op.titulo || 'Operativo sin título'}</h4>
+                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
+                        <p>${op.descripcion || 'Sin descripción adicional.'}</p>
+                    </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
+    } catch (err) {
+        console.error("Error al cargar operativos:", err.message);
     }
-  }cg.operativos=false;
 }
-async function cargarPreventivos(){
-  if(cg.preventivos)return;cg.preventivos=true;const c=document.getElementById("lista-preventivos");
-  if(!c){cg.preventivos=false;return;}c.innerHTML="<p>Cargando...</p>";
-  const{data:prs}=await supabase.from("preventivos").select("*").is("fecha_fin",null).order("fecha_inicio",{ascending:false});
-  c.innerHTML="";
-  if(!prs||prs.length===0){c.innerHTML="<p>No hay preventivos activos.</p>";}else{
-    for(const p of prs){
-      const s=await estaSuscrito("preventivos",p.id);
-      const f=p.fecha_inicio?p.fecha_inicio.substring(0,16).replace('T',' '):"—";
-      const textoBoton=s?"Cancelar":"Suscribirme";
-      
-      let htmlCard = "<div class='card'>";
-      htmlCard += "<h3><a href='#/evento/preventivos/" + p.id + "'>" + p.titulo + " ↗</a></h3>";
-      htmlCard += "<p>Lugar: " + (p.lugar||"—") + "</p>";
-      htmlCard += "<p>Fecha inicio: " + f + "</p>";
-      htmlCard += "<button onclick=\"window.toggleSuscripcion('preventivos','" + p.id + "')\">" + textoBoton + "</button>";
-      htmlCard += "</div>";
-      
-      c.innerHTML += htmlCard;
+
+async function cargarPreventivos() {
+    const contenedor = document.getElementById('preventivos');
+    try {
+        const { data, error } = await supabase
+            .from('preventivos')
+            .select('*')
+            .order('inicio', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = `<h3>Dispositivos Preventivos</h3>`;
+            data.forEach(prev => {
+                const fecha = new Date(prev.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 10px;">
+                        <h4>${prev.titulo || 'Preventivo sin título'}</h4>
+                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
+                        <p>${prev.descripcion || 'Sin detalles.'}</p>
+                    </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
+    } catch (err) {
+        console.error("Error al cargar preventivos:", err.message);
     }
-  }cg.preventivos=false;
 }
+
+async function cargarEmergencias() {
+    const contenedor = document.getElementById('emergencias');
+    try {
+        const { data, error } = await supabase
+            .from('emergencias')
+            .select('*')
+            .order('inicio', { ascending: false }); // Las más recientes primero
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = `<div class="card card-danger"><h3>Alertas de Emergencia</h3></div>`;
+            data.forEach(em => {
+                const fecha = new Date(em.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 10px; background-color: #fff5f5;">
+                        <h4 style="color: #dc3545;">🚨 ${em.titulo || 'EMERGENCIA'}</h4>
+                        <p><strong>Gravedad:</strong> <span style="color: #dc3545; font-weight: bold;">${em.gravedad || 'No especificada'}</span></p>
+                        <p><strong>📅 Inicio:</strong> ${fecha}</p>
+                        <p>${em.descripcion || ''}</p>
+                    </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
+    } catch (err) {
+        console.error("Error al cargar emergencias:", err.message);
+    }
+}
+
+async function cargarPreventivos() {
+    const contenedor = document.getElementById('preventivos');
+    try {
+        const { data, error } = await supabase
+            .from('preventivos')
+            .select('*')
+            .order('inicio', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = `<h3>Dispositivos Preventivos</h3>`;
+            data.forEach(prev => {
+                const fecha = new Date(prev.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 10px;">
+                        <h4>${prev.titulo || 'Preventivo sin título'}</h4>
+                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
+                        <p>${prev.descripcion || 'Sin detalles.'}</p>
+                    </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
+    } catch (err) {
+        console.error("Error al cargar preventivos:", err.message);
+    }
+}
+
 function activarPitidoEmergencia(){
   if(os)return;try{ac=new(window.AudioContext||window.webkitAudioContext)();os=ac.createOscillator();const g=ac.createGain();os.type='sine';os.frequency.setValueAtTime(880,ac.currentTime);g.gain.setValueAtTime(0.4,ac.currentTime);os.connect(g);g.connect(ac.destination);os.start();}catch(e){}
 }
+
 function detenerPitidoEmergencia(){
   if(os){try{os.stop();os.disconnect();if(ac&&ac.state!=='closed')ac.close();}catch(e){}os=null;ac=null;}
 }
-async function cargarEmergencias(){
-  if(cg.emergencias)return;cg.emergencias=true;const c=document.getElementById("lista-emergencias");if(!c){cg.emergencias=false;return;}
-  const{data:ems}=await supabase.from("emergencias").select("*").eq("activa",true);
-  if(!ems||ems.length===0){c.innerHTML="<p>Sin emergencias.</p>";detenerPitidoEmergencia();cg.emergencias=false;return;}
-  c.innerHTML="";activarPitidoEmergencia();
-  
-  ems.forEach(e=>{
-    let htmlEmg = "<div class='card' style='border:2px solid red;background:#fff5f5;padding:10px;'>";
-    htmlEmg += "<h3>🚨 EMERGENCIA</h3>";
-    htmlEmg += "<p>Lugar: " + (e.lugar||"—") + "</p>";
-    htmlEmg += "<p>" + (e.descripcion||"—") + "</p>";
-    htmlEmg += "<button onclick=\"window.responderAAlerta('" + e.id + "','aceptar')\">Aceptar</button>";
-    htmlEmg += "<button onclick=\"window.responderAAlerta('" + e.id + "','declinar')\">Declinar</button>";
-    htmlEmg += "</div>";
-    
-    c.innerHTML += htmlEmg;
-  });
-  cg.emergencias=false;
+
+async function cargarEmergencias() {
+    const contenedor = document.getElementById('emergencias');
+    try {
+        const { data, error } = await supabase
+            .from('emergencias')
+            .select('*')
+            .order('inicio', { ascending: false }); // Las más recientes primero
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            let html = `<div class="card card-danger"><h3>Alertas de Emergencia</h3></div>`;
+            data.forEach(em => {
+                const fecha = new Date(em.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                html += `
+                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 10px; background-color: #fff5f5;">
+                        <h4 style="color: #dc3545;">🚨 ${em.titulo || 'EMERGENCIA'}</h4>
+                        <p><strong>Gravedad:</strong> <span style="color: #dc3545; font-weight: bold;">${em.gravedad || 'No especificada'}</span></p>
+                        <p><strong>📅 Inicio:</strong> ${fecha}</p>
+                        <p>${em.descripcion || ''}</p>
+                    </div>`;
+            });
+            contenedor.innerHTML = html;
+        }
+    } catch (err) {
+        console.error("Error al cargar emergencias:", err.message);
+    }
 }
+
 async function estaSuscrito(t,id){
   const u=localStorage.getItem("usuario_id"),tc=t==="operativos"?"OPR":"NRP";
   const{data:d}=await supabase.from("suscripciones").select("*").eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id)).maybeSingle();return!!d;
 }
+
 window.toggleSuscripcion=async function(t,id){
   const u=localStorage.getItem("usuario_id"),sc=await estaSuscrito(t,id),tc=t==="operativos"?"OPR":"NRP";
   if(!sc){
@@ -97,6 +183,7 @@ window.toggleSuscripcion=async function(t,id){
   }else{await supabase.from("suscripciones").delete().eq("usuario_id",u).eq("tipo",tc).eq("evento_id",String(id));alert("Cancelado.");}
   if(t==="preventivos")cargarPreventivos();if(t==="operativos")cargarOperativos();await cargarFichaVoluntario();
 };
+
 async function cargarFichaVoluntario() {
     const nombreEL = document.getElementById('voluntario-nombre');
     const telefonoEL = document.getElementById('voluntario-telefono');
@@ -195,6 +282,7 @@ async function cargarListadoAdmin() {
     });
   } catch (e) {}
 }
+
 async function cargarUsuariosAdmin() {
   const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");if (!cont) return;
   try {
@@ -207,6 +295,7 @@ async function cargarUsuariosAdmin() {
     });
   } catch (e) {}
 }
+
 async function cargarListadoHorasVoluntarios() {
   const cont = document.getElementById("admin-contabilidad-horas");if (!cont) return;
   try {
@@ -217,6 +306,7 @@ async function cargarListadoHorasVoluntarios() {
     });
   } catch (e) {}
 }
+
 window.abrirModalEdicionUsuario = async function(id) {
   try {
     const { data: usr } = await supabase.from("usuarios").select("*").eq("id", id).single();
@@ -233,6 +323,7 @@ window.abrirModalEdicionUsuario = async function(id) {
     alert("Actualizado."); await cargarUsuariosAdmin(); await cargarListadoHorasVoluntarios();
   } catch (e) {}
 };
+
 async function inicializarAplicacionVoluntario(){
   window.inicializarAplicacionVoluntario = inicializarAplicacionVoluntario;
 
