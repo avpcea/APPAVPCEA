@@ -280,19 +280,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Escuchar el evento de clic/toque en cada botón
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
-            // Evitar comportamientos extraños en scroll móvil
             e.preventDefault(); 
-
             const targetScreen = button.getAttribute('data-screen');
-            
+        
             if (targetScreen) {
-                // Alternar la pantalla usando la función existente de la app
-                // Si showScreen recibe un string ("operativos"), asegúrate de que tu función 
-                // busque por ID (ej: document.getElementById(screenId))
                 showScreen(targetScreen);
-                
-                // Actualizar el estado visual del botón activo
                 updateActiveNavButton(button);
+
+                // 🌟 DISPARAR CARGAS AUTOMÁTICAS AL CAMBIAR DE PESTAÑA
+                if (targetScreen === 'operativos') cargarOperativos();
+                if (targetScreen === 'preventivos') cargarPreventivos();
+                if (targetScreen === 'emergencias') cargarEmergencias();
             }
         });
     });
