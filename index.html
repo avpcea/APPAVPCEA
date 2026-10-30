@@ -58,54 +58,64 @@
         </div>
       </section>
 
-      <!-- 5. PANTALLA: ADMINISTRACIÓN (Oculta al inicio) -->
+      <!-- 5. PANTALLA: ADMINISTRACIÓN -->
       <section id="admin" class="app-screen" style="display: none;">
-        <h2>Panel de Administración</h2>
-        
-        <div class="card">
-          <h3>Crear Operativo</h3>
+        <h2 style="text-align: center;">Panel de Administración</h2>
+  
+        <!-- Formulario Operativos -->
+        <div class="card" style="border-top: 4px solid #ff6600;">
+          <h3>Crear Nuevo Operativo</h3>
+          <label>Título:</label>
+          <input type="text" id="op-titulo" placeholder="Ej: Incendio Forestal Nocturno" required>
+    
+          <label>Lugar:</label>
+          <input type="text" id="op-lugar" placeholder="Ej: Zona Norte El Arenal">
+    
           <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local">
-          <button class="btn">Crear Operativo</button>
+          <input type="datetime-local" id="op-inicio" required>
+    
+          <label>Descripción / Observaciones:</label>
+          <textarea id="op-descripcion" placeholder="Detalles del despliegue..."></textarea>
+    
+          <button class="btn" id="btn-crear-operativo" style="background-color: #ff6600; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Crear Operativo</button>
         </div>
 
-        <div class="card">
-          <h3>Crear Preventivo</h3>
+        <!-- Formulario Preventivos -->
+        <div class="card" style="border-top: 4px solid #007bff;">
+          <h3>Crear Nuevo Preventivo</h3>
+          <label>Título:</label>
+          <input type="text" id="prev-titulo" placeholder="Ej: Carrera Ciclista San Blas" required>
+    
+          <label>Lugar:</label>
+          <input type="text" id="prev-lugar" placeholder="Ej: Plaza Mayor">
+    
           <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local">
-          <button class="btn">Crear Preventivo</button>
+          <input type="datetime-local" id="prev-inicio" required>
+    
+          <label>Descripción / Observaciones:</label>
+          <textarea id="prev-descripcion" placeholder="Puestos de socorro..."></textarea>
+    
+          <button class="btn" id="btn-crear-preventivo" style="background-color: #007bff; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Crear Preventivo</button>
         </div>
 
-        <div class="card">
-          <h3>Crear Emergencia</h3>
+        <!-- Formulario Emergencias -->
+        <div class="card" style="border-top: 4px solid #dc3545;">
+          <h3>Crear Alerta de Emergencia</h3>
+          <label>Título de la Alerta:</label>
+          <input type="text" id="em-titulo" placeholder="Ej: Inundación Vía Pública" required>
+    
           <label>Nivel de Gravedad:</label>
-          <select>
-            <option>Bajo</option>
-            <option>Medio</option>
-            <option>Alto</option>
-            <option>Crítico</option>
+          <select id="em-nivel" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <option value="bajo">Bajo</option>
+            <option value="medio" selected>Medio</option>
+            <option value="alto">Alto</option>
+            <option value="critico">Crítico</option>
           </select>
+    
           <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local">
-          <button class="btn btn-danger">Crear Emergencia</button>
-        </div>
-
-        <div class="card">
-          <h3>Crear Usuario</h3>
-          <label>Fecha de Nacimiento:</label>
-          <input type="date">
-          <label>Rol del Dispositivo:</label>
-          <select>
-            <option>Usuario</option>
-            <option>Administrador</option>
-            <option>Coordinador</option>
-          </select>
-          <button class="btn">Crear Usuario</button>
-        </div>
-
-        <div class="card">
-          <h3>Gestión de Usuarios</h3>
-          <button class="btn btn-secondary">🔄 Actualizar usuarios</button>
+          <input type="datetime-local" id="em-inicio" required>
+    
+          <button class="btn btn-danger" id="btn-crear-emergencia" style="background-color: #dc3545; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🚨 Publicar Emergencia Activa</button>
         </div>
       </section>
 
