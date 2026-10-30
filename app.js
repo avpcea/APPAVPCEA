@@ -62,7 +62,6 @@ async function cargarOperativos() {
     }
 }
 
-
 async function cargarPreventivos() {
     const contenedor = document.getElementById('preventivos');
     try {
@@ -116,29 +115,64 @@ function detenerPitidoEmergencia(){
 async function cargarEmergencias() {
     const contenedor = document.getElementById('emergencias');
     try {
+        // 🌟 Modificado para usar tu estructura real: fecha_inicio y filtrar activas primero
         const { data, error } = await supabase
             .from('emergencias')
-            .select('*')
-            .order('inicio', { ascending: false }); // Las más recientes primero
+            .select('titulo, fecha_inicio, nivel, activa')
+            .order('fecha_inicio', { ascending: false }); // Las más recientes arriba
 
         if (error) throw error;
 
+        // Comprobamos si hay alguna emergencia que esté ACTIVA en el sistema
+        const tieneEmergenciaActiva = data && data.some(em => em.activa === true);
+
+        // Control de sonido automático basado en el estado real de la base de datos
+        if (tieneEmergenciaActiva) {
+            if (typeof activarPitidoEmergencia === 'function') {
+                activarPitidoEmergencia();
+            }
+        } else {
+            if (typeof detenerPitidoEmergencia === 'function') {
+                detenerPitidoEmergencia();
+            }
+        }
+
+        // Renderizado del contenido en el DOM
         if (data && data.length > 0) {
-            let html = `<div class="card card-danger"><h3>Alertas de Emergencia</h3></div>`;
+            let html = `<h3>Alertas de Emergencia</h3>`;
+            
             data.forEach(em => {
-                const fecha = new Date(em.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                const fecha = new Date(em.fecha_inicio).toLocaleString('es-ES', { 
+                    dateStyle: 'short', 
+                    timeStyle: 'short' 
+                });
+                
+                // Determinamos el estilo según si está activa o es del pasado
+                const badgeActiva = em.activa 
+                    ? `<span style="background-color: #dc3545; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; float: right;">ACTIVA</span>` 
+                    : `<span style="background-color: #6c757d; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; float: right;">CERRADA</span>`;
+
                 html += `
-                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 10px; background-color: #fff5f5;">
-                        <h4 style="color: #dc3545;">🚨 ${em.titulo || 'EMERGENCIA'}</h4>
-                        <p><strong>Gravedad:</strong> <span style="color: #dc3545; font-weight: bold;">${em.gravedad || 'No especificada'}</span></p>
-                        <p><strong>📅 Inicio:</strong> ${fecha}</p>
-                        <p>${em.descripcion || ''}</p>
+                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 12px; background-color: ${em.activa ? '#fff5f5' : '#ffffff'};">
+                        ${badgeActiva}
+                        <h4 style="margin: 0 0 5px 0; color: #dc3545;">🚨 ${em.titulo}</h4>
+                        <p style="margin: 4px 0;"><strong>📅 Inicio:</strong> ${fecha}</p>
+                        <p style="margin: 4px 0;"><strong>Nivel de Riesgo:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #dc3545;">${em.nivel || 'medio'}</span></p>
                     </div>`;
             });
+            
             contenedor.innerHTML = html;
+        } else {
+            // Si la tabla está totalmente vacía
+            contenedor.innerHTML = `
+                <div class="card card-danger">
+                    <h3>Alertas de Emergencia</h3>
+                    <p class="placeholder-text">Sin alertas de última hora de la central.</p>
+                </div>`;
         }
     } catch (err) {
         console.error("Error al cargar emergencias:", err.message);
+        contenedor.innerHTML = `<h3>Alertas de Emergencia</h3><p style="color: red;">Error al conectar con el centro de alertas.</p>`;
     }
 }
 
