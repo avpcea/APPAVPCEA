@@ -70,10 +70,11 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between; /* Empuja el logo a la izquierda y el título a la derecha */
-    background-color: #ff6600; /* Tu naranja oficial */
+    background-color: #f49404;      /* 🌟 Cambiado al nuevo color oficial */
     padding: 10px 16px;
     box-sizing: border-box;
 }
+
 
 .header-logo {
     height: 40px; /* Ajusta según el tamaño de tu icono */
