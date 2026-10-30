@@ -22,31 +22,46 @@ let ac=null,os=null;const cg={operativos:false,preventivos:false,emergencias:fal
 async function cargarOperativos() {
     const contenedor = document.getElementById('operativos');
     try {
-        // Consultar la tabla 'operativos' ordenados por fecha próxima
+        // 🌟 Modificado para usar 'fecha_inicio' que sí existe en tu DDL
         const { data, error } = await supabase
             .from('operativos')
-            .select('*')
-            .order('inicio', { ascending: true });
+            .select('titulo, lugar, fecha_inicio, descripcion')
+            .order('fecha_inicio', { ascending: true });
 
         if (error) throw error;
 
+        // Si hay registros, renderizamos las tarjetas nativas
         if (data && data.length > 0) {
             let html = `<h3>Próximos Operativos</h3>`;
+            
             data.forEach(op => {
-                const fecha = new Date(op.inicio).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+                // Formateamos la fecha nativa de Postgres a formato legible en España
+                const fecha = new Date(op.fecha_inicio).toLocaleString('es-ES', { 
+                    dateStyle: 'short', 
+                    timeStyle: 'short' 
+                });
+                
                 html += `
-                    <div class="card" style="border-left: 5px solid #ff6600; margin-bottom: 10px;">
-                        <h4>${op.titulo || 'Operativo sin título'}</h4>
-                        <p><strong>📅 Fecha:</strong> ${fecha}</p>
-                        <p>${op.descripcion || 'Sin descripción adicional.'}</p>
+                    <div class="card" style="border-left: 5px solid #ff6600; margin-bottom: 12px;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${op.titulo}</h4>
+                        <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
+                        ${op.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${op.lugar}</p>` : ''}
+                        ${op.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${op.descripcion}</p>` : ''}
                     </div>`;
             });
+            
             contenedor.innerHTML = html;
+        } else {
+            contenedor.innerHTML = `
+                <h3>Próximos Operativos</h3>
+                <p class="placeholder-text">No hay operativos activos asignados en este momento.</p>`;
         }
     } catch (err) {
         console.error("Error al cargar operativos:", err.message);
+        contenedor.innerHTML = `<h3>Próximos Operativos</h3><p style="color: red;">Error al conectar con la base de datos.</p>`;
     }
 }
+
 
 async function cargarPreventivos() {
     const contenedor = document.getElementById('preventivos');
