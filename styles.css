@@ -265,6 +265,47 @@ html, body {
   to { opacity: 1; }
 }
 
+/* Contenedor para cada fila de formulario (Título + Caja) */
+.form-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 10px; /* Espacio mínimo entre el texto y la caja */
+}
+
+/* Estilo para los títulos (Izquierda) */
+#admin .form-group label {
+    flex: 0 0 35%;      /* El título ocupa exactamente el 35% del ancho */
+    margin: 0;
+    font-weight: bold;
+    color: #333333;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+/* Estilo para las cajas de entrada (Derecha) */
+#admin .form-group input[type="text"],
+#admin .form-group input[type="datetime-local"],
+#admin .form-group textarea,
+#admin .form-group select {
+    flex: 1;            /* Toma todo el espacio restante (65%) */
+    padding: 8px 10px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.95rem;
+    margin: 0;          /* Limpiamos márgenes antiguos */
+}
+
+/* Ajuste específico para el área de texto */
+#admin .form-group textarea {
+    resize: none;
+    height: 50px;       /* Altura contenida para que no rompa la fila */
+}
+
+
 /* ============================
    COLORES CORPORATIVOS
 ============================ */
