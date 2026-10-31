@@ -267,74 +267,79 @@ html, body {
 
 
 /* ========================================================
-   REESTRUCTURACIÓN DEL PANEL DE ADMINISTRACIÓN (CSS GRID)
+   ARQUITECTURA DE FORMULARIOS AVANZADA - PANEL ADMIN
    ======================================================== */
 
-/* Cada tarjeta del formulario se convierte en una cuadrícula limpia */
+/* El contenedor de la tarjeta distribuye sus filas con separación limpia */
 #admin .card {
-    display: grid !important;
-    grid-template-columns: 1fr !important; /* Por defecto, una sola columna */
-    gap: 16px !important; /* Espacio vertical generoso entre cada campo */
-    padding: 16px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
-/* Filas estándar: Título a la izquierda, Caja a la derecha */
-.form-group {
+/* 🌟 FILAS EN LÍNEA: Título (izquierda) y Caja (derecha) */
+#admin .form-group {
     display: grid !important;
-    grid-template-columns: 120px 1fr !important; /* 120px fijos para etiquetas, el resto para la caja */
+    /* 150px para la etiqueta (ej: "Fecha y Hora de Inicio:"), el resto (1fr) para el input */
+    grid-template-columns: 150px 1fr !important;
     align-items: center !important;
     gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
-/* Asegurar el salto de línea al final de cada fila completa */
-.form-group::after {
-    content: "" !important;
-    display: block !important;
-    clear: both !important;
-}
-
-/* Estilo para las etiquetas en línea */
+/* Forzar que las etiquetas cortas no rompan la línea */
 #admin .form-group label {
     font-weight: bold !important;
     color: #333333 !important;
-    text-align: left !important;
+    font-size: 0.9rem !important;
     margin: 0 !important;
-    white-space: normal !important; /* Permite que títulos largos salten de renglón si es necesario */
-}
-
-/* 🌟 FILA DE BLOQUE COMPLETÓ: Título arriba, Caja abajo (Descripción) */
-.form-group-block {
-    display: grid !important;
-    grid-template-columns: 1fr !important; /* Fuerza una sola columna vertical */
-    gap: 6px !important;
-}
-
-#admin .form-group-block label {
-    display: block !important;
-    font-weight: bold !important;
-    color: #333333 !important;
     text-align: left !important;
-    margin: 0 !important;
 }
 
-/* Estilo general y limpio de las cajas de entrada de texto y selectores */
-#admin input[type="text"],
-#admin input[type="datetime-local"],
-#admin select,
-#admin textarea {
-    width: 100% !important;
-    padding: 10px !important;
+/* Control estricto del tamaño de las cajas para que NO salten de línea */
+#admin .form-group input,
+#admin .form-group select {
+    width: 100% !important; /* Ocupa exactamente el espacio asignado por el Grid (1fr) */
+    max-width: 100% !important;
+    padding: 6px 8px !important; /* Padding compacto para reducir la altura */
+    height: 34px !important; /* Altura estándar de mercado móvil */
     border: 1px solid #cccccc !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
     font-family: inherit !important;
-    font-size: 0.95rem !important;
-    margin: 0 !important;
+    font-size: 0.9rem !important;
 }
 
-#admin textarea {
-    height: 100px !important;
-    resize: vertical !important;
+/* 🌟 FILA EN BLOQUE: Título arriba, Caja abajo (Solo para Descripción/Observaciones) */
+#admin .form-group-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-top: 4px !important;
+}
+
+#admin .form-group-block label {
+    font-weight: bold !important;
+    color: #333333 !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+}
+
+#admin .form-group-block textarea {
+    width: 100% !important;
+    height: 70px !important; /* Altura optimizada para no agigantar el formulario */
+    padding: 8px !important;
+    border: 1px solid #cccccc !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    font-family: inherit !important;
+    font-size: 0.9rem !important;
+    resize: none !important; /* Evita que el usuario deforme el layout móvil */
 }
 
 
