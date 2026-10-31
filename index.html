@@ -4,16 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AVPCEA - Protección Civil El Arenal</title>
-  <!-- CDN Limpio de Supabase -->
-  <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <!-- CONTENEDOR PRINCIPAL MÓVIL CENTRADO (480px) -->
   <div class="app-container">
     
-    <!-- CABECERA FIJA NARANJA -->
+    <!-- CABECERA FIJA ÁMBAR -->
     <header class="app-header">
       <img src="icons/icon-192.png" alt="Logo AVPCEA" class="header-logo">
       <h1 class="header-title">Protección Civil de El Arenal</h1>
@@ -36,86 +35,102 @@
 
       <!-- 2. PANTALLA: OPERATIVOS (Oculta al inicio) -->
       <section id="operativos" class="app-screen" style="display: none;">
-        <div class="card">
-          <h3>Próximos Operativos</h3>
-          <p class="placeholder-text">No hay operativos activos asignados en este momento.</p>
-        </div>
+        <!-- El contenido se genera dinámicamente desde app.js -->
       </section>
 
       <!-- 3. PANTALLA: PREVENTIVOS (Oculta al inicio) -->
       <section id="preventivos" class="app-screen" style="display: none;">
-        <div class="card">
-          <h3>Dispositivos Preventivos</h3>
-          <p class="placeholder-text">Consulta y apúntate a los próximos preventivos de El Arenal.</p>
-        </div>
+        <!-- El contenido se genera dinámicamente desde app.js -->
       </section>
 
       <!-- 4. PANTALLA: EMERGENCIAS (Oculta al inicio) -->
       <section id="emergencias" class="app-screen" style="display: none;">
-        <div class="card card-danger">
-          <h3>Alertas de Emergencia</h3>
-          <p class="placeholder-text">Sin alertas de última hora de la central.</p>
-        </div>
+        <!-- El contenido se genera dinámicamente desde app.js -->
       </section>
 
-      <!-- 5. PANTALLA: ADMINISTRACIÓN -->
+      <!-- 5. PANTALLA: ADMINISTRACIÓN (Oculta al inicio) -->
       <section id="admin" class="app-screen" style="display: none;">
-        <h2 style="text-align: center;">Panel de Administración</h2>
-  
+        <h2 style="text-align: center; margin-bottom: 15px;">Panel de Administración</h2>
+        
         <!-- Formulario Operativos -->
         <div class="card" style="border-top: 4px solid #ff6600;">
           <h3>Crear Nuevo Operativo</h3>
-          <label>Título:</label>
-          <input type="text" id="op-titulo" placeholder="Ej: Incendio Forestal Nocturno" required>
-    
-          <label>Lugar:</label>
-          <input type="text" id="op-lugar" placeholder="Ej: Zona Norte El Arenal">
-    
-          <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local" id="op-inicio" required>
-    
-          <label>Descripción / Observaciones:</label>
-          <textarea id="op-descripcion" placeholder="Detalles del despliegue..."></textarea>
-    
-          <button class="btn" id="btn-crear-operativo" style="background-color: #ff6600; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Crear Operativo</button>
+          
+          <div class="form-group">
+            <label>Título:</label>
+            <input type="text" id="op-titulo" placeholder="Ej: Incendio Forestal Nocturno" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Lugar:</label>
+            <input type="text" id="op-lugar" placeholder="Ej: Zona Norte">
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha y Hora de Inicio:</label>
+            <input type="datetime-local" id="op-inicio" required>
+          </div>
+          
+          <div class="form-group-block">
+            <label>Descripción / Observaciones:</label>
+            <textarea id="op-descripcion" placeholder="Escribe los detalles del despliegue aquí..."></textarea>
+          </div>
+          
+          <button class="btn" id="btn-crear-operativo" style="background-color: #ff6600; color: white;">Crear Operativo</button>
         </div>
 
         <!-- Formulario Preventivos -->
         <div class="card" style="border-top: 4px solid #007bff;">
           <h3>Crear Nuevo Preventivo</h3>
-          <label>Título:</label>
-          <input type="text" id="prev-titulo" placeholder="Ej: Carrera Ciclista San Blas" required>
-    
-          <label>Lugar:</label>
-          <input type="text" id="prev-lugar" placeholder="Ej: Plaza Mayor">
-    
-          <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local" id="prev-inicio" required>
-    
-          <label>Descripción / Observaciones:</label>
-          <textarea id="prev-descripcion" placeholder="Puestos de socorro..."></textarea>
-    
-          <button class="btn" id="btn-crear-preventivo" style="background-color: #007bff; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Crear Preventivo</button>
+          
+          <div class="form-group">
+            <label>Título:</label>
+            <input type="text" id="prev-titulo" placeholder="Ej: Carrera Ciclista" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Lugar:</label>
+            <input type="text" id="prev-lugar" placeholder="Ej: Plaza Mayor">
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha y Hora de Inicio:</label>
+            <input type="datetime-local" id="prev-inicio" required>
+          </div>
+          
+          <div class="form-group-block">
+            <label>Descripción / Observaciones:</label>
+            <textarea id="prev-descripcion" placeholder="Escribe las observaciones aquí..."></textarea>
+          </div>
+          
+          <button class="btn" id="btn-crear-preventivo" style="background-color: #007bff; color: white;">Crear Preventivo</button>
         </div>
 
         <!-- Formulario Emergencias -->
         <div class="card" style="border-top: 4px solid #dc3545;">
           <h3>Crear Alerta de Emergencia</h3>
-          <label>Título de la Alerta:</label>
-          <input type="text" id="em-titulo" placeholder="Ej: Inundación Vía Pública" required>
-    
-          <label>Nivel de Gravedad:</label>
-          <select id="em-nivel" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-            <option value="bajo">Bajo</option>
-            <option value="medio" selected>Medio</option>
-            <option value="alto">Alto</option>
-            <option value="critico">Crítico</option>
-          </select>
-    
-          <label>Fecha y Hora de Inicio:</label>
-          <input type="datetime-local" id="em-inicio" required>
-    
-          <button class="btn btn-danger" id="btn-crear-emergencia" style="background-color: #dc3545; color: white; width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🚨 Publicar Emergencia Activa</button>
+          
+          <div class="form-group">
+            <label>Alerta:</label>
+            <input type="text" id="em-titulo" placeholder="Ej: Inundación Vía Pública" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Gravedad:</label>
+            <select id="em-nivel">
+              <option value="bajo">Bajo</option>
+              <option value="medio" selected>Medio</option>
+              <option value="alto">Alto</option>
+              <option value="critico">Crítico</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha y Hora de Inicio:</label>
+            <input type="datetime-local" id="em-inicio" required>
+          </div>
+          
+          <button class="btn btn-danger" id="btn-crear-emergencia" style="background-color: #dc3545; color: white;">🚨 Publicar Emergencia Activa</button>
         </div>
       </section>
 
@@ -127,7 +142,7 @@
       <button class="nav-btn" data-screen="operativos">Operativos</button>
       <button class="nav-btn" data-screen="preventivos">Preventivos</button>
       <button class="nav-btn" data-screen="emergencias">Emergencias</button>
-      <button class="nav-btn" data-screen="admin">Administración</button>
+      <button class="nav-btn" data-screen="admin">Admin</button>
     </nav>
 
   </div>
