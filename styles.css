@@ -1,296 +1,124 @@
-/* ============================
-   GENERAL
-============================ */
+/* ========================================================
+   ESTILOS GENERALES DE LA APP (MÓVIL ENFOCADO A 480px)
+   ======================================================== */
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, sans-serif;
-  background: #f5f5f5;
-  color: #222;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* ============================
-   CONTENEDOR PRINCIPAL
-============================ */
-
-.app-container {
-  max-width: 480px;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  margin: 0 auto;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-}
-
-/* ============================
-   CABECERA DE BIENVENIDA
-============================ */
-
-.welcome-header {
-  width: 100%;
-  overflow: hidden;
-  padding: 0;
-  margin: 0;
-  background: none;
-}
-
-.welcome-hero {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-}
-
-#telefono-bienvenida {
-  display: block;
-  margin: 50px auto 10px auto;   /* separa y centra */
-  text-align: center;
-  padding: 10px;
-  font-size: 18px;
-  width: 80%;
-  max-width: 300px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-
-/* ============================
-   CABECERA NORMAL
-============================ */
-
-.app-header {
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f5f5f5;
     display: flex;
-    align-items: center;
-    justify-content: space-between; /* Empuja el logo a la izquierda y el título a la derecha */
-    background-color: #f49404;      /* 🌟 Cambiado al nuevo color oficial */
-    padding: 10px 16px;
+    justify-content: center;
+}
+
+/* Contenedor central simulando un teléfono móvil */
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
+/* Cabecera naranja oficial equilibrada con texto en negro */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f49404;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-sizing: border-box;
+    height: 60px;
+}
 
 .header-logo {
-    height: 40px; /* Ajusta según el tamaño de tu icono */
+    height: 38px;
     width: auto;
 }
 
 .header-title {
-    font-size: 1.1rem; /* Tamaño contenido para que no rompa en pantallas de 480px */
-    color: #000000;    /* 🌟 Cambiado a negro */
+    font-size: 1.05rem;
+    color: #000000;
     margin: 0;
-    text-align: right; /* Alinea el texto a la derecha dentro de su bloque */
-    font-weight: 600;
+    text-align: right;
+    font-weight: bold;
 }
 
-/* ============================
-   CONTENIDO PRINCIPAL
-============================ */
-
+/* Zona central de pantallas */
 .app-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 0 70px 0; /* espacio para barra inferior */
+    flex: 1;
+    padding: 16px;
+    padding-bottom: 80px; /* Espacio para que la navegación no tape el contenido */
+    box-sizing: border-box;
 }
 
-.section-title {
-  font-size: 22px;
-  font-weight: bold;
-  margin: 20px 15px 10px;
-  color: #22349a; /* azul corporativo */
-  display: none;
-}
-
-/* ============================
-   SECCIÓN DE ADMINISTRACIÓN
-============================ */
-
-.admin-section {
-  margin-bottom: 25px;
-  padding: 15px;
-  background: #f2f2f2;
-  border-radius: 8px;
-}
-
-.admin-section input,
-.admin-section textarea {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
-}
-
-#admin-listado div {
-  background: #eee;
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-}
-
-/* ============================
-   TARJETAS
-============================ */
-
+/* Tarjetas base de la app */
 .card {
-  background: white;
-  padding: 20px;
-  margin: 15px;
-  border-radius: 14px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    border: 1px solid #e0e0e0;
+    box-sizing: border-box;
 }
 
 .card h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 20px;
-  color: #22349a;
+    margin: 0 0 12px 0;
+    color: #333333;
+    font-size: 1.15rem;
 }
 
-/* ============================
-   BIENVENIDA
-============================ */
-
-.welcome-card {
-  background: none;
-  box-shadow: none;
-  padding: 20px 15px;
-  text-align: center;
+.placeholder-text {
+    color: #777777;
+    font-size: 0.95rem;
+    text-align: center;
 }
 
-.welcome-title {
-  font-size: 26px;
-  margin-bottom: 10px;
+/* Botones generales */
+.btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.2s;
 }
 
-.welcome-sub {
-  font-size: 18px;
-  margin: 4px 0;
+.btn:active {
+    opacity: 0.8;
 }
-
-.welcome-town {
-  font-size: 26px;
-  margin-top: 10px;
-}
-
-/* ============================
-   BOTONES
-============================ */
-
-.btn-primary {
-  background: #0d6efd;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-size: 16px;
-  width: 100%;
-  margin-top: 20px;
-  cursor: pointer;
-  background-color: #22349a !important;
-  border-color: #22349a !important;
-}
-
-.btn-primary:hover {
-  background: #0b5ed7;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-size: 16px;
-  width: 100%;
-  margin-top: 10px;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  background: #5c636a;
-}
-
-/* ============================
-   BARRA INFERIOR
-============================ */
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: #ffffff;
-  border-top: 1px solid #ccc;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  z-index: 999;
-}
-
-.nav-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #666;
-  cursor: pointer;
-}
-
-.nav-btn.active {
-  color: #0d6efd;
-  font-weight: bold;
-}
-
-/* ============================
-   PANTALLAS
-============================ */
-
-.screen {
-  display: none;
-  animation: fade 0.2s ease-in-out;
-}
-
-.screen.active {
-  display: block;
-}
-
-@keyframes fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 
 /* ========================================================
-   ARQUITECTURA DE FORMULARIOS AVANZADA - PANEL ADMIN
+   ESTILOS ESPECÍFICOS DEL PANEL DE ADMINISTRACIÓN
    ======================================================== */
 
-/* El contenedor de la tarjeta distribuye sus filas con separación limpia */
 #admin .card {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px;
-    box-sizing: border-box;
 }
 
-/* 🌟 FILAS EN LÍNEA: Título (izquierda) y Caja (derecha) */
-#admin .form-group {
+/* Filas horizontales perfectas para móvil: Título a la izquierda, Input a la derecha */
+.form-group {
     display: grid !important;
-    /* 150px para la etiqueta (ej: "Fecha y Hora de Inicio:"), el resto (1fr) para el input */
-    grid-template-columns: 150px 1fr !important;
+    grid-template-columns: 140px 1fr !important; /* Ancho seguro para los títulos de la izquierda */
     align-items: center !important;
     gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
 }
 
-/* Forzar que las etiquetas cortas no rompan la línea */
 #admin .form-group label {
     font-weight: bold !important;
     color: #333333 !important;
@@ -299,13 +127,11 @@ html, body {
     text-align: left !important;
 }
 
-/* Control estricto del tamaño de las cajas para que NO salten de línea */
 #admin .form-group input,
 #admin .form-group select {
-    width: 100% !important; /* Ocupa exactamente el espacio asignado por el Grid (1fr) */
-    max-width: 100% !important;
-    padding: 6px 8px !important; /* Padding compacto para reducir la altura */
-    height: 34px !important; /* Altura estándar de mercado móvil */
+    width: 100% !important;
+    padding: 6px 8px !important;
+    height: 34px !important;
     border: 1px solid #cccccc !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
@@ -313,14 +139,13 @@ html, body {
     font-size: 0.9rem !important;
 }
 
-/* 🌟 FILA EN BLOQUE: Título arriba, Caja abajo (Solo para Descripción/Observaciones) */
-#admin .form-group-block {
+/* Fila vertical exclusiva para la Descripción / Observaciones */
+.form-group-block {
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
+    gap: 6px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    margin-top: 4px !important;
 }
 
 #admin .form-group-block label {
@@ -332,19 +157,49 @@ html, body {
 
 #admin .form-group-block textarea {
     width: 100% !important;
-    height: 70px !important; /* Altura optimizada para no agigantar el formulario */
+    height: 75px !important;
     padding: 8px !important;
     border: 1px solid #cccccc !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
     font-family: inherit !important;
     font-size: 0.9rem !important;
-    resize: none !important; /* Evita que el usuario deforme el layout móvil */
+    resize: none !important;
 }
 
+/* ========================================================
+   BARRA DE NAVEGACIÓN INFERIOR NATIVA (BOTTOM-NAV)
+   ======================================================== */
 
-/* ============================
-   COLORES CORPORATIVOS
-============================ */
-/* Naranja: #f49404 */
-/* Azul:    #22349a */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 480px;
+    height: 60px;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+.nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    height: 100%;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #777777;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s ease;
+}
+
+.nav-btn.active {
+    color: #f49404; /* Resalta con el color corporativo */
+}
