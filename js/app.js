@@ -13,7 +13,8 @@ import {
     cargarListadoAdmin, 
     cargarUsuariosAdmin, 
     cargarListadoHorasVoluntarios 
-} from './admin-forms.js';
+} from './admin-forms.js'; // 🌟 Asegúrate de incluir el '.js' al final
+
 
 // ==========================================
 // CARGA DINÁMICA DESDE SUPABASE (Vistas de Voluntario)
