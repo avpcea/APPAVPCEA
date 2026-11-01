@@ -112,7 +112,7 @@ body {
 /* Filas horizontales perfectas para móvil: Título a la izquierda, Input a la derecha */
 .form-group {
     display: grid !important;
-    grid-template-columns: 140px 1fr !important; /* Ancho seguro para los títulos de la izquierda */
+    grid-template-columns: 150px 1fr !important; /* Ancho seguro para los títulos de la izquierda */
     align-items: center !important;
     gap: 10px !important;
     width: 100% !important;
