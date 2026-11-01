@@ -1,5 +1,5 @@
 // js/navigation.js
-import { supabase } from './supabase-config.js';
+// import { supabase } from './supabase-config.js';
 
 // Estados locales de la alerta de audio
 let ac = null, os = null;
