@@ -112,7 +112,7 @@ body {
 /* Filas horizontales perfectas para móvil: Título a la izquierda, Input a la derecha */
 .form-group {
     display: grid !important;
-    grid-template-columns: 150px 1fr !important; /* Ancho seguro para los títulos de la izquierda */
+    grid-template-columns: 160px 1fr !important; /* Ancho seguro para los títulos de la izquierda */
     align-items: center !important;
     gap: 10px !important;
     width: 100% !important;
@@ -157,7 +157,7 @@ body {
 
 #admin .form-group-block textarea {
     width: 100% !important;
-    height: 75px !important;
+    height: 40px !important;
     padding: 8px !important;
     border: 1px solid #cccccc !important;
     border-radius: 4px !important;
