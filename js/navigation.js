@@ -1,4 +1,4 @@
-// js/navigation.js (Primeras líneas)
+// js/navigation.js
 
 // Importamos la conexión segura de tu configuración local
 import { db as supabase } from './supabase-config.js';
@@ -6,13 +6,13 @@ import { db as supabase } from './supabase-config.js';
 // Estados locales de la alerta de audio
 let ac = null, os = null;
 
-// --- FUNCIONES AUXILIAR PARA EVENTOS (Añadir arriba en navigation.js) ---
+// --- FUNCIONES AUXILIARES PARA EVENTOS ---
 async function obtenerTodosLosEventos() {
   try {
     const [ops, prevs, emers] = await Promise.all([
-      db.from('operativos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
-      db.from('preventivos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
-      db.from('emergencias').select('id, titulo, fecha_inicio, nivel, activa').order('fecha_inicio', { ascending: false })
+      supabase.from('operativos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
+      supabase.from('preventivos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
+      supabase.from('emergencias').select('id, titulo, fecha_inicio, nivel, activa').order('fecha_inicio', { ascending: false })
     ]);
     return { operativos: ops.data || [], preventivos: prevs.data || [], emergencias: emers.data || [] };
   } catch (err) {
@@ -91,29 +91,25 @@ export function showScreen(screenId) {
     }
 }
 
-// Configuración de eventos de la barra de navegación inferior
 export function initNavigation(callbacks = {}) {
     const navButtons = document.querySelectorAll('.bottom-nav .nav-btn');
-
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault(); 
             const targetScreen = button.getAttribute('data-screen');
-        
             if (targetScreen) {
                 showScreen(targetScreen);
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-
-                // Ejecutar cargas dinámicas asociadas a la pestaña
                 if (callbacks[targetScreen]) callbacks[targetScreen]();
             }
         });
     });
 }
 
-  async cargarListadoAdmin() {
+export async function cargarListadoAdmin() {
     const appContainer = document.getElementById('app');
+    if (!appContainer) return;
     
     appContainer.innerHTML = `
       <h2>Panel de Administración AVPCEA</h2>
@@ -156,31 +152,30 @@ export function initNavigation(callbacks = {}) {
         cumple_mes: mesValor ? parseInt(mesValor, 10) : null
       };
 
-      const { error } = await db.from('usuarios').insert([nuevoUsuario]);
+      const { error } = await supabase.from('usuarios').insert([nuevoUsuario]);
       if (error) {
         alert('Error al guardar el usuario: ' + error.message);
       } else {
         alert('Usuario guardado con éxito');
         e.target.reset();
-        this.cargarUsuariosAdmin();
+        await cargarUsuariosAdmin();
       }
     });
 
-    this.cargarUsuariosAdmin();
+    await cargarUsuariosAdmin();
     
     obtenerTodosLosEventos().then(eventos => {
       const divEventos = document.getElementById('contenedor-eventos-admin');
       if (divEventos) divEventos.innerHTML = generarHTMLListadosEventos(eventos);
     });
-  },
+}
 
-
-  async cargarUsuariosAdmin() {
+export async function cargarUsuariosAdmin() {
     const contenedorUsuarios = document.getElementById('contenedor-usuarios-admin');
     if (!contenedorUsuarios) return;
 
     contenedorUsuarios.innerHTML = '<p style="color:#666;">Cargando lista de usuarios...</p>';
-    const { data: usuarios, error } = await db.from('usuarios').select('*').order('nombre', { ascending: true });
+    const { data: usuarios, error } = await supabase.from('usuarios').select('*').order('nombre', { ascending: true });
 
     if (error) {
       contenedorUsuarios.innerHTML = `<p style="color:red;">Error cargando usuarios: ${error.message}</p>`;
@@ -220,8 +215,7 @@ export function initNavigation(callbacks = {}) {
 
     tablaHTML += '</tbody></table>';
     contenedorUsuarios.innerHTML = tablaHTML;
-  }
-
+}
 
 export async function cargarListadoHorasVoluntarios() {
     const cont = document.getElementById("admin-contabilidad-horas");
@@ -253,7 +247,7 @@ export function initAdminFormListeners() {
                 if (error) throw error;
                 alert('¡Operativo guardado con éxito!');
                 formOperativos.reset();
-                cargarListadoAdmin();
+                await cargarListadoAdmin();
             } catch (err) { alert('Error: ' + err.message); }
         });
     }
@@ -275,7 +269,7 @@ export function initAdminFormListeners() {
                 if (error) throw error;
                 alert('¡Preventivo guardado con éxito!');
                 formPreventivos.reset();
-                cargarListadoAdmin();
+                await cargarListadoAdmin();
             } catch (err) { alert('Error: ' + err.message); }
         });
     }
