@@ -222,7 +222,7 @@ export function initNavigation(callbacks = {}) {
 
     tablaHTML += '</tbody></table>';
     contenedorUsuarios.innerHTML = tablaHTML;
-  };
+  }
 
 
 export async function cargarListadoHorasVoluntarios() {
