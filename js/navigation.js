@@ -1,5 +1,7 @@
 // js/navigation.js
-// import { supabase } from './supabase-config.js';
+
+// Leemos el cliente directamente de la ventana global, evitando imports conflictivos
+const supabase = window.supabaseClient || window.supabase;
 
 // Estados locales de la alerta de audio
 let ac = null, os = null;
