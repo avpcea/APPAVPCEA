@@ -6,6 +6,48 @@ import { db as supabase } from './supabase-config.js';
 // Estados locales de la alerta de audio
 let ac = null, os = null;
 
+// --- FUNCIONES AUXILIAR PARA EVENTOS (Añadir arriba en navigation.js) ---
+async function obtenerTodosLosEventos() {
+  try {
+    const [ops, prevs, emers] = await Promise.all([
+      db.from('operativos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
+      db.from('preventivos').select('id, titulo, fecha, lugar').order('fecha', { ascending: false }),
+      db.from('emergencias').select('id, titulo, fecha_inicio, nivel, activa').order('fecha_inicio', { ascending: false })
+    ]);
+    return { operativos: ops.data || [], preventivos: prevs.data || [], emergencias: emers.data || [] };
+  } catch (err) {
+    console.error('Error cargando los listados de eventos:', err);
+    return { operativos: [], preventivos: [], emergencias: [] };
+  }
+}
+
+function generarHTMLListadosEventos(eventos) {
+  const formatearFecha = (f) => f ? new Date(f).toLocaleDateString('es-ES') : 'S/F';
+  const htmlOps = eventos.operativos.map(o => `<div style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${o.titulo}</strong><br><small>📅 ${formatearFecha(o.fecha)} | 📍 ${o.lugar || 'No asignado'}</small></div>`).join('') || '<p style="color: #888; font-size: 14px;">No hay operativos.</p>';
+  const htmlPrevs = eventos.preventivos.map(p => `<div style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${p.titulo}</strong><br><small>📅 ${formatearFecha(p.fecha)} | 📍 ${p.lugar || 'No asignado'}</small></div>`).join('') || '<p style="color: #888; font-size: 14px;">No hay preventivos.</p>';
+  const htmlEmers = eventos.emergencias.map(e => `<div style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${e.titulo}</strong> ${e.activa ? '<span style="color: green; font-size: 11px; font-weight: bold;">● ACTIVA</span>' : ''}<br><small>📅 ${formatearFecha(e.fecha_inicio)} | ⚠️ Nivel: ${e.nivel}</small></div>`).join('') || '<p style="color: #888; font-size: 14px;">No hay emergencias.</p>';
+
+  return `
+    <div class="seccion-eventos-inferior" style="margin-top: 35px; border-top: 2px solid #ddd; padding-top: 20px;">
+      <h3 style="margin-bottom: 15px; color: #333;">📋 Listados Globales de Eventos</h3>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 240px; background: #f9f9f9; padding: 15px; border-radius: 6px; border-top: 3px solid #0284c7;">
+          <h4 style="margin-top: 0; color: #0284c7;">🔧 Operativos</h4>
+          <div style="max-height: 200px; overflow-y: auto;">${htmlOps}</div>
+        </div>
+        <div style="flex: 1; min-width: 240px; background: #f9f9f9; padding: 15px; border-radius: 6px; border-top: 3px solid #b45309;">
+          <h4 style="margin-top: 0; color: #b45309;">🛡️ Preventivos</h4>
+          <div style="max-height: 200px; overflow-y: auto;">${htmlPrevs}</div>
+        </div>
+        <div style="flex: 1; min-width: 240px; background: #f9f9f9; padding: 15px; border-radius: 6px; border-top: 3px solid #dc2626;">
+          <h4 style="margin-top: 0; color: #dc2626;">🚨 Emergencias</h4>
+          <div style="max-height: 200px; overflow-y: auto;">${htmlEmers}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function activarPitidoEmergencia() {
     if (os) return;
     try {
@@ -72,53 +114,116 @@ export function initNavigation(callbacks = {}) {
 
 // Al final de js/navigation.js
 
-export async function cargarListadoAdmin() {
-    const cont = document.getElementById("admin-listado");
-    if (!cont) return;
-    cont.innerHTML = "<p>Cargando listados...</p>";
-    try {
-        const [operativos, preventivos] = await Promise.all([
-            supabase.from("operativos").select("*").order("fecha_inicio", { ascending: false }),
-            supabase.from("preventivos").select("*").order("fecha_inicio", { ascending: false })
-        ]);
-        cont.innerHTML = "<h3>Operativos</h3>";
-        operativos.data?.forEach(op => {
-            const estaCerrado = op.fecha_fin !== null;
-            let hOp = `<div class='card' style='margin-bottom:10px; padding:10px; border:1px solid #ddd; opacity:${estaCerrado ? "0.6" : "1"};'>`;
-            hOp += "<strong>"+op.titulo+"</strong> - Lugar: "+(op.lugar || "—")+"<br>";
-            hOp += "Fecha de evento: "+(op.fecha || "—")+" | Inicio: "+(op.fecha_inicio ? op.fecha_inicio.substring(0,16).replace("T"," "):"—")+"<br>";
-            if(estaCerrado) hOp += "Fecha fin: "+op.fecha_fin.substring(0,16).replace("T"," ")+"<br>";
-            hOp += estaCerrado ? "✓ Cerrado " : "<button onclick=\"window.ejecutarCierreEvento('"+op.id+"', 'operativos')\">Cerrar</button> ";
-            hOp += "<button onclick=\"window.ejecutarEliminacionElemento('operativos', '"+op.id+"')\">Eliminar</button></div>";
-            cont.innerHTML += hOp;
-        });
-        cont.innerHTML += "<h3>Preventivos</h3>";
-        preventivos.data?.forEach(pr => {
-            const estaCerrado = pr.fecha_fin !== null;
-            let hPr = `<div class='card' style='margin-bottom:10px; padding:10px; border:1px solid #ddd; opacity:${estaCerrado ? "0.6" : "1"};'>`;
-            hPr += "<strong>"+pr.titulo+"</strong> - Lugar: "+(pr.lugar || "—")+"<br>";
-            hPr += "Fecha de evento: "+(pr.fecha || "—")+" | Inicio: "+(pr.fecha_inicio ? pr.fecha_inicio.substring(0,16).replace("T"," "):"—")+"<br>";
-            if(estaCerrado) hPr += "Fecha fin: "+pr.fecha_fin.substring(0,16).replace("T"," ")+"<br>";
-            hPr += estaCerrado ? "✓ Cerrado " : "<button onclick=\"window.ejecutarCierreEvento('"+pr.id+"', 'preventivos')\">Cerrar</button> ";
-            hPr += "<button onclick=\"window.ejecutarEliminacionElemento('preventivos', '"+pr.id+"')\">Eliminar</button></div>";
-            cont.innerHTML += hPr;
-        });
-    } catch (e) {}
-}
+  async cargarListadoAdmin() {
+    const appContainer = document.getElementById('app');
+    
+    appContainer.innerHTML = `
+      <h2>Panel de Administración AVPCEA</h2>
+      <div class="card-formulario" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+        <h3>➕ Registrar Nuevo Usuario</h3>
+        <form id="form-nuevo-usuario">
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; margin-bottom:4px;">Nombre completo:</label>
+            <input type="text" id="usuario-nombre" required style="width:100%; padding:8px;">
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; margin-bottom:4px;">Teléfono:</label>
+            <input type="text" id="usuario-telefono" style="width:100%; padding:8px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:bold;">Cumpleaños:</label>
+            <div style="display: flex; gap: 10px;">
+              <input type="number" id="usuario-cumple-dia" placeholder="Día (1-31)" min="1" max="31" style="flex:1; padding:8px;">
+              <input type="number" id="usuario-cumple-mes" placeholder="Mes (1-12)" min="1" max="12" style="flex:1; padding:8px;">
+            </div>
+          </div>
+          <button type="submit" style="padding:10px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer;">Guardar Usuario</button>
+        </form>
+      </div>
+      <div id="contenedor-usuarios-admin" style="margin-top:30px;"></div>
+      <div id="contenedor-eventos-admin">
+        <p style="color: #666; font-size: 14px; margin-top: 25px;">🔄 Cargando listados de eventos...</p>
+      </div>
+    `;
 
-export async function cargarUsuariosAdmin() {
-    const cont = document.getElementById("admin-usuarios-lista") || document.getElementById("admin-usuarios");
-    if (!cont) return;
-    try {
-        const { data: usuarios } = await supabase.from("usuarios").select("id, nombre, telefono, cumple_mes, cumple_dia, dispositivos(rol)").order("nombre", { ascending: true });
-        cont.innerHTML = "";
-        usuarios?.forEach(usr => {
-            const rolReal = usr.dispositivos?.rol || "normal";
-            const cumpleStr = (usr.cumple_dia && usr.cumple_mes) ? (String(usr.cumple_dia).padStart(2,"0")+"/"+String(usr.cumple_mes).padStart(2,"0")) : "—";
-            cont.innerHTML += "<div style='padding:6px; border-bottom:1px solid #eee;'><strong>"+usr.nombre+"</strong> ("+rolReal.toUpperCase()+") - Cumpleaños: "+cumpleStr+" <button onclick=\"window.abrirModalEdicionUsuario('"+usr.id+"')\">Editar</button> <button onclick=\"window.ejecutarEliminacionElemento('usuarios', '"+usr.id+"')\">Baja</button></div>";
-        });
-    } catch (e) {}
-}
+    document.getElementById('form-nuevo-usuario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const diaValor = document.getElementById('usuario-cumple-dia').value;
+      const mesValor = document.getElementById('usuario-cumple-mes').value;
+
+      const nuevoUsuario = {
+        nombre: document.getElementById('usuario-nombre').value,
+        telefono: document.getElementById('usuario-telefono').value || null,
+        cumple_dia: diaValor ? parseInt(diaValor, 10) : null,
+        cumple_mes: mesValor ? parseInt(mesValor, 10) : null
+      };
+
+      const { error } = await db.from('usuarios').insert([nuevoUsuario]);
+      if (error) {
+        alert('Error al guardar el usuario: ' + error.message);
+      } else {
+        alert('Usuario guardado con éxito');
+        e.target.reset();
+        this.cargarUsuariosAdmin();
+      }
+    });
+
+    this.cargarUsuariosAdmin();
+    
+    obtenerTodosLosEventos().then(eventos => {
+      const divEventos = document.getElementById('contenedor-eventos-admin');
+      if (divEventos) divEventos.innerHTML = generarHTMLListadosEventos(eventos);
+    });
+  },
+
+
+  async cargarUsuariosAdmin() {
+    const contenedorUsuarios = document.getElementById('contenedor-usuarios-admin');
+    if (!contenedorUsuarios) return;
+
+    contenedorUsuarios.innerHTML = '<p style="color:#666;">Cargando lista de usuarios...</p>';
+    const { data: usuarios, error } = await db.from('usuarios').select('*').order('nombre', { ascending: true });
+
+    if (error) {
+      contenedorUsuarios.innerHTML = `<p style="color:red;">Error cargando usuarios: ${error.message}</p>`;
+      return;
+    }
+
+    if (!usuarios || usuarios.length === 0) {
+      contenedorUsuarios.innerHTML = '<p style="color:#888;">No hay usuarios registrados aún.</p>';
+      return;
+    }
+
+    let tablaHTML = `
+      <h3>👥 Usuarios Registrados</h3>
+      <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#fff; border:1px solid #ddd;">
+        <thead>
+          <tr style="background:#f3f4f6; border-bottom:1px solid #ddd; text-align:left;">
+            <th style="padding:10px;">Nombre</th>
+            <th style="padding:10px;">Teléfono</th>
+            <th style="padding:10px;">Cumpleaños</th>
+            <th style="padding:10px;">Horas Totales</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    usuarios.forEach(u => {
+      const cumpleStr = (u.cumple_dia && u.cumple_mes) ? `${u.cumple_dia}/${u.cumple_mes}` : 'No configurado';
+      tablaHTML += `
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:10px; font-weight:500;">${u.nombre}</td>
+          <td style="padding:10px; color:#555;">${u.telefono || '-'}</td>
+          <td style="padding:10px; color:#0284c7;">🎂 ${cumpleStr}</td>
+          <td style="padding:10px; font-weight:bold; color:#10b981;">⏱️ ${u.horas || '0.00'} hrs</td>
+        </tr>
+      `;
+    });
+
+    tablaHTML += '</tbody></table>';
+    contenedorUsuarios.innerHTML = tablaHTML;
+  }
+
 
 export async function cargarListadoHorasVoluntarios() {
     const cont = document.getElementById("admin-contabilidad-horas");
