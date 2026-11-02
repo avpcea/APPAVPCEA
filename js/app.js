@@ -1,17 +1,16 @@
-// js/app.js
-
-// 1. IMPORTACIONES MODULARES RESTRUCTURADAS
-import { supabase, BASE_FN } from './supabase-config.js';
+// 1. IMPORTACIONES MODULARES LIMPIAS (Sin importar supabase de archivos locales)
 import { 
     showScreen, 
     initNavigation, 
     activarPitidoEmergencia, 
     detenerPitidoEmergencia,
-    initAdminFormListeners, // 🌟 Mudado aquí
-    cargarListadoAdmin,     // 🌟 Mudado aquí
-    cargarUsuariosAdmin,    // 🌟 Mudado aquí
-    cargarListadoHorasVoluntarios // 🌟 Mudado aquí
-} from './navigation.js'; // 🌟 Todo se carga desde un único archivo seguro
+    initAdminFormListeners, 
+    cargarListadoAdmin,     
+    cargarUsuariosAdmin,    
+    cargarListadoHorasVoluntarios 
+} from './navigation.js';
+
+// 2. DEFINICIÓN DEL CLIENTE GLOBAL (Para uso interno de este archivo)
 
 
 
