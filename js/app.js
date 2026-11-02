@@ -14,7 +14,6 @@ import {
 } from './navigation.js';
 
 // 2. DEFINICIÓN DEL CLIENTE GLOBAL (Para uso interno de este archivo)
-const supabase = window.supabaseClient;
 const BASE_FN = `https://hptnaoliiychgkxsaksy.supabase.co/functions/v1`;
 
 
