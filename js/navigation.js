@@ -110,7 +110,7 @@ export function initNavigation(callbacks = {}) {
             }
         });
     });
-},
+}
 
   async cargarListadoAdmin() {
     const appContainer = document.getElementById('app');
