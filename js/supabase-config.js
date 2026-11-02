@@ -1,4 +1,4 @@
-port// js/supabase-config.js
+// js/supabase-config.js
 // import { createClient } from "https://esm.sh/@supabase/supabase-js@2.118.0";
 
 const URL = "https://hptnaoliiychgkxsaksy.supabase.co";
