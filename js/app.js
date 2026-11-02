@@ -1,4 +1,4 @@
-// js/app.js (Primeras líneas)
+// js/app.js
 
 // 1. IMPORTACIONES MODULARES REESTRUCTURADAS
 import { db as supabase, BASE_FN } from './supabase-config.js';
@@ -12,9 +12,6 @@ import {
     cargarUsuariosAdmin,    
     cargarListadoHorasVoluntarios 
 } from './navigation.js';
-
-// 2. DEFINICIÓN DEL CLIENTE GLOBAL (Para uso interno de este archivo)
-const BASE_FN = `https://hptnaoliiychgkxsaksy.supabase.co/functions/v1`;
 
 
 // ==========================================
