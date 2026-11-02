@@ -110,7 +110,7 @@ export function initNavigation(callbacks = {}) {
             }
         });
     });
-}
+},
 
 // Al final de js/navigation.js
 
@@ -222,7 +222,7 @@ export function initNavigation(callbacks = {}) {
 
     tablaHTML += '</tbody></table>';
     contenedorUsuarios.innerHTML = tablaHTML;
-  }
+  };
 
 
 export async function cargarListadoHorasVoluntarios() {
