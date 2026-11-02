@@ -1,4 +1,7 @@
-// 1. IMPORTACIONES MODULARES LIMPIAS (Sin importar supabase de archivos locales)
+// js/app.js (Primeras líneas)
+
+// 1. IMPORTACIONES MODULARES REESTRUCTURADAS
+import { db as supabase, BASE_FN } from './supabase-config.js';
 import { 
     showScreen, 
     initNavigation, 
