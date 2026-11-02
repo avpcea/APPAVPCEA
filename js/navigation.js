@@ -28,7 +28,7 @@ function generarHTMLListadosEventos(eventos) {
   const htmlEmers = eventos.emergencias.map(e => `<div style="padding: 8px; border-bottom: 1px solid #eee;"><strong>${e.titulo}</strong> ${e.activa ? '<span style="color: green; font-size: 11px; font-weight: bold;">● ACTIVA</span>' : ''}<br><small>📅 ${formatearFecha(e.fecha_inicio)} | ⚠️ Nivel: ${e.nivel}</small></div>`).join('') || '<p style="color: #888; font-size: 14px;">No hay emergencias.</p>';
 
   return `
-    <div class="seccion-eventos-inferior" style="margin-top: 35px; border-top: 2px solid #ddd; padding-top: 20px;">
+    <div class="seccion-eventos-inferior" style="margin-top: 35px; border-top: 2px solid #ddd; padding-top: 20px; width: 100%;">
       <h3 style="margin-bottom: 15px; color: #333;">📋 Listados Globales de Eventos</h3>
       <div style="display: flex; gap: 20px; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 240px; background: #f9f9f9; padding: 15px; border-radius: 6px; border-top: 3px solid #0284c7;">
@@ -91,6 +91,7 @@ export function showScreen(screenId) {
     }
 }
 
+// REPARADO: Automatizado el disparo de la vista 'admin' de forma nativa al hacer click
 export function initNavigation(callbacks = {}) {
     const navButtons = document.querySelectorAll('.bottom-nav .nav-btn');
     navButtons.forEach(button => {
@@ -101,37 +102,53 @@ export function initNavigation(callbacks = {}) {
                 showScreen(targetScreen);
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
+                
+                // Si va a la pestaña Admin, autoejecutamos la inyección de usuarios/eventos
+                if (targetScreen === 'admin') {
+                    cargarListadoAdmin();
+                }
+
                 if (callbacks[targetScreen]) callbacks[targetScreen]();
             }
         });
     });
 }
-
 export async function cargarListadoAdmin() {
-    const appContainer = document.getElementById('app');
-    if (!appContainer) return;
+    // Buscamos la sección con ID "admin" en tu HTML que se activa con tu barra inferior
+    let adminScreen = document.getElementById('admin') || document.querySelector('.screen-active') || document.getElementById('app');
+    if (!adminScreen) return;
+
+    // Evitamos duplicaciones de la interfaz creando un único nodo de control
+    let contenedorDedicado = document.getElementById('seccion-gestion-usuarios-eventos');
+    if (!contenedorDedicado) {
+        contenedorDedicado = document.createElement('div');
+        contenedorDedicado.id = 'seccion-gestion-usuarios-eventos';
+        contenedorDedicado.style.marginTop = '40px';
+        contenedorDedicado.style.paddingTop = '20px';
+        contenedorDedicado.style.borderTop = '3px double #ccc';
+        adminScreen.appendChild(contenedorDedicado);
+    }
     
-    appContainer.innerHTML = `
-      <h2>Panel de Administración AVPCEA</h2>
-      <div class="card-formulario" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
-        <h3>➕ Registrar Nuevo Usuario</h3>
+    contenedorDedicado.innerHTML = `
+      <div class="card-formulario" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-top:20px;">
+        <h3>➕ Registrar Nuevo Voluntario / Usuario</h3>
         <form id="form-nuevo-usuario">
           <div style="margin-bottom: 12px;">
-            <label style="display:block; margin-bottom:4px;">Nombre completo:</label>
-            <input type="text" id="usuario-nombre" required style="width:100%; padding:8px;">
+            <label style="display:block; margin-bottom:4px; font-weight:bold;">Nombre completo:</label>
+            <input type="text" id="usuario-nombre" required style="width:100%; padding:8px; box-sizing:border-box;">
           </div>
           <div style="margin-bottom: 12px;">
-            <label style="display:block; margin-bottom:4px;">Teléfono:</label>
-            <input type="text" id="usuario-telefono" style="width:100%; padding:8px;">
+            <label style="display:block; margin-bottom:4px; font-weight:bold;">Teléfono:</label>
+            <input type="text" id="usuario-telefono" style="width:100%; padding:8px; box-sizing:border-box;">
           </div>
           <div style="margin-bottom: 15px;">
             <label style="display:block; margin-bottom:4px; font-weight:bold;">Cumpleaños:</label>
             <div style="display: flex; gap: 10px;">
-              <input type="number" id="usuario-cumple-dia" placeholder="Día (1-31)" min="1" max="31" style="flex:1; padding:8px;">
-              <input type="number" id="usuario-cumple-mes" placeholder="Mes (1-12)" min="1" max="12" style="flex:1; padding:8px;">
+              <input type="number" id="usuario-cumple-dia" placeholder="Día (1-31)" min="1" max="31" style="flex:1; padding:8px; box-sizing:border-box;">
+              <input type="number" id="usuario-cumple-mes" placeholder="Mes (1-12)" min="1" max="12" style="flex:1; padding:8px; box-sizing:border-box;">
             </div>
           </div>
-          <button type="submit" style="padding:10px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer;">Guardar Usuario</button>
+          <button type="submit" style="padding:10px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar Usuario</button>
         </form>
       </div>
       <div id="contenedor-usuarios-admin" style="margin-top:30px;"></div>
