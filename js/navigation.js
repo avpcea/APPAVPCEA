@@ -112,8 +112,6 @@ export function initNavigation(callbacks = {}) {
     });
 },
 
-// Al final de js/navigation.js
-
   async cargarListadoAdmin() {
     const appContainer = document.getElementById('app');
     
