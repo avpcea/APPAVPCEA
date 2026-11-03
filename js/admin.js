@@ -1,7 +1,77 @@
 // js/admin.js
 import { db as supabase } from './supabase-config.js';
 
-// --- 1. CARGA DINÁMICA DE DATOS MEDIANTE EDGE FUNCTIONS ---
+// --- 1. LÓGICA DE SUSCRIPCIONES (Mover de app.js a admin.js) ---
+
+export async function estaSuscrito(tipo, eventoId) {
+    const usuarioId = localStorage.getItem("usuario_id");
+    if (!usuarioId) return false;
+
+    // Mapeo estricto según tus reglas de base de datos
+    let codigoTipo = "OPR";
+    if (tipo === "preventivos") codigoTipo = "NRP";
+    if (tipo === "emergencias") codigoTipo = "EMR";
+
+    const { data } = await supabase
+        .from("suscripciones")
+        .select("*")
+        .eq("usuario_id", usuarioId)
+        .eq("tipo", codigoTipo)
+        .eq("evento_id", String(eventoId))
+        .maybeSingle();
+
+    return !!data;
+}
+
+window.toggleSuscripcion = async function(tipo, eventoId) {
+    const usuarioId = localStorage.getItem("usuario_id");
+    if (!usuarioId) {
+        alert("No se ha seleccionado ningún voluntario activo.");
+        return;
+    }
+
+    const suscrito = await estaSuscrito(tipo, eventoId);
+    let codigoTipo = tipo === "operativos" ? "OPR" : (tipo === "preventivos" ? "NRP" : "EMR");
+
+    try {
+        if (!suscrito) {
+            // Invocación limpia usando la SDK nativa para tu Edge Function
+            const { error } = await supabase.functions.invoke('admin-create-suscripcion-ts', {
+                body: { 
+                    usuario_id: usuarioId, 
+                    evento_id: isNaN(eventoId) ? eventoId : Number(eventoId), 
+                    tipo: tipo, 
+                    admin_id: usuarioId 
+                }
+            });
+            if (error) throw error;
+            alert("Inscripción realizada con éxito.");
+        } else {
+            // Borrado directo en tabla como hacías en tu código original
+            const { error } = await supabase
+                .from("suscripciones")
+                .delete()
+                .eq("usuario_id", usuarioId)
+                .eq("tipo", codigoTipo)
+                .eq("evento_id", String(eventoId));
+            if (error) throw error;
+            alert("Inscripción cancelada.");
+        }
+
+        // Refrescos reactivos instantáneos de las secciones
+        if (tipo === "preventivos") cargarPreventivos();
+        if (tipo === "operativos") cargarOperativos();
+        if (tipo === "emergencias") cargarEmergencias();
+        
+        // Recargar la tabla/lista de usuarios para reflejar el cambio de horas anuales calculadas por el trigger
+        cargarUsuariosAdmin();
+        
+    } catch (err) {
+        alert("Error en la operación de suscripción: " + err.message);
+    }
+};
+
+// --- 2. LISTADOS DINÁMICOS CON BOTÓN DE SUSCRIPCIÓN INCORPORADO ---
 
 export async function cargarEmergencias() {
     const contenedor = document.getElementById('contenedor-listado-emergencias');
@@ -9,53 +79,62 @@ export async function cargarEmergencias() {
     contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
     
     try {
-        // Invocamos la función centralizada de elementos filtrando por tipo o consumiendo su salida
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            body: { tipo: 'emergencias' }
-        });
-        
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'emergencias' } });
         if (error) throw error;
         
         const lista = data || [];
-        contenedor.innerHTML = lista.map(e => `
-            <div style="padding: 10px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong style="color:#dc2626;">${e.titulo}</strong> 
-                        ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : '<span style="color:#6b7280; font-size:11px;">(Cerrada)</span>'}
-                    </div>
-                    ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">Cerrar</button>` : ''}
-                </div>
-                <small>📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
-            </div>
-        `).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
-    } catch (err) {
-        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-    }
-}
+        const promesasHtml = lista.map(async (e) => {
+            const inscrito = await estaSuscrito('emergencias', e.id);
+            const textoBoton = inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#9ca3af' : '#dc2626';
 
+            return `
+                <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+                        <div>
+                            <strong style="color:#dc2626;">${e.titulo}</strong> 
+                            ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : '<span style="color:#6b7280; font-size:11px;">(Cerrada)</span>'}
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                            ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                        </div>
+                    </div>
+                    <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
+                </div>
+            `;
+        });
+        
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
+    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
+}
 export async function cargarOperativos() {
     const contenedor = document.getElementById('contenedor-listado-operativos');
     if (!contenedor) return;
     contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
     
     try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            body: { tipo: 'operativos' }
-        });
-        
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'operativos' } });
         if (error) throw error;
         
         const lista = data || [];
-        contenedor.innerHTML = lista.map(o => `
-            <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px;">
-                <strong style="color:#0284c7;">${o.titulo}</strong><br>
-                <small>📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'} | ⏱️ ${o.duracion_horas || 0} hrs</small>
-            </div>
-        `).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
-    } catch (err) {
-        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-    }
+        const promesasHtml = lista.map(async (o) => {
+            const inscrito = await estaSuscrito('operativos', o.id);
+            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#6b7280' : '#0284c7';
+
+            return `
+                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#0284c7;">${o.titulo}</strong><br>
+                        <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
+                    </div>
+                    <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                </div>
+            `;
+        });
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
+    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
 }
 
 export async function cargarPreventivos() {
@@ -64,38 +143,39 @@ export async function cargarPreventivos() {
     contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
     
     try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            body: { tipo: 'preventivos' }
-        });
-        
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'preventivos' } });
         if (error) throw error;
         
         const lista = data || [];
-        contenedor.innerHTML = lista.map(p => `
-            <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px;">
-                <strong style="color:#b45309;">${p.titulo}</strong><br>
-                <small>📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'} | ⏱️ ${p.duracion_horas || 0} hrs</small>
-            </div>
-        `).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
-    } catch (err) {
-        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-    }
+        const promesasHtml = lista.map(async (p) => {
+            const inscrito = await estaSuscrito('preventivos', p.id);
+            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#6b7280' : '#b45309';
+
+            return `
+                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#b45309;">${p.titulo}</strong><br>
+                        <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
+                    </div>
+                    <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                </div>
+            `;
+        });
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
+    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
 }
 
-// Expuesta globalmente para interactuar con los botones renderizados dinámicamente
 window.cerrarEmergenciaActiva = async function(id) {
     if (!confirm('¿Seguro que deseas dar por finalizada esta emergencia?')) return;
     try {
-        const { error } = await supabase.functions.invoke('emergencia-ts', {
-            body: { accion: 'close', id: id }
-        });
+        const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'close', id: id } });
         if (error) throw error;
         alert('Emergencia cerrada con éxito.');
         cargarEmergencias();
-    } catch (err) {
-        alert('Error en Edge Function: ' + err.message);
-    }
+    } catch (err) { alert('Error en Edge Function: ' + err.message); }
 };
+
 export async function cargarUsuariosAdmin() {
     const contenedor = document.getElementById('contenedor-usuarios-admin');
     if (!contenedor) return;
@@ -103,10 +183,9 @@ export async function cargarUsuariosAdmin() {
     
     try {
         const { data: usuarios, error } = await supabase.functions.invoke('admin-list-users-ts');
-        
         if (error) throw error;
         if (!usuarios || usuarios.length === 0) {
-            contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados aún.</p>';
+            contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados.</p>';
             return;
         }
 
@@ -117,7 +196,7 @@ export async function cargarUsuariosAdmin() {
                 <th style="padding:10px;">Nombre</th>
                 <th style="padding:10px;">Teléfono</th>
                 <th style="padding:10px;">Cumpleaños</th>
-                <th style="padding:10px;">Horas Totales</th>
+                <th style="padding:10px;">Horas Totales (Anual)</th>
               </tr>
             </thead>
             <tbody>
@@ -126,126 +205,47 @@ export async function cargarUsuariosAdmin() {
         usuarios.forEach(u => {
           const cumpleStr = (u.cumple_dia && u.cumple_mes) ? `${u.cumple_dia}/${u.cumple_mes}` : 'No configurado';
           tablaHTML += `
-            <tr style="border-bottom:1px solid #eee;">
-              <td style="padding:10px; font-weight:500;">${u.nombre}</td>
-              <td style="padding:10px; color:#555;">${u.telefono || '-'}</td>
+            <tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="localStorage.setItem('usuario_id','${u.id}'); alert('Voluntario activo seleccionado: ${u.nombre}'); cargarEmergencias(); cargarOperativos(); cargarPreventivos();">
+              <td style="padding:10px; font-weight:500; color:#111827;">${u.nombre}</td>
+              <td style="padding:10px; color:#4b5563;">${u.telefono || '-'}</td>
               <td style="padding:10px; color:#0284c7;">🎂 ${cumpleStr}</td>
-              <td style="padding:10px; font-weight:bold; color:#10b981;">⏱️ ${u.horas || '0.00'} hrs</td>
+              <td style="padding:10px; font-weight:bold; color:#059669;">⏱️ ${parseFloat(u.horas || 0).toFixed(2)} hrs</td>
             </tr>
           `;
         });
 
-        tablaHTML += '</tbody></table>';
+        tablaHTML += '</tbody></table><small style="color:#6b7280; display:block; margin-top:8px;">💡 Truco: Haz click en la fila de cualquier voluntario para seleccionarlo como activo y gestionar sus suscripciones.</small>';
         contenedor.innerHTML = tablaHTML;
-    } catch (err) {
-        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-    }
+    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
 }
 
-// --- 2. MANEJADORES DE SUTMIT ORQUESTADOS POR EDGE FUNCTIONS ---
-
 export function initAdminFormListeners() {
-    // A. Formulario de Emergencias (Arriba del todo)
     document.getElementById('form-emergencias')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const btn = e.target.querySelector('button[type="submit"]');
-        
-        btn.disabled = true;
-        try {
-            const { error } = await supabase.functions.invoke('emergencia-ts', {
-                body: { 
-                    accion: 'create',
-                    titulo: formData.get('titulo'),
-                    nivel: formData.get('nivel')
-                }
-            });
-            if (error) throw error;
-            e.target.reset();
-            await cargarEmergencias();
-        } catch (err) {
-            alert('Error al desplegar: ' + err.message);
-        } finally {
-            btn.disabled = false;
-        }
+        const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'create', titulo: formData.get('titulo'), nivel: formData.get('nivel') } });
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarEmergencias(); }
     });
 
-    // B. Formulario de Nuevos Usuarios / Voluntarios
     document.getElementById('form-nuevo-usuario')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const diaValor = document.getElementById('usuario-cumple-dia').value;
         const mesValor = document.getElementById('usuario-cumple-mes').value;
-        const btn = e.target.querySelector('button[type="submit"]');
-
-        btn.disabled = true;
-        try {
-            const { error } = await supabase.functions.invoke('admin-create-user-ts', {
-                body: {
-                    nombre: document.getElementById('usuario-nombre').value,
-                    telefono: document.getElementById('usuario-telefono').value || null,
-                    cumple_dia: diaValor ? parseInt(diaValor, 10) : null,
-                    cumple_mes: mesValor ? parseInt(mesValor, 10) : null
-                }
-            });
-            if (error) throw error;
-            e.target.reset();
-            await cargarUsuariosAdmin();
-        } catch (err) {
-            alert('Error al guardar usuario: ' + err.message);
-        } finally {
-            btn.disabled = false;
-        }
+        const { error } = await supabase.functions.invoke('admin-create-user-ts', { body: { nombre: document.getElementById('usuario-nombre').value, telefono: document.getElementById('usuario-telefono').value || null, cumple_dia: diaValor ? parseInt(diaValor, 10) : null, cumple_mes: mesValor ? parseInt(mesValor, 10) : null } });
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarUsuariosAdmin(); }
     });
 
-    // C. Formulario de Operativos
     document.getElementById('form-operativos')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const btn = e.target.querySelector('button[type="submit"]');
-
-        btn.disabled = true;
-        try {
-            const { error } = await supabase.functions.invoke('admin-create-element-ts', {
-                body: {
-                    tipo: 'operativos',
-                    titulo: formData.get('titulo'),
-                    lugar: formData.get('lugar'),
-                    fecha: formData.get('fecha')
-                }
-            });
-            if (error) throw error;
-            e.target.reset();
-            await cargarOperativos();
-        } catch (err) {
-            alert('Error al crear operativo: ' + err.message);
-        } finally {
-            btn.disabled = false;
-        }
+        const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'operativos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarOperativos(); }
     });
 
-    // D. Formulario de Preventivos
     document.getElementById('form-preventivos')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const btn = e.target.querySelector('button[type="submit"]');
-
-        btn.disabled = true;
-        try {
-            const { error } = await supabase.functions.invoke('admin-create-element-ts', {
-                body: {
-                    tipo: 'preventivos',
-                    titulo: formData.get('titulo'),
-                    lugar: formData.get('lugar'),
-                    fecha: formData.get('fecha')
-                }
-            });
-            if (error) throw error;
-            e.target.reset();
-            await cargarPreventivos();
-        } catch (err) {
-            alert('Error al crear preventivo: ' + err.message);
-        } finally {
-            btn.disabled = false;
-        }
+        const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'preventivos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarPreventivos(); }
     });
 }
