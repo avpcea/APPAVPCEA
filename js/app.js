@@ -11,15 +11,20 @@ import {
 // ==========================================
 // CARGA DINÁMICA DESDE SUPABASE (Vistas de Voluntario)
 // ==========================================
-async function cargarOperativos() {
-    const contenedor = document.getElementById('operativos');
+export async function cargarOperativos() {
+    const contenedor = document.getElementById('contenedor-listado-operativos');
     if (!contenedor) return;
+    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
+    
     try {
-        const { data, error } = await supabase
-            .from('operativos')
-            .select('titulo, lugar, fecha_inicio, descripcion')
-            .order('fecha_inicio', { ascending: true });
-
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
+            },
+            body: { tipo: 'operativos' }
+        });
+        
         if (error) throw error;
 
         if (data && data.length > 0) {
@@ -48,15 +53,20 @@ async function cargarOperativos() {
     }
 }
 
-async function cargarPreventivos() {
-    const contenedor = document.getElementById('preventivos');
+export async function cargarPreventivos() {
+    const contenedor = document.getElementById('contenedor-listado-preventivos');
     if (!contenedor) return;
+    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
+    
     try {
-        const { data, error } = await supabase
-            .from('preventivos')
-            .select('titulo, lugar, fecha_inicio, descripcion')
-            .order('fecha_inicio', { ascending: true });
-
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
+            },
+            body: { tipo: 'operativos' }
+        });
+        
         if (error) throw error;
 
         if (data && data.length > 0) {
@@ -85,55 +95,48 @@ async function cargarPreventivos() {
     }
 }
 
-async function cargarEmergencias() {
-    const contenedor = document.getElementById('emergencias');
+export async function cargarEmergencias() {
+    const contenedor = document.getElementById('contenedor-listado-emergencias');
     if (!contenedor) return;
+    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
+    
     try {
-        const { data, error } = await supabase
-            .from('emergencias')
-            .select('titulo, fecha_inicio, nivel, activa')
-            .order('fecha_inicio', { ascending: false });
-
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
+            },
+            body: { tipo: 'emergencias' }
+        });
+        
         if (error) throw error;
+        
+        const lista = data || [];
+        const promesasHtml = lista.map(async (e) => {
+            const inscrito = await estaSuscrito('emergencias', e.id);
+            const textoBoton = inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#9ca3af' : '#dc2626';
 
-        const tieneEmergenciaActiva = data && data.some(em => em.activa === true);
-
-        if (tieneEmergenciaActiva) {
-            activarPitidoEmergencia();
-        } else {
-            detenerPitidoEmergencia();
-        }
-
-        if (data && data.length > 0) {
-            let html = `<h3>Alertas de Emergencia</h3>`;
-            data.forEach(em => {
-                const fecha = new Date(em.fecha_inicio).toLocaleString('es-ES', { 
-                    dateStyle: 'short', 
-                    timeStyle: 'short' 
-                });
-                const badgeActiva = em.activa 
-                    ? `<span style="background-color: #dc3545; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; float: right;">ACTIVA</span>` 
-                    : `<span style="background-color: #6c757d; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; float: right;">CERRADA</span>`;
-
-                html += `
-                    <div class="card" style="border-left: 5px solid #dc3545; margin-bottom: 12px; background-color: ${em.activa ? '#fff5f5' : '#ffffff'};">
-                        ${badgeActiva}
-                        <h4 style="margin: 0 0 5px 0; color: #dc3545;">🚨 ${em.titulo}</h4>
-                        <p style="margin: 4px 0;"><strong>📅 Inicio:</strong> ${fecha}</p>
-                        <p style="margin: 4px 0;"><strong>Nivel de Riesgo:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #dc3545;">${em.nivel || 'medio'}</span></p>
-                    </div>`;
-            });
-            contenedor.innerHTML = html;
-        } else {
-            contenedor.innerHTML = `
-                <div class="card card-danger">
-                    <h3>Alertas de Emergencia</h3>
-                    <p class="placeholder-text">Sin alertas de última hora de la central.</p>
-                </div>`;
-        }
-    } catch (err) {
-        console.error("Error al cargar emergencias:", err.message);
-        contenedor.innerHTML = `<h3>Alertas de Emergencia</h3><p style="color: red;">Error al conectar con el centro de alertas.</p>`;
+            return `
+                <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+                        <div>
+                            <strong style="color:#dc2626;">${e.titulo}</strong> 
+                            ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : '<span style="color:#6b7280; font-size:11px;">(Cerrada)</span>'}
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                            ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                        </div>
+                    </div>
+                    <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
+                </div>
+            `;
+        });
+        
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
+    } catch (err) { 
+        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; 
     }
 }
 
