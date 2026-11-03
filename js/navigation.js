@@ -154,10 +154,8 @@ export async function cargarListadoAdmin() {
     // 🚀 Inyección asíncrona limpia: Importamos el módulo y disparamos sus cargas de Edge Functions
     const adminModule = await import('./admin.js');
     adminModule.initAdminFormListeners();
-    adminModule.cargarEmergencias();
     adminModule.cargarUsuariosAdmin();
-    adminModule.cargarOperativos();
-    adminModule.cargarPreventivos();
+    await adminModule.cargarTodosLosEventosEdge(); // 👈 Llama a la nueva consulta unificada
 }
 
 // Función puente para mantener compatibilidad con modales externos de actualización
