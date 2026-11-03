@@ -114,124 +114,96 @@ export function initNavigation(callbacks = {}) {
     });
 }
 export async function cargarListadoAdmin() {
-    // Buscamos la sección con ID "admin" en tu HTML que se activa con tu barra inferior
     let adminScreen = document.getElementById('admin') || document.querySelector('.screen-active') || document.getElementById('app');
     if (!adminScreen) return;
 
-    // Evitamos duplicaciones de la interfaz creando un único nodo de control
-    let contenedorDedicado = document.getElementById('seccion-gestion-usuarios-eventos');
-    if (!contenedorDedicado) {
-        contenedorDedicado = document.createElement('div');
-        contenedorDedicado.id = 'seccion-gestion-usuarios-eventos';
-        contenedorDedicado.style.marginTop = '40px';
-        contenedorDedicado.style.paddingTop = '20px';
-        contenedorDedicado.style.borderTop = '3px double #ccc';
-        adminScreen.appendChild(contenedorDedicado);
-    }
-    
-    contenedorDedicado.innerHTML = `
-      <div class="card-formulario" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-top:20px;">
-        <h3>➕ Registrar Nuevo Voluntario / Usuario</h3>
-        <form id="form-nuevo-usuario">
-          <div style="margin-bottom: 12px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold;">Nombre completo:</label>
-            <input type="text" id="usuario-nombre" required style="width:100%; padding:8px; box-sizing:border-box;">
-          </div>
-          <div style="margin-bottom: 12px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold;">Teléfono:</label>
-            <input type="text" id="usuario-telefono" style="width:100%; padding:8px; box-sizing:border-box;">
-          </div>
-          <div style="margin-bottom: 15px;">
-            <label style="display:block; margin-bottom:4px; font-weight:bold;">Cumpleaños:</label>
-            <div style="display: flex; gap: 10px;">
-              <input type="number" id="usuario-cumple-dia" placeholder="Día (1-31)" min="1" max="31" style="flex:1; padding:8px; box-sizing:border-box;">
-              <input type="number" id="usuario-cumple-mes" placeholder="Mes (1-12)" min="1" max="12" style="flex:1; padding:8px; box-sizing:border-box;">
-            </div>
-          </div>
-          <button type="submit" style="padding:10px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Guardar Usuario</button>
-        </form>
-      </div>
-      <div id="contenedor-usuarios-admin" style="margin-top:30px;"></div>
-      <div id="contenedor-eventos-admin">
-        <p style="color: #666; font-size: 14px; margin-top: 25px;">🔄 Cargando listados de eventos...</p>
+    // Estructuramos el panel con el orden estricto solicitado
+    adminScreen.innerHTML = `
+      <h2 style="margin-bottom:20px;">Panel de Control y Administración AVPCEA</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: 30px; width:100%;">
+      
+        <!-- 🚨 1. EMERGENCIAS (ARRIBA DEL TODO) -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #fca5a5; border-top: 4px solid #dc2626;">
+            <h3 style="margin-top:0; color:#dc2626;">🚨 Gestión de Emergencias Activas</h3>
+            <form id="form-emergencias" style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px; flex-wrap:wrap;">
+                <div style="flex:2; min-width:200px;">
+                    <label style="display:block; margin-bottom:4px; font-size:13px;">Título de la Emergencia:</label>
+                    <input type="text" name="titulo" required style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="flex:1; min-width:120px;">
+                    <label style="display:block; margin-bottom:4px; font-size:13px;">Nivel de Gravedad:</label>
+                    <select name="nivel" style="width:100%; padding:8px; box-sizing:border-box;">
+                        <option value="bajo">Bajo</option>
+                        <option value="medio" selected>Medio</option>
+                        <option value="alto">Alto</option>
+                    </select>
+                </div>
+                <button type="submit" style="padding:9px 15px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Desplegar Emergencia</button>
+            </form>
+            <div id="contenedor-listado-emergencias" style="max-height:200px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px;"></div>
+        </div>
+
+        <!-- 👥 2. REGISTRO Y TABLA DE VOLUNTARIOS -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd;">
+            <h3>👥 Gestión de Voluntarios</h3>
+            <form id="form-nuevo-usuario" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;">
+                <div style="flex:2; min-width:180px;">
+                    <input type="text" id="usuario-nombre" placeholder="Nombre completo" required style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="flex:1; min-width:120px;">
+                    <input type="text" id="usuario-telefono" placeholder="Teléfono" style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <input type="number" id="usuario-cumple-dia" placeholder="Día" min="1" max="31" style="width:60px; padding:8px; box-sizing:border-box;">
+                    <span>/</span>
+                    <input type="number" id="usuario-cumple-mes" placeholder="Mes" min="1" max="12" style="width:60px; padding:8px; box-sizing:border-box;">
+                </div>
+                <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Añadir</button>
+            </form>
+            <div id="contenedor-usuarios-admin"></div>
+        </div>
+
+        <!-- 🔧 3. OPERATIVOS -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd; border-top: 4px solid #0284c7;">
+            <h3 style="margin-top:0; color:#0284c7;">🔧 Configurar Dispositivos Operativos</h3>
+            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:15px;">
+                <input type="text" name="titulo" placeholder="Título del Operativo" required style="padding:8px;">
+                <input type="text" name="lugar" placeholder="Lugar / Ubicación" style="padding:8px;">
+                <input type="date" name="fecha" required style="padding:8px;">
+                <button type="submit" style="background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Crear Operativo</button>
+            </form>
+            <div id="contenedor-listado-operativos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px;"></div>
+        </div>
+
+        <!-- 🛡️ 4. PREVENTIVOS -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ddd; border-top: 4px solid #b45309;">
+            <h3 style="margin-top:0; color:#b45309;">🛡️ Servicios Preventivos</h3>
+            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:15px;">
+                <input type="text" name="titulo" placeholder="Título del Preventivo" required style="padding:8px;">
+                <input type="text" name="lugar" placeholder="Lugar del Evento" style="padding:8px;">
+                <input type="date" name="fecha" required style="padding:8px;">
+                <button type="submit" style="background:#b45309; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Crear Preventivo</button>
+            </form>
+            <div id="contenedor-listado-preventivos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px;"></div>
+        </div>
+
       </div>
     `;
 
-    document.getElementById('form-nuevo-usuario').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const diaValor = document.getElementById('usuario-cumple-dia').value;
-      const mesValor = document.getElementById('usuario-cumple-mes').value;
-
-      const nuevoUsuario = {
-        nombre: document.getElementById('usuario-nombre').value,
-        telefono: document.getElementById('usuario-telefono').value || null,
-        cumple_dia: diaValor ? parseInt(diaValor, 10) : null,
-        cumple_mes: mesValor ? parseInt(mesValor, 10) : null
-      };
-
-      const { error } = await supabase.from('usuarios').insert([nuevoUsuario]);
-      if (error) {
-        alert('Error al guardar el usuario: ' + error.message);
-      } else {
-        alert('Usuario guardado con éxito');
-        e.target.reset();
-        await cargarUsuariosAdmin();
-      }
-    });
-
-    await cargarUsuariosAdmin();
-    
-    obtenerTodosLosEventos().then(eventos => {
-      const divEventos = document.getElementById('contenedor-eventos-admin');
-      if (divEventos) divEventos.innerHTML = generarHTMLListadosEventos(eventos);
-    });
+    // Importación dinámica y ejecución asíncrona del nuevo módulo desacoplado
+    const adminModule = await import('./admin.js');
+    adminModule.initAdminFormListeners();
+    adminModule.cargarEmergencias();
+    adminModule.cargarUsuariosAdmin();
+    adminModule.cargarOperativos();
+    adminModule.cargarPreventivos();
 }
 
+// Dejamos la función como puente por retrocompatibilidad con abrirModalEdicionUsuario u otros módulos
 export async function cargarUsuariosAdmin() {
-    const contenedorUsuarios = document.getElementById('contenedor-usuarios-admin');
-    if (!contenedorUsuarios) return;
-
-    contenedorUsuarios.innerHTML = '<p style="color:#666;">Cargando lista de usuarios...</p>';
-    const { data: usuarios, error } = await supabase.from('usuarios').select('*').order('nombre', { ascending: true });
-
-    if (error) {
-      contenedorUsuarios.innerHTML = `<p style="color:red;">Error cargando usuarios: ${error.message}</p>`;
-      return;
-    }
-
-    if (!usuarios || usuarios.length === 0) {
-      contenedorUsuarios.innerHTML = '<p style="color:#888;">No hay usuarios registrados aún.</p>';
-      return;
-    }
-
-    let tablaHTML = `
-      <h3>👥 Usuarios Registrados</h3>
-      <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#fff; border:1px solid #ddd;">
-        <thead>
-          <tr style="background:#f3f4f6; border-bottom:1px solid #ddd; text-align:left;">
-            <th style="padding:10px;">Nombre</th>
-            <th style="padding:10px;">Teléfono</th>
-            <th style="padding:10px;">Cumpleaños</th>
-            <th style="padding:10px;">Horas Totales</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    usuarios.forEach(u => {
-      const cumpleStr = (u.cumple_dia && u.cumple_mes) ? `${u.cumple_dia}/${u.cumple_mes}` : 'No configurado';
-      tablaHTML += `
-        <tr style="border-bottom:1px solid #eee;">
-          <td style="padding:10px; font-weight:500;">${u.nombre}</td>
-          <td style="padding:10px; color:#555;">${u.telefono || '-'}</td>
-          <td style="padding:10px; color:#0284c7;">🎂 ${cumpleStr}</td>
-          <td style="padding:10px; font-weight:bold; color:#10b981;">⏱️ ${u.horas || '0.00'} hrs</td>
-        </tr>
-      `;
-    });
-
-    tablaHTML += '</tbody></table>';
-    contenedorUsuarios.innerHTML = tablaHTML;
+    const adminModule = await import('./admin.js');
+    adminModule.cargarUsuariosAdmin();
 }
 
 export async function cargarListadoHorasVoluntarios() {
