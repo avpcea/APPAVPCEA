@@ -9,8 +9,7 @@ import {
     detenerPitidoEmergencia,
     initAdminFormListeners, 
     cargarListadoAdmin,     
-    cargarUsuariosAdmin,    
-    cargarListadoHorasVoluntarios 
+    cargarUsuariosAdmin,   
 } from './navigation.js';
 
 
@@ -250,7 +249,7 @@ async function arrancarAplicacion() {
             'admin': () => {
                 cargarListadoAdmin();
                 cargarUsuariosAdmin();
-                cargarListadoHorasVoluntarios();
+//                cargarListadoHorasVoluntarios();
             }
         });
 
