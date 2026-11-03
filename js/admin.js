@@ -73,98 +73,108 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
 
 // --- 2. LISTADOS DINÁMICOS CON BOTÓN DE SUSCRIPCIÓN INCORPORADO ---
 
-export async function cargarEmergencias() {
-    const contenedor = document.getElementById('contenedor-listado-emergencias');
-    if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'emergencias' } });
-        if (error) throw error;
-        
-        const lista = data || [];
-        const promesasHtml = lista.map(async (e) => {
-            const inscrito = await estaSuscrito('emergencias', e.id);
-            const textoBoton = inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse';
-            const colorBoton = inscrito ? '#9ca3af' : '#dc2626';
+// js/admin.js
 
-            return `
-                <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+// --- NUEVA FUNCIÓN UNIFICADA DE CONSULTA DE EVENTOS DESDE EL EDGE ---
+export async function cargarTodosLosEventosEdge() {
+    const usuarioId = localStorage.getItem("usuario_id");
+    if (!usuarioId) {
+        console.warn("Falta usuario_id para la autenticación en el Edge.");
+        return;
+    }
+
+    const contEmergencias = document.getElementById('contenedor-listado-emergencias');
+    const contOperativos = document.getElementById('contenedor-listado-operativos');
+    const contPreventivos = document.getElementById('contenedor-listado-preventivos');
+
+    if (contEmergencias) contEmergencias.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando emergencias...</p>';
+    if (contOperativos) contOperativos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando operativos...</p>';
+    if (contPreventivos) contPreventivos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando preventivos...</p>';
+
+    try {
+        // Enlazamos de forma estricta el parámetro query de URL (?admin_id=...) que exige el TypeScript
+        const { data: respuestaEdge, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            queryParams: { admin_id: usuarioId }
+        });
+
+        if (error) throw error;
+
+        // La función encapsula la respuesta dentro de un objeto { data: [...] }
+        const listaCompleta = respuestaEdge?.data || [];
+
+        // 🚨 Separar y Renderizar Emergencias
+        if (contEmergencias) {
+            const emergencias = listaCompleta.filter(item => item.tipo === 'emergencias');
+            const promesasEm = emergencias.map(async (e) => {
+                const inscrito = await estaSuscrito('emergencias', e.id);
+                return `
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+                            <div>
+                                <strong style="color:#dc2626;">${e.titulo}</strong> 
+                                ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : '<span style="color:#6b7280; font-size:11px;">(Cerrada)</span>'}
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${inscrito ? '#9ca3af' : '#dc2626'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse'}</button>
+                                ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                            </div>
+                        </div>
+                        <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
+                    </div>
+                `;
+            });
+            contEmergencias.innerHTML = (await Promise.all(promesasEm)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
+        }
+
+        // 🔧 Separar y Renderizar Operativos
+        if (contOperativos) {
+            const operativos = listaCompleta.filter(item => item.tipo === 'operativos');
+            const promesasOp = operativos.map(async (o) => {
+                const inscrito = await estaSuscrito('operativos', o.id);
+                return `
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <strong style="color:#dc2626;">${e.titulo}</strong> 
-                            ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : '<span style="color:#6b7280; font-size:11px;">(Cerrada)</span>'}
+                            <strong style="color:#0284c7;">${o.titulo}</strong><br>
+                            <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
                         </div>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
-                            ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                        <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${inscrito ? '#6b7280' : '#0284c7'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
+                    </div>
+                `;
+            });
+            contOperativos.innerHTML = (await Promise.all(promesasOp)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
+        }
+
+        // 🛡️ Separar y Renderizar Preventivos
+        if (contPreventivos) {
+            const preventivos = listaCompleta.filter(item => item.tipo === 'preventivos');
+            const promesasPr = preventivos.map(async (p) => {
+                const inscrito = await estaSuscrito('preventivos', p.id);
+                return `
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong style="color:#b45309;">${p.titulo}</strong><br>
+                            <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
                         </div>
+                        <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${inscrito ? '#6b7280' : '#b45309'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
                     </div>
-                    <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
-                </div>
-            `;
-        });
-        
-        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
-    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
-}
-export async function cargarOperativos() {
-    const contenedor = document.getElementById('contenedor-listado-operativos');
-    if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'operativos' } });
-        if (error) throw error;
-        
-        const lista = data || [];
-        const promesasHtml = lista.map(async (o) => {
-            const inscrito = await estaSuscrito('operativos', o.id);
-            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
-            const colorBoton = inscrito ? '#6b7280' : '#0284c7';
+                `;
+            });
+            contPreventivos.innerHTML = (await Promise.all(promesasPr)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
+        }
 
-            return `
-                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong style="color:#0284c7;">${o.titulo}</strong><br>
-                        <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
-                    </div>
-                    <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
-                </div>
-            `;
-        });
-        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
-    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
+    } catch (err) {
+        const errorHtml = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
+        if (contEmergencias) contEmergencias.innerHTML = errorHtml;
+        if (contOperativos) contOperativos.innerHTML = errorHtml;
+        if (contPreventivos) contPreventivos.innerHTML = errorHtml;
+    }
 }
 
-export async function cargarPreventivos() {
-    const contenedor = document.getElementById('contenedor-listado-preventivos');
-    if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', { body: { tipo: 'preventivos' } });
-        if (error) throw error;
-        
-        const lista = data || [];
-        const promesasHtml = lista.map(async (p) => {
-            const inscrito = await estaSuscrito('preventivos', p.id);
-            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
-            const colorBoton = inscrito ? '#6b7280' : '#b45309';
+// Conservamos los nombres de funciones originales mapeadas para compatibilidad con refrescos de eventos cruzados
+export async function cargarEmergencias() { await cargarTodosLosEventosEdge(); }
+export async function cargarOperativos() { await cargarTodosLosEventosEdge(); }
+export async function cargarPreventivos() { await cargarTodosLosEventosEdge(); }
 
-            return `
-                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong style="color:#b45309;">${p.titulo}</strong><br>
-                        <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
-                    </div>
-                    <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
-                </div>
-            `;
-        });
-        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
-    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
-}
 
 window.cerrarEmergenciaActiva = async function(id) {
     if (!confirm('¿Seguro que deseas dar por finalizada esta emergencia?')) return;
