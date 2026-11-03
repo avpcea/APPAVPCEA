@@ -257,9 +257,15 @@ async function arrancarAplicacion() {
     }
 }
 
-// Ejecución segura según el estado del DOM
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', arrancarAplicacion);
-} else {
-    arrancarAplicacion();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa la barra de navegación nativa e inferior
+    initNavigation({
+        admin: () => {
+            // Se ejecuta de fondo si necesitas callbacks adicionales para la pestaña Admin
+            console.log("Cargando módulo de administración...");
+        }
+    });
+
+    // Si tu app arranca por defecto en la pantalla de administración, llama a:
+    // cargarListadoAdmin();
+});
