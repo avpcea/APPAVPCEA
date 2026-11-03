@@ -3,13 +3,8 @@
 // 1. IMPORTACIONES MODULARES REESTRUCTURADAS
 import { db as supabase, BASE_FN } from './supabase-config.js';
 import { 
-    showScreen, 
     initNavigation, 
-    activarPitidoEmergencia, 
-    detenerPitidoEmergencia,
-    initAdminFormListeners, 
     cargarListadoAdmin,     
-    cargarUsuariosAdmin,   
 } from './navigation.js';
 
 
