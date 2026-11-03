@@ -228,7 +228,6 @@ async function arrancarAplicacion() {
             'admin': () => {
                 cargarListadoAdmin();
                 cargarUsuariosAdmin();
-//                cargarListadoHorasVoluntarios();
             }
         });
 
