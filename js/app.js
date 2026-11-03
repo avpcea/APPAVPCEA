@@ -228,7 +228,7 @@ async function arrancarAplicacion() {
             'admin': () => {
                 cargarListadoAdmin();
                 cargarUsuariosAdmin();
-            }
+            },
         });
 
         // 4. Inicializar interceptores de formularios administrativos (Operativos/Preventivos con fecha)
