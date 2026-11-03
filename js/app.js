@@ -11,101 +11,14 @@ import {
 // ==========================================
 // CARGA DINÁMICA DESDE SUPABASE (Vistas de Voluntario)
 // ==========================================
-export async function cargarOperativos() {
-    const contenedor = document.getElementById('contenedor-listado-operativos');
-    if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-            },
-            body: { tipo: 'operativos' }
-        });
-        
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            let html = `<h3 style="text-align: center;">Próximos Operativos</h3>`;
-            data.forEach(op => {
-                const fecha = new Date(op.fecha_inicio).toLocaleString('es-ES', { 
-                    dateStyle: 'short', 
-                    timeStyle: 'short' 
-                });
-                html += `
-                    <div class="card" style="border-left: 5px solid #ff6600; margin-bottom: 12px;">
-                        <h4 style="margin: 0 0 5px 0; color: #0056b3; font-size: 1.3rem; font-weight: bold;">${op.titulo}</h4>
-                        <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
-                        ${op.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${op.lugar}</p>` : ''}
-                        ${op.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${op.descripcion}</p>` : ''}
-                    </div>`;
-            });
-            contenedor.innerHTML = html;
-        } else {
-            contenedor.innerHTML = `
-                <h3 style="text-align: center;">Próximos Operativos</h3>
-                <p class="placeholder-text">No hay operativos activos asignados en este momento.</p>`;
-        }
-    } catch (err) {
-        console.error("Error al cargar operativos:", err.message);
-    }
-}
-
-export async function cargarPreventivos() {
-    const contenedor = document.getElementById('contenedor-listado-preventivos');
-    if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    try {
-        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-            },
-            body: { tipo: 'operativos' }
-        });
-        
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            let html = `<h3 style="text-align: center;">Dispositivos Preventivos</h3>`;
-            data.forEach(prev => {
-                const fecha = new Date(prev.fecha_inicio).toLocaleString('es-ES', { 
-                    dateStyle: 'short', 
-                    timeStyle: 'short' 
-                });
-                html += `
-                    <div class="card" style="border-left: 5px solid #007bff; margin-bottom: 12px;">
-                        <h4 style="margin: 0 0 5px 0; color: #0056b3; font-size: 1.3rem; font-weight: bold;">${prev.titulo}</h4>
-                        <p style="margin: 4px 0;"><strong>📅 Fecha/Hora:</strong> ${fecha}</p>
-                        ${prev.lugar ? `<p style="margin: 4px 0;"><strong>📍 Lugar:</strong> ${prev.lugar}</p>` : ''}
-                        ${prev.descripcion ? `<p style="margin: 8px 0 0 0; color: #555; font-size: 0.95rem;">${prev.descripcion}</p>` : ''}
-                    </div>`;
-            });
-            contenedor.innerHTML = html;
-        } else {
-            contenedor.innerHTML = `
-                <h3 style="text-align: center;">Dispositivos Preventivos</h3>
-                <p class="placeholder-text">Consulta y apúntate a los próximos preventivos de El Arenal.</p>`;
-        }
-    } catch (err) {
-        console.error("Error al cargar preventivos:", err.message);
-    }
-}
-
 export async function cargarEmergencias() {
     const contenedor = document.getElementById('contenedor-listado-emergencias');
     if (!contenedor) return;
     contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
     
     try {
+        // Sintaxis nativa y limpia: la SDK se encarga de las cabeceras y del POST automáticamente
         const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-            },
             body: { tipo: 'emergencias' }
         });
         
@@ -135,6 +48,74 @@ export async function cargarEmergencias() {
         });
         
         contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
+    } catch (err) { 
+        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; 
+    }
+}
+
+export async function cargarOperativos() {
+    const contenedor = document.getElementById('contenedor-listado-operativos');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
+    
+    try {
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            body: { tipo: 'operativos' }
+        });
+        
+        if (error) throw error;
+        
+        const lista = data || [];
+        const promesasHtml = lista.map(async (o) => {
+            const inscrito = await estaSuscrito('operativos', o.id);
+            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#6b7280' : '#0284c7';
+
+            return `
+                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#0284c7;">${o.titulo}</strong><br>
+                        <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
+                    </div>
+                    <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                </div>
+            `;
+        ));
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
+    } catch (err) { 
+        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>'; 
+    }
+}
+
+export async function cargarPreventivos() {
+    const contenedor = document.getElementById('contenedor-listado-preventivos');
+    if (!contenedor) return;
+    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
+    
+    try {
+        const { data, error } = await supabase.functions.invoke('admin-list-elements-ts', {
+            body: { tipo: 'preventivos' }
+        });
+        
+        if (error) throw error;
+        
+        const lista = data || [];
+        const promesasHtml = lista.map(async (p) => {
+            const inscrito = await estaSuscrito('preventivos', p.id);
+            const textoBoton = inscrito ? '❌ Cancelar' : '✍️ Suscribirse';
+            const colorBoton = inscrito ? '#6b7280' : '#b45309';
+
+            return `
+                <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#b45309;">${p.titulo}</strong><br>
+                        <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
+                    </div>
+                    <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${colorBoton}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${textoBoton}</button>
+                </div>
+            `;
+        });
+        contenedor.innerHTML = (await Promise.all(promesasHtml)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
     } catch (err) { 
         contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; 
     }
