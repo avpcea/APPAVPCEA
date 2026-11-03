@@ -168,16 +168,22 @@ window.cerrarEmergenciaActiva = async function(id) {
     } catch (err) { alert('Error en Edge Function: ' + err.message); }
 };
 
+// Dentro de admin.js
 export async function cargarUsuariosAdmin() {
     const contenedor = document.getElementById('contenedor-usuarios-admin');
     if (!contenedor) return;
     contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
     
+    const usuarioId = localStorage.getItem("usuario_id");
     try {
-        const { data: usuarios, error } = await supabase.functions.invoke('admin-list-users-ts');
+        // Sincronización con las cabeceras de validación url.searchParams de tus microservicios
+        const { data: usuarios, error } = await supabase.functions.invoke('admin-list-users-ts', {
+            queryParams: { admin_id: usuarioId }
+        });
+        
         if (error) throw error;
         if (!usuarios || usuarios.length === 0) {
-            contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados.</p>';
+            contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados aún.</p>';
             return;
         }
 
@@ -188,7 +194,7 @@ export async function cargarUsuariosAdmin() {
                 <th style="padding:10px;">Nombre</th>
                 <th style="padding:10px;">Teléfono</th>
                 <th style="padding:10px;">Cumpleaños</th>
-                <th style="padding:10px;">Horas Totales (Anual)</th>
+                <th style="padding:10px;">Horas Totales</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +203,7 @@ export async function cargarUsuariosAdmin() {
         usuarios.forEach(u => {
           const cumpleStr = (u.cumple_dia && u.cumple_mes) ? `${u.cumple_dia}/${u.cumple_mes}` : 'No configurado';
           tablaHTML += `
-            <tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="localStorage.setItem('usuario_id','${u.id}'); alert('Voluntario activo seleccionado: ${u.nombre}'); cargarEmergencias(); cargarOperativos(); cargarPreventivos();">
+            <tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="localStorage.setItem('usuario_id','${u.id}'); alert('Voluntario activo seleccionado: ${u.nombre}'); cargarTodosLosEventosEdge();">
               <td style="padding:10px; font-weight:500; color:#111827;">${u.nombre}</td>
               <td style="padding:10px; color:#4b5563;">${u.telefono || '-'}</td>
               <td style="padding:10px; color:#0284c7;">🎂 ${cumpleStr}</td>
@@ -208,7 +214,9 @@ export async function cargarUsuariosAdmin() {
 
         tablaHTML += '</tbody></table><small style="color:#6b7280; display:block; margin-top:8px;">💡 Truco: Haz click en la fila de cualquier voluntario para seleccionarlo como activo y gestionar sus suscripciones.</small>';
         contenedor.innerHTML = tablaHTML;
-    } catch (err) { contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`; }
+    } catch (err) {
+        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
+    }
 }
 
 export function initAdminFormListeners() {
