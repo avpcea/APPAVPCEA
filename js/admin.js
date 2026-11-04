@@ -173,11 +173,21 @@ export async function cargarUsuariosAdmin() {
     
     const usuarioId = localStorage.getItem("usuario_id");
     try {
-        // SOLUCIÓN: Concatenamos el parámetro de consulta directo en el nombre de la función
-        const { data: usuarios, error } = await supabase.functions.invoke(`admin-list-users-ts?admin_id=${usuarioId}`);
+        const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-users-ts?admin_id=${usuarioId}`);
         
         if (error) throw error;
-        if (!usuarios || usuarios.length === 0) {
+        
+        // REPARACIÓN: Extraer el array si viene envuelto en .data, .usuarios o si es la respuesta directa
+        let usuarios = [];
+        if (Array.isArray(respuestaEdge)) {
+            usuarios = respuestaEdge;
+        } else if (respuestaEdge && Array.isArray(respuestaEdge.data)) {
+            usuarios = respuestaEdge.data;
+        } else if (respuestaEdge && Array.isArray(respuestaEdge.usuarios)) {
+            usuarios = respuestaEdge.usuarios;
+        }
+        
+        if (usuarios.length === 0) {
             contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados aún.</p>';
             return;
         }
