@@ -76,14 +76,30 @@ export async function cargarTodosLosEventosEdge() {
         return;
     }
 
-    // Buscamos dinámicamente si los contenedores son de admin o las pantallas directas de la App
-    const contEmergencias = document.getElementById('contenedor-listado-emergencias') || document.getElementById('emergencias');
-    const contOperativos = document.getElementById('contenedor-listado-operativos') || document.getElementById('operativos');
-    const contPreventivos = document.getElementById('contenedor-listado-preventivos') || document.getElementById('preventivos');
+    // Identificamos quirurgicamente dónde estamos renderizando
+    const adminEmergencias = document.getElementById('contenedor-listado-emergencias');
+    const adminOperativos = document.getElementById('contenedor-listado-operativos');
+    const adminPreventivos = document.getElementById('contenedor-listado-preventivos');
 
-    if (contEmergencias) contEmergencias.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando emergencias...</p>';
-    if (contOperativos) contOperativos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando operativos...</p>';
-    if (contPreventivos) contPreventivos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando preventivos...</p>';
+    const screenEmergencias = document.getElementById('emergencias');
+    const screenOperativos = document.getElementById('operativos');
+    const screenPreventivos = document.getElementById('preventivos');
+
+    // 1. Preparar contenedores con sus esqueletos si estamos en pantallas limpias de voluntario
+    if (screenEmergencias && !adminEmergencias) {
+        screenEmergencias.innerHTML = `<h2>🚨 Central de Emergencias</h2><div id="vol-lista-emergencias" style="max-height:80vh; overflow-y:auto;">🔄 Cargando alertas...</div>`;
+    }
+    if (screenOperativos && !adminOperativos) {
+        screenOperativos.innerHTML = `<h2>🔧 Dispositivos Operativos</h2><div id="vol-lista-operativos" style="max-height:80vh; overflow-y:auto;">🔄 Cargando dispositivos...</div>`;
+    }
+    if (screenPreventivos && !adminPreventivos) {
+        screenPreventivos.innerHTML = `<h2>🛡️ Servicios Preventivos</h2><div id="vol-lista-preventivos" style="max-height:80vh; overflow-y:auto;">🔄 Cargando preventivos...</div>`;
+    }
+
+    // Nodos reales de inyección final
+    const targetEmergencias = adminEmergencias || document.getElementById('vol-lista-emergencias');
+    const targetOperativos = adminOperativos || document.getElementById('vol-lista-operativos');
+    const targetPreventivos = adminPreventivos || document.getElementById('vol-lista-preventivos');
 
     try {
         const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-elements-ts?admin_id=${usuarioId}`);
@@ -91,8 +107,8 @@ export async function cargarTodosLosEventosEdge() {
 
         const listaCompleta = respuestaEdge?.data || [];
 
-        // 🚨 Renderizar Emergencias
-        if (contEmergencias) {
+        // 🚨 RENDERIZAR EMERGENCIAS
+        if (targetEmergencias) {
             const emergencias = listaCompleta.filter(item => item.tipo === 'emergencias');
             const promesasEm = emergencias.map(async (e) => {
                 const inscrito = await estaSuscrito('emergencias', e.id);
@@ -102,56 +118,56 @@ export async function cargarTodosLosEventosEdge() {
                             <div><strong style="color:#dc2626;">${e.titulo}</strong> ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : ''}</div>
                             <div style="display:flex; gap:5px;">
                                 <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${inscrito ? '#9ca3af' : '#dc2626'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse'}</button>
-                                ${e.activa && document.getElementById('contenedor-listado-emergencias') ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                                ${e.activa && adminEmergencias ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
                             </div>
                         </div>
                         <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
                     </div>
                 `;
             });
-            contEmergencias.innerHTML = (await Promise.all(promesasEm)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
+            targetEmergencias.innerHTML = (await Promise.all(promesasEm)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
         }
-        // 🔧 Renderizar Operativos
-        if (contOperativos) {
+        // 🔧 RENDERIZAR OPERATIVOS
+        if (targetOperativos) {
             const operativos = listaCompleta.filter(item => item.tipo === 'operativos');
             const promesasOp = operativos.map(async (o) => {
                 const inscrito = await estaSuscrito('operativos', o.id);
                 return `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb;">
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                         <div>
-                            <strong style="color:#0284c7;">${o.titulo}</strong><br>
-                            <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
+                            <strong style="color:#0284c7; font-size:15px;">${o.titulo}</strong><br>
+                            <small style="color:#555; display:block; margin-top:2px;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
                         </div>
-                        <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${inscrito ? '#6b7280' : '#0284c7'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
+                        <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${inscrito ? '#6b7280' : '#0284c7'}; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
                     </div>
                 `;
             });
-            contOperativos.innerHTML = (await Promise.all(promesasOp)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
+            targetOperativos.innerHTML = (await Promise.all(promesasOp)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
         }
 
-        // 🛡️ Renderizar Preventivos
-        if (contPreventivos) {
+        // 🛡️ RENDERIZAR PREVENTIVOS
+        if (targetPreventivos) {
             const preventivos = listaCompleta.filter(item => item.tipo === 'preventivos');
             const promesasPr = preventivos.map(async (p) => {
                 const inscrito = await estaSuscrito('preventivos', p.id);
                 return `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb;">
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                         <div>
-                            <strong style="color:#b45309;">${p.titulo}</strong><br>
-                            <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
+                            <strong style="color:#b45309; font-size:15px;">${p.titulo}</strong><br>
+                            <small style="color:#555; display:block; margin-top:2px;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
                         </div>
-                        <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${inscrito ? '#6b7280' : '#b45309'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
+                        <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${inscrito ? '#6b7280' : '#b45309'}; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
                     </div>
                 `;
             });
-            contPreventivos.innerHTML = (await Promise.all(promesasPr)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
+            targetPreventivos.innerHTML = (await Promise.all(promesasPr)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
         }
 
     } catch (err) {
         const errorHtml = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-        if (contEmergencias) contEmergencias.innerHTML = errorHtml;
-        if (contOperativos) contOperativos.innerHTML = errorHtml;
-        if (contPreventivos) contPreventivos.innerHTML = errorHtml;
+        if (targetEmergencias) targetEmergencias.innerHTML = errorHtml;
+        if (targetOperativos) targetOperativos.innerHTML = errorHtml;
+        if (targetPreventivos) targetPreventivos.innerHTML = errorHtml;
     }
 }
 
@@ -166,7 +182,7 @@ window.cerrarEmergenciaActiva = async function(id) {
 };
 
 // =========================================================================
-// 3. SECCIÓN ADMINISTRATIVA DE VOLUNTARIOS (Extracción e Inyección limpia)
+// 3. SECCIÓN ADMINISTRATIVA DE VOLUNTARIOS
 // =========================================================================
 
 export async function cargarUsuariosAdmin() {
@@ -180,13 +196,9 @@ export async function cargarUsuariosAdmin() {
         if (error) throw error;
         
         let usuarios = [];
-        if (Array.isArray(respuestaEdge)) {
-            usuarios = respuestaEdge;
-        } else if (respuestaEdge && Array.isArray(respuestaEdge.data)) {
-            usuarios = respuestaEdge.data;
-        } else if (respuestaEdge && Array.isArray(respuestaEdge.usuarios)) {
-            usuarios = respuestaEdge.usuarios;
-        }
+        if (Array.isArray(respuestaEdge)) usuarios = respuestaEdge;
+        else if (respuestaEdge && Array.isArray(respuestaEdge.data)) usuarios = respuestaEdge.data;
+        else if (respuestaEdge && Array.isArray(respuestaEdge.usuarios)) usuarios = respuestaEdge.usuarios;
         
         if (usuarios.length === 0) {
             contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados aún.</p>';
