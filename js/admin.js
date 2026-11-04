@@ -73,6 +73,19 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
 
 // --- 2. LISTADOS DINÁMICOS CON BOTÓN DE SUSCRIPCIÓN INCORPORADO ---
 
+// --- PUENTES DE COMPATIBILIDAD PARA LAS PESTAÑAS DEL VOLUNTARIO ---
+export async function cargarEmergencias() { 
+    await cargarTodosLosEventosEdge(); 
+}
+
+export async function cargarOperativos() { 
+    await cargarTodosLosEventosEdge(); 
+}
+
+export async function cargarPreventivos() { 
+    await cargarTodosLosEventosEdge(); 
+}
+
 export async function cargarTodosLosEventosEdge() {
     const usuarioId = localStorage.getItem("usuario_id");
     if (!usuarioId) {
