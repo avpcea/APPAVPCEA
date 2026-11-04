@@ -1,46 +1,41 @@
 // =========================================================================
-// ARCHIVO: app.js (PARTE 1: CICLO DE VIDA, CONTROL DE VERSIÓN Y AUTENTICACIÓN)
+// ARCHIVO: app.js (PARTE 1 MODIFICADA: TOKEN GLOBAL DINÁMICO DESDE SUPABASE)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { initNavigation, showScreen } from './navigation.js';
 
 const APP_VERSION_ACTUAL = "2.1.0"; // Versión física local actual del frontend
-const TOKEN_GLOBAL_CORRECTO = "AVPCEA_GLOBAL_2026"; // Tu contraseña general existente
 
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. CONTROL DE VERSIÓN AUTOMATIZADO
     const versionValida = await verificarVersionApp();
-    if (!versionValida) return; // Se detiene la app si se pintó el modal de actualización forzosa
+    if (!versionValida) return; 
 
-    // 2. COMPROBACIÓN DEL FILTRO 1: Token Global de Acceso (Persiste por sesión de pestaña)
+    // 2. COMPROBACIÓN DEL FILTRO 1: Token Global de Acceso (Persiste por pestaña)
     const tokenValidado = sessionStorage.getItem("token_global_aprobado");
     if (!tokenValidado) {
-        solicitarTokenGlobal();
+        // Consultamos el token fresco directamente desde la base de datos
+        await solicitarTokenGlobalDinamico();
         return;
     }
 
-    // 3. COMPROBACIÓN DEL FILTRO 2: Identificación de Voluntario Dinámica (Adiós hardcodeo)
+    // 3. COMPROBACIÓN DEL FILTRO 2: Identificación de Voluntario Dinámica
     const usuarioIdGuardado = localStorage.getItem("usuario_id");
     
     if (usuarioIdGuardado) {
-        // Inicializamos la sesión global reactiva que consumen tus otros módulos
         window.usuario_id = usuarioIdGuardado;
-        
-        // Arrancamos la navegación nativa y mandamos a la pantalla por defecto
         initNavigation();
-        showScreen('home-screen'); // O tu pantalla inicial configurada
+        showScreen('home-screen'); 
     } else {
-        // Si no hay sesión válida, mandamos al voluntario a identificarse con su nuevo código único
         solicitarIdentificacionVoluntario();
     }
 });
 
 /**
- * Consulta los parámetros del sistema para alertar sobre nuevas versiones en GitHub Pages
+ * Consulta los parámetros del sistema para alertar sobre nuevas versiones
  */
 async function verificarVersionApp() {
     try {
-        // Consultamos una tabla simple de constantes o metadatos del sistema
         const { data, error } = await supabase
             .from('configuraciones')
             .select('valor')
@@ -56,21 +51,37 @@ async function verificarVersionApp() {
                     <p style="color:#4b5563; max-width:400px; line-height:1.5;">Estás usando la versión v${APP_VERSION_ACTUAL}. Existe una versión crítica más reciente (v${data.valor}). Limpia la caché de tu navegador para actualizar de inmediato.</p>
                 </div>
             `;
-            // Purgamos sesiones por seguridad ante cambios estructurales de BD
             localStorage.clear();
             return false;
         }
         return true;
     } catch (err) {
-        console.warn("No se pudo verificar la versión contra Supabase, continuando en modo offline:", err.message);
-        return true; // Resiliencia nativa: no bloquea si falla la red en el chequeo inicial
+        console.warn("No se pudo verificar la versión contra Supabase, continuando:", err.message);
+        return true; 
     }
 }
 
 /**
- * Renderiza el Filtro 1: Pasarela del Token general
+ * Descarga el token vigente de la base de datos y despliega la pasarela visual
  */
-function solicitarTokenGlobal() {
+async function solicitarTokenGlobalDinamico() {
+    let tokenRemoto = "";
+    
+    try {
+        const { data, error } = await supabase
+            .from('configuraciones')
+            .select('valor')
+            .eq('clave', 'token_global_acceso')
+            .single();
+            
+        if (error) throw error;
+        tokenRemoto = data?.valor;
+    } catch (err) {
+        console.error("Error crítico: No se pudo obtener el token de autorización remota.", err);
+        document.body.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626; text-align:center;">Fallo de enlace de seguridad con Supabase. Contacte con Sistemas.</p>`;
+        return;
+    }
+
     document.body.innerHTML = `
         <div id="filtro-token" style="padding:30px; font-family:sans-serif; text-align:center; margin-top:15vh;">
             <h2 style="color:#1f2937;">Acceso al Ecosistema AVPCEA</h2>
@@ -82,10 +93,12 @@ function solicitarTokenGlobal() {
     `;
 
     document.getElementById('btn-validar-token').addEventListener('click', () => {
-        const input = document.getElementById('input-token-global').value;
-        if (input === TOKEN_GLOBAL_CORRECTO) {
+        const input = document.getElementById('input-token-global').value.trim();
+        
+        // Validación contra el registro en tiempo real de la base de datos
+        if (input === tokenRemoto) {
             sessionStorage.setItem("token_global_aprobado", "true");
-            location.reload(); // Recargamos para pasar al siguiente filtro de forma limpia
+            location.reload(); 
         } else {
             document.getElementById('error-token').style.display = 'block';
         }
@@ -131,8 +144,7 @@ function solicitarIdentificacionVoluntario() {
         const codigoIngresado = document.getElementById('input-codigo-voluntario').value.trim().toUpperCase();
 
         try {
-            // Buscamos el ID real del usuario cruzando la columna de tu tabla física
-            // Nota: Asegúrate de que la columna se llame 'codigo_voluntario' o similar en tu tabla 'usuarios'
+            // Buscamos el ID real del usuario cruzando la columna de tu tabla física usuarios
             const { data: usuario, error } = await supabase
                 .from('usuarios')
                 .select('id')
@@ -142,7 +154,7 @@ function solicitarIdentificacionVoluntario() {
             if (error) throw error;
 
             if (usuario && usuario.id) {
-                // 1. Persistimos el ID de forma dinámica en el almacenamiento del navegador
+                // 1. Persistimos el ID de forma dinámica en el almacenamiento local del dispositivo
                 localStorage.setItem("usuario_id", usuario.id);
                 
                 // 2. Seteamos la variable viva global requerida por el ecosistema nativo
@@ -168,7 +180,7 @@ function solicitarIdentificacionVoluntario() {
 }
 
 /**
- * Función utilitaria expuesta por si requieres forzar un cierre de sesión manual en la app
+ * Función utilitaria expuesta para forzar un cierre de sesión manual y purgar estados
  */
 export function cerrarSesionVoluntario() {
     localStorage.removeItem("usuario_id");
