@@ -9,7 +9,6 @@ export async function estaSuscrito(tipo, eventoId) {
     const usuarioId = localStorage.getItem("usuario_id");
     if (!usuarioId) return false;
 
-    // Mapeo estricto según tus reglas de base de datos
     let codigoTipo = "OPR";
     if (tipo === "preventivos") codigoTipo = "NRP";
     if (tipo === "emergencias") codigoTipo = "EMR";
@@ -37,7 +36,6 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
 
     try {
         if (!suscrito) {
-            // Invocación limpia usando la SDK nativa para tu Edge Function
             const { error } = await supabase.functions.invoke('admin-create-suscripcion-ts', {
                 body: { 
                     usuario_id: usuarioId, 
@@ -49,7 +47,6 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
             if (error) throw error;
             alert("Inscripción realizada con éxito.");
         } else {
-            // Borrado directo en tabla como hacías en tu código original
             const { error } = await supabase
                 .from("suscripciones")
                 .delete()
@@ -60,10 +57,7 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
             alert("Inscripción cancelada.");
         }
 
-        // Refrescos reactivos instantáneos de las secciones
         await cargarTodosLosEventosEdge();
-        
-        // Recargar la tabla/lista de usuarios para reflejar el cambio de horas anuales calculadas por el trigger
         await cargarUsuariosAdmin();
         
     } catch (err) {
@@ -72,7 +66,7 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
 };
 
 // =========================================================================
-// 2. LISTADOS DINÁMICOS UNIFICADOS BASADOS EN ENDPOINTS EDGE
+// 2. LISTADOS DINÁMICOS UNIFICADOS INTELIGENTES (Admin y Voluntarios)
 // =========================================================================
 
 export async function cargarTodosLosEventosEdge() {
@@ -82,18 +76,17 @@ export async function cargarTodosLosEventosEdge() {
         return;
     }
 
-    const contEmergencias = document.getElementById('contenedor-listado-emergencias');
-    const contOperativos = document.getElementById('contenedor-listado-operativos');
-    const contPreventivos = document.getElementById('contenedor-listado-preventivos');
+    // Buscamos dinámicamente si los contenedores son de admin o las pantallas directas de la App
+    const contEmergencias = document.getElementById('contenedor-listado-emergencias') || document.getElementById('emergencias');
+    const contOperativos = document.getElementById('contenedor-listado-operativos') || document.getElementById('operativos');
+    const contPreventivos = document.getElementById('contenedor-listado-preventivos') || document.getElementById('preventivos');
 
     if (contEmergencias) contEmergencias.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando emergencias...</p>';
     if (contOperativos) contOperativos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando operativos...</p>';
     if (contPreventivos) contPreventivos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando preventivos...</p>';
 
     try {
-        // SOLUCIÓN: Concatenamos el parámetro de consulta directo en el nombre de la función
         const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-elements-ts?admin_id=${usuarioId}`);
-
         if (error) throw error;
 
         const listaCompleta = respuestaEdge?.data || [];
@@ -104,12 +97,12 @@ export async function cargarTodosLosEventosEdge() {
             const promesasEm = emergencias.map(async (e) => {
                 const inscrito = await estaSuscrito('emergencias', e.id);
                 return `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'};">
+                    <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'}; font-family:sans-serif;">
                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
                             <div><strong style="color:#dc2626;">${e.titulo}</strong> ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : ''}</div>
                             <div style="display:flex; gap:5px;">
                                 <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${inscrito ? '#9ca3af' : '#dc2626'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse'}</button>
-                                ${e.activa ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
+                                ${e.activa && document.getElementById('contenedor-listado-emergencias') ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
                             </div>
                         </div>
                         <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
@@ -124,8 +117,11 @@ export async function cargarTodosLosEventosEdge() {
             const promesasOp = operativos.map(async (o) => {
                 const inscrito = await estaSuscrito('operativos', o.id);
                 return `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
-                        <div><strong style="color:#0284c7;">${o.titulo}</strong><br><small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small></div>
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb;">
+                        <div>
+                            <strong style="color:#0284c7;">${o.titulo}</strong><br>
+                            <small style="color:#555;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
+                        </div>
                         <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${inscrito ? '#6b7280' : '#0284c7'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
                     </div>
                 `;
@@ -139,8 +135,11 @@ export async function cargarTodosLosEventosEdge() {
             const promesasPr = preventivos.map(async (p) => {
                 const inscrito = await estaSuscrito('preventivos', p.id);
                 return `
-                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
-                        <div><strong style="color:#b45309;">${p.titulo}</strong><br><small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small></div>
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb;">
+                        <div>
+                            <strong style="color:#b45309;">${p.titulo}</strong><br>
+                            <small style="color:#555;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
+                        </div>
                         <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${inscrito ? '#6b7280' : '#b45309'}; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
                     </div>
                 `;
@@ -178,7 +177,6 @@ export async function cargarUsuariosAdmin() {
     const usuarioId = localStorage.getItem("usuario_id");
     try {
         const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-users-ts?admin_id=${usuarioId}`);
-        
         if (error) throw error;
         
         let usuarios = [];
@@ -196,7 +194,7 @@ export async function cargarUsuariosAdmin() {
         }
 
         let tablaHTML = `
-          <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#fff; border:1px solid #ddd;">
+          <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#fff; border:1px solid #ddd; font-family:sans-serif;">
             <thead>
               <tr style="background:#f3f4f6; border-bottom:1px solid #ddd; text-align:left;">
                 <th style="padding:10px;">Nombre</th>
@@ -220,7 +218,7 @@ export async function cargarUsuariosAdmin() {
           `;
         });
 
-        tablaHTML += '</tbody></table><small style="color:#6b7280; display:block; margin-top:8px;">💡 Truco: Haz click en la fila de cualquier voluntario para seleccionarlo como activo y gestionar sus suscripciones.</small>';
+        tablaHTML += '</tbody></table><small style="color:#6b7280; display:block; margin-top:8px; font-family:sans-serif;">💡 Truco: Haz click en la fila de cualquier voluntario para seleccionarlo como activo y gestionar sus suscripciones.</small>';
         contenedor.innerHTML = tablaHTML;
     } catch (err) {
         contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
