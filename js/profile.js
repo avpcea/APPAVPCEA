@@ -1,7 +1,9 @@
 // =========================================================================
-// ARCHIVO: profile.js (GESTIÓN REACTIVA DE LA FICHA PERSONAL DEL VOLUNTARIO)
+// ARCHIVO: profile.js (PARTE 1: FICHA PERSONAL Y CIERRE DE SESIÓN SEGURO)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
+// 🚀 Importamos la lógica de desconexión nativa que expone tu orquestador central
+import { cerrarSesionVoluntario } from './app.js';
 
 // Mapeo defensivo de códigos físicos de base de datos a texto legible
 const TIPO_MAP_TEXTO = {
@@ -23,14 +25,12 @@ export async function initProfileScreen(usuarioId) {
 
     try {
         // 2. Consulta paralela segura directo a Postgres a través del cliente configurado
-        // Evitamos llamar a admin-list-users-ts ya que bloquearía por falta de rol admin
         const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes').eq('id', usuarioId).single(),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
-            supabase.from('elementos').select('id, nombre, descripcion, fecha, tipo') // Cambia 'elementos' por el nombre físico si difiere
+            supabase.from('elementos').select('id, nombre, descripcion, fecha, tipo')
         ]);
 
-        // Manejo de errores controlado en el cliente seguro
         if (usuarioRes.error) throw new Error(`Error al cargar perfil: ${usuarioRes.error.message}`);
         if (suscripcionesRes.error) throw new Error(`Error al cargar suscripciones: ${suscripcionesRes.error.message}`);
         if (eventosRes.error) throw new Error(`Error al cargar el catálogo de eventos: ${eventosRes.error.message}`);
@@ -39,9 +39,14 @@ export async function initProfileScreen(usuarioId) {
         const listaSuscripciones = suscripcionesRes.data || [];
         const listaEventos = eventosRes.data || [];
 
-        // 3. Renderizar metadatos del usuario arriba del listado (Horas totales calculadas en Postgres automáticamente)
+        // 3. Renderizar metadatos del usuario con el nuevo botón de desconexión incorporado
         const headerHTML = `
-            <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb;">
+            <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
+                <!-- 🚪 BOTÓN DE CIERRE DE SESIÓN (Estilizado en la esquina superior derecha) -->
+                <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
+                    🚪 Salir
+                </button>
+
                 <h3 style="margin:0 0 10px 0; color:#1f2937;">👤 Ficha de Voluntario</h3>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Nombre:</strong> ${escapeHTML(usuario.nombre)}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
@@ -51,6 +56,13 @@ export async function initProfileScreen(usuarioId) {
             <div id="profile-events-inner-list"></div>
         `;
         profileContainer.innerHTML = headerHTML;
+
+        // 🌟 BINDING REACTIVO: Escuchador para borrar el almacenamiento local y recargar filtros
+        document.getElementById('btn-logout-voluntario')?.addEventListener('click', () => {
+            if (confirm("¿Estás seguro de que deseas cerrar sesión en este dispositivo?")) {
+                cerrarSesionVoluntario();
+            }
+        });
 
         // 4. Filtrar y cruzar de forma reactiva en cliente las relaciones por id en formato string plano
         const eventosSuscritos = listaEventos.filter(evento => {
@@ -102,7 +114,7 @@ function renderListaTarjetas(container, eventos) {
     eventos.forEach(evento => {
         const tarjeta = document.createElement('div');
         
-        // Mapeo dinámico de estilos de borde por tipo de evento
+        // Mapeo dinámico de estilos de borde por tipo de evento físico relacional
         let borderStyle = '4px solid #9ca3af'; // Por defecto
         if (evento.tipo === 'EMR') borderStyle = '4px solid #dc2626'; // Emergencias
         if (evento.tipo === 'OPR') borderStyle = '4px solid #0284c7'; // Operativos
