@@ -1,113 +1,146 @@
-// profile.js - Gestión nativa de la ficha personal del voluntario
-import { supabase } from './supabase-config.js';
+// =========================================================================
+// ARCHIVO: profile.js (GESTIÓN REACTIVA DE LA FICHA PERSONAL DEL VOLUNTARIO)
+// =========================================================================
+import { db as supabase } from './supabase-config.js';
 
-// Mapeo inverso para presentación visual en el frontend
+// Mapeo defensivo de códigos físicos de base de datos a texto legible
 const TIPO_MAP_TEXTO = {
     'OPR': 'Operativo',
     'NRP': 'Preventivo',
-    'EMR': 'Emergencia' // Manteniendo consistencia por si escala la BD
+    'EMR': 'Emergencia'
 };
 
 /**
- * Inicializa y renderiza la pantalla de perfil del voluntario activo
- * @param {string} usuarioId - Recuperado de la variable de sesión activa
+ * Inicializa y renderiza la ficha personal del voluntario activo leyendo de forma segura la DB
+ * @param {string} usuarioId - El id del voluntario recuperado desde window.usuario_id
  */
 export async function initProfileScreen(usuarioId) {
     const profileContainer = document.getElementById('profile-subscriptions-container');
     if (!profileContainer) return;
 
-    // 1. Estado de carga (Visual skeleton nativo)
-    profileContainer.innerHTML = `<p class="loading-text">Cargando tus eventos suscritos...</p>`;
+    // 1. Estado de carga inicial (Visual skeleton nativo)
+    profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
-        // 2. Consumo en paralelo de microservicios mediante queries optimizadas
-        // Usamos admin-list-users-ts pasándole el id para aislar sus datos/suscripciones
-        // y admin-list-elements-ts para el catálogo de eventos disponibles
-        const [suscripcionesRes, elementosRes] = await Promise.all([
-            fetch(`${supabase.functionsUrl}/admin-list-users-ts?usuario_id=${usuarioId}`),
-            fetch(`${supabase.functionsUrl}/admin-list-elements-ts`)
+        // 2. Consulta paralela segura directo a Postgres a través del cliente configurado
+        // Evitamos llamar a admin-list-users-ts ya que bloquearía por falta de rol admin
+        const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
+            supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes').eq('id', usuarioId).single(),
+            supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
+            supabase.from('elementos').select('id, nombre, descripcion, fecha, tipo') // Cambia 'elementos' por el nombre físico si difiere
         ]);
 
-        if (!suscripcionesRes.ok || !elementosRes.ok) {
-            throw new Error('Error en la comunicación con las Edge Functions.');
-        }
+        // Manejo de errores controlado en el cliente seguro
+        if (usuarioRes.error) throw new Error(`Error al cargar perfil: ${usuarioRes.error.message}`);
+        if (suscripcionesRes.error) throw new Error(`Error al cargar suscripciones: ${suscripcionesRes.error.message}`);
+        if (eventosRes.error) throw new Error(`Error al cargar el catálogo de eventos: ${eventosRes.error.message}`);
 
-        const resSuscripciones = await suscripcionesRes.json();
-        const resElementos = await elementosRes.json();
+        const usuario = usuarioRes.data;
+        const listaSuscripciones = suscripcionesRes.data || [];
+        const listaEventos = eventosRes.data || [];
 
-        // 3. Extracción y cruce de datos reactivo en cliente
-        // Extraemos las suscripciones del voluntario y los elementos globales
-        const listaSuscripciones = resSuscripciones.suscripciones || [];
-        const listaElementos = resElementos.elementos || [];
+        // 3. Renderizar metadatos del usuario arriba del listado (Horas totales calculadas en Postgres automáticamente)
+        const headerHTML = `
+            <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb;">
+                <h3 style="margin:0 0 10px 0; color:#1f2937;">👤 Ficha de Voluntario</h3>
+                <p style="margin:4px 0; color:#4b5563;"><strong>Nombre:</strong> ${escapeHTML(usuario.nombre)}</p>
+                <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
+                <p style="margin:4px 0; color:#4b5563;"><strong>Cumpleaños:</strong> ${usuario.cumple_dia && usuario.cumple_mes ? `${usuario.cumple_dia}/${usuario.cumple_mes}` : 'No definido'}</p>
+            </div>
+            <h3 style="font-family:sans-serif; color:#1f2937; margin-bottom:15px;">📅 Mis Dispositivos y Eventos Suscritos</h3>
+            <div id="profile-events-inner-list"></div>
+        `;
+        profileContainer.innerHTML = headerHTML;
 
-        // Filtramos la lista global de elementos usando coincidencia estricta de strings por 'evento_id'
-        const eventosSuscritos = listaElementos.filter(elemento => {
+        // 4. Filtrar y cruzar de forma reactiva en cliente las relaciones por id en formato string plano
+        const eventosSuscritos = listaEventos.filter(evento => {
             return listaSuscripciones.some(suscripcion => 
-                String(suscripcion.evento_id) === String(elemento.id)
+                String(suscripcion.evento_id) === String(evento.id)
             );
         });
 
-        // 4. Renderizado Final en el DOM
-        renderEventosSuscritos(profileContainer, eventosSuscritos);
+        const listInnerContainer = document.getElementById('profile-events-inner-list');
+        renderListaTarjetas(listInnerContainer, eventosSuscritos);
 
     } catch (error) {
-        console.error('Error en ProfileModule:', error);
+        console.error('Excepción en ProfileModule:', error);
         profileContainer.innerHTML = `
-            <div class="error-container">
-                <p>Error al cargar el listado de eventos de tu ficha personal.</p>
-                <button id="btn-retry-profile" class="btn-retry">Reintentar</button>
+            <div class="error-container" style="padding:20px; font-family:sans-serif; text-align:center;">
+                <p style="color:#dc2626; font-weight:bold;">No se pudo procesar tu ficha personal.</p>
+                <p style="color:#6b7280; font-size:13px;">${error.message}</p>
+                <button id="btn-retry-profile" style="padding:8px 15px; background:#4b5563; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Reintentar</button>
             </div>
         `;
-        
-        document.getElementById('btn-retry-profile')?.addEventListener('click', () => {
-            initProfileScreen(usuarioId);
-        });
+        document.getElementById('btn-retry-profile')?.addEventListener('click', () => initProfileScreen(usuarioId));
     }
 }
-
 /**
- * Renderiza los elementos vinculados en formato de tarjetas legibles e inyección segura
+ * Renderiza la colección de tarjetas de eventos suscritos en el contenedor del DOM
+ * @param {HTMLElement} container - Contenedor interno exclusivo de la lista
+ * @param {Array} eventos - Listado filtrado de eventos a los que se encuentra suscrito
  */
-function renderEventosSuscritos(container, eventos) {
-    container.innerHTML = ''; // Limpiar loader
+function renderListaTarjetas(container, eventos) {
+    if (!container) return;
+    container.innerHTML = ''; // Limpiar loaders previos
 
     if (eventos.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-                <p>No constas como inscrito en ningún evento actualmente.</p>
-                <p class="subtitle">Puedes apuntarte a nuevos dispositivos desde el panel de control.</p>
+            <div class="empty-state" style="padding: 30px; text-align: center; background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; font-family: sans-serif;">
+                <p style="color: #4b5563; font-weight: 500; margin: 0 0 5px 0;">No figuras inscrito en ningún dispositivo actualmente.</p>
+                <p style="color: #9ca3af; font-size: 13px; margin: 0;">Puedes apuntarte a nuevos operativos y coberturas desde el panel principal.</p>
             </div>
         `;
         return;
     }
 
-    const listElement = document.createElement('div');
-    listElement.className = 'profile-events-grid';
+    const gridLayout = document.createElement('div');
+    gridLayout.style.display = 'flex';
+    gridLayout.style.flexDirection = 'column';
+    gridLayout.style.gap = '15px';
+    gridLayout.style.fontFamily = 'sans-serif';
 
     eventos.forEach(evento => {
-        const card = document.createElement('div');
-        // Aseguramos clase CSS basada en el tipo físico de la BD ('OPR', 'NRP')
-        card.className = `event-profile-card border-${evento.tipo.toLowerCase()}`;
+        const tarjeta = document.createElement('div');
         
-        const tipoLegible = TIPO_MAP_TEXTO[evento.tipo] || evento.tipo;
+        // Mapeo dinámico de estilos de borde por tipo de evento
+        let borderStyle = '4px solid #9ca3af'; // Por defecto
+        if (evento.tipo === 'EMR') borderStyle = '4px solid #dc2626'; // Emergencias
+        if (evento.tipo === 'OPR') borderStyle = '4px solid #0284c7'; // Operativos
+        if (evento.tipo === 'NRP') borderStyle = '4px solid #b45309'; // Preventivos
 
-        card.innerHTML = `
-            <div class="card-badge-container">
-                <span class="badge badge-${evento.tipo.toLowerCase()}">${tipoLegible}</span>
+        tarjeta.style.background = '#fff';
+        tarjeta.style.padding = '15px';
+        tarjeta.style.borderRadius = '6px';
+        tarjeta.style.border = '1px solid #e5e7eb';
+        tarjeta.style.borderLeft = borderStyle;
+        tarjeta.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+
+        const tipoTexto = TIPO_MAP_TEXTO[evento.tipo] || evento.tipo;
+
+        tarjeta.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <h4 style="margin: 0; color: #111827; font-size: 16px; font-weight: 600;">${escapeHTML(evento.nombre)}</h4>
+                <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 3px 8px; border-radius: 12px; background: #f3f4f6; color: #374151;">
+                    ${tipoTexto}
+                </span>
             </div>
-            <h4 class="profile-event-title">${escapeHTML(evento.nombre)}</h4>
-            <p class="profile-event-date">📅 ${evento.fecha || 'Fecha no definida'}</p>
-            <p class="profile-event-desc">${escapeHTML(evento.descripcion || 'Sin descripción disponible.')}</p>
+            <p style="margin: 0 0 6px 0; color: #4b5563; font-size: 13px;"><strong>📅 Fecha:</strong> ${evento.fecha || 'Sin fecha asignada'}</p>
+            <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.4;">${escapeHTML(evento.descripcion || 'Sin descripción disponible.')}</p>
         `;
 
-        listElement.appendChild(card);
+        gridLayout.appendChild(tarjeta);
     });
 
-    container.appendChild(listElement);
+    container.appendChild(gridLayout);
 }
 
-// Sanitización contra ataques XSS para strings cargados por usuarios/coordinadores
+/**
+ * Helper utilitario para evitar inyecciones XSS al renderizar texto dinámico introducido por usuarios
+ * @param {string} str - Cadena de texto a sanitizar
+ * @returns {string} Cadena de texto segura para insertar en HTML
+ */
 function escapeHTML(str) {
+    if (!str) return '';
     return str.replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
