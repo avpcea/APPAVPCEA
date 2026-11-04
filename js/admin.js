@@ -173,10 +173,8 @@ export async function cargarUsuariosAdmin() {
     
     const usuarioId = localStorage.getItem("usuario_id");
     try {
-        // Sincronización con las cabeceras de validación url.searchParams de tus microservicios
-        const { data: usuarios, error } = await supabase.functions.invoke('admin-list-users-ts', {
-            queryParams: { admin_id: usuarioId }
-        });
+        // SOLUCIÓN: Concatenamos el parámetro de consulta directo en el nombre de la función
+        const { data: usuarios, error } = await supabase.functions.invoke(`admin-list-users-ts?admin_id=${usuarioId}`);
         
         if (error) throw error;
         if (!usuarios || usuarios.length === 0) {
