@@ -2,6 +2,8 @@
 
 // Importamos la conexión segura de tu configuración local
 import { db as supabase } from './supabase-config.js';
+// 🚀 Interceptor Reactivo: Importamos la lógica de carga para la ficha del voluntario
+import { initProfileScreen } from './profile.js';
 
 // Estados locales de la alerta de audio
 let ac = null, os = null;
@@ -46,6 +48,22 @@ export function showScreen(screenId) {
         currentScreen.classList.add('screen-active');
     } else {
         console.warn(`La pantalla con ID "${screenId}" no existe en el DOM.`);
+    }
+
+    // 🌟 INTERCEPTOR REACTIVO: Si la pantalla que se activa es la de Perfil, cargamos sus datos en tiempo real
+    if (screenId === 'profile-screen' || screenId === 'profile') {
+        const currentUserId = window.usuario_id;
+
+        if (currentUserId) {
+            // Orquestamos la petición reactiva delegando el peso al microservicio en profile.js
+            initProfileScreen(currentUserId);
+        } else {
+            console.warn("Advertencia: No se detectó 'window.usuario_id' en la sesión actual.");
+            const container = document.getElementById('profile-subscriptions-container');
+            if (container) {
+                container.innerHTML = `<p style="color:#ef4444; padding:20px; font-family:sans-serif;">Sesión no válida o expirada. Por favor, reautentícate.</p>`;
+            }
+        }
     }
 }
 
