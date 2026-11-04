@@ -129,6 +129,10 @@ export async function cargarListadoAdmin() {
                 <div style="flex:2; min-width:180px;">
                     <input type="text" id="usuario-nombre" placeholder="Nombre completo del voluntario" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
                 </div>
+                <!-- 🌟 NUEVO CAMPO: Identificador Único de Acceso Alternativo -->
+                <div style="flex:1; min-width:100px;">
+                    <input type="text" id="usuario-codigo" placeholder="Cód. Voluntario (Ej: V-104)" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; text-transform:uppercase;">
+                </div>
                 <div style="flex:1; min-width:120px;">
                     <input type="text" id="usuario-telefono" placeholder="Teléfono" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
                 </div>
