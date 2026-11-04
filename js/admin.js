@@ -1,7 +1,9 @@
 // js/admin.js
 import { db as supabase } from './supabase-config.js';
 
-// --- 1. LÓGICA DE SUSCRIPCIONES (Mover de app.js a admin.js) ---
+// =========================================================================
+// 1. LÓGICA DE SUSCRIPCIONES (Sincronizada con la Base de Datos y Edge)
+// =========================================================================
 
 export async function estaSuscrito(tipo, eventoId) {
     const usuarioId = localStorage.getItem("usuario_id");
@@ -59,19 +61,19 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
         }
 
         // Refrescos reactivos instantáneos de las secciones
-        if (tipo === "preventivos") cargarPreventivos();
-        if (tipo === "operativos") cargarOperativos();
-        if (tipo === "emergencias") cargarEmergencias();
+        await cargarTodosLosEventosEdge();
         
         // Recargar la tabla/lista de usuarios para reflejar el cambio de horas anuales calculadas por el trigger
-        cargarUsuariosAdmin();
+        await cargarUsuariosAdmin();
         
     } catch (err) {
         alert("Error en la operación de suscripción: " + err.message);
     }
 };
 
-// --- 2. LISTADOS DINÁMICOS CON BOTÓN DE SUSCRIPCIÓN INCORPORADO ---
+// =========================================================================
+// 2. LISTADOS DINÁMICOS UNIFICADOS BASADOS EN ENDPOINTS EDGE
+// =========================================================================
 
 export async function cargarTodosLosEventosEdge() {
     const usuarioId = localStorage.getItem("usuario_id");
@@ -116,7 +118,6 @@ export async function cargarTodosLosEventosEdge() {
             });
             contEmergencias.innerHTML = (await Promise.all(promesasEm)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
         }
-
         // 🔧 Renderizar Operativos
         if (contOperativos) {
             const operativos = listaCompleta.filter(item => item.tipo === 'operativos');
@@ -161,11 +162,14 @@ window.cerrarEmergenciaActiva = async function(id) {
         const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'close', id: id } });
         if (error) throw error;
         alert('Emergencia cerrada con éxito.');
-        cargarEmergencias();
+        await cargarTodosLosEventosEdge();
     } catch (err) { alert('Error en Edge Function: ' + err.message); }
 };
 
-// Dentro de admin.js
+// =========================================================================
+// 3. SECCIÓN ADMINISTRATIVA DE VOLUNTARIOS (Extracción e Inyección limpia)
+// =========================================================================
+
 export async function cargarUsuariosAdmin() {
     const contenedor = document.getElementById('contenedor-usuarios-admin');
     if (!contenedor) return;
@@ -177,7 +181,6 @@ export async function cargarUsuariosAdmin() {
         
         if (error) throw error;
         
-        // REPARACIÓN: Extraer el array si viene envuelto en .data, .usuarios o si es la respuesta directa
         let usuarios = [];
         if (Array.isArray(respuestaEdge)) {
             usuarios = respuestaEdge;
@@ -229,7 +232,7 @@ export function initAdminFormListeners() {
         e.preventDefault();
         const formData = new FormData(e.target);
         const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'create', titulo: formData.get('titulo'), nivel: formData.get('nivel') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarEmergencias(); }
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
     });
 
     document.getElementById('form-nuevo-usuario')?.addEventListener('submit', async (e) => {
@@ -237,20 +240,27 @@ export function initAdminFormListeners() {
         const diaValor = document.getElementById('usuario-cumple-dia').value;
         const mesValor = document.getElementById('usuario-cumple-mes').value;
         const { error } = await supabase.functions.invoke('admin-create-user-ts', { body: { nombre: document.getElementById('usuario-nombre').value, telefono: document.getElementById('usuario-telefono').value || null, cumple_dia: diaValor ? parseInt(diaValor, 10) : null, cumple_mes: mesValor ? parseInt(mesValor, 10) : null } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarUsuariosAdmin(); }
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarUsuariosAdmin(); }
     });
 
     document.getElementById('form-operativos')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'operativos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarOperativos(); }
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
     });
 
     document.getElementById('form-preventivos')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'preventivos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); cargarPreventivos(); }
+        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
     });
 }
+
+// =========================================================================
+// 4. PUENTES DE COMPATIBILIDAD MODULAR EXPORTABLES (Para app.js)
+// =========================================================================
+export async function cargarEmergencias() { await cargarTodosLosEventosEdge(); }
+export async function cargarOperativos() { await cargarTodosLosEventosEdge(); }
+export async function cargarPreventivos() { await cargarTodosLosEventosEdge(); }
