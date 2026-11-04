@@ -73,7 +73,6 @@ window.toggleSuscripcion = async function(tipo, eventoId) {
 
 // --- 2. LISTADOS DINÁMICOS CON BOTÓN DE SUSCRIPCIÓN INCORPORADO ---
 
-// Dentro de admin.js
 export async function cargarTodosLosEventosEdge() {
     const usuarioId = localStorage.getItem("usuario_id");
     if (!usuarioId) {
@@ -90,10 +89,8 @@ export async function cargarTodosLosEventosEdge() {
     if (contPreventivos) contPreventivos.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Sincronizando preventivos...</p>';
 
     try {
-        // Corrección estricta: Enviamos el admin_id por URL (queryParams) como exige el TypeScript
-        const { data: respuestaEdge, error } = await supabase.functions.invoke('admin-list-elements-ts', {
-            queryParams: { admin_id: usuarioId }
-        });
+        // SOLUCIÓN: Concatenamos el parámetro de consulta directo en el nombre de la función
+        const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-elements-ts?admin_id=${usuarioId}`);
 
         if (error) throw error;
 
