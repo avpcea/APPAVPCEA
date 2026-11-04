@@ -1,276 +1,302 @@
-// js/admin.js
+// =========================================================================
+// ARCHIVO: admin.js (PARTE 1: ESCUCHADORES DE FORMULARIOS Y COMMITS EDGE)
+// =========================================================================
 import { db as supabase } from './supabase-config.js';
 
-// =========================================================================
-// 1. LÓGICA DE SUSCRIPCIONES (Sincronizada con la Base de Datos y Edge)
-// =========================================================================
+/**
+ * Inicializa los listeners de los formularios inyectados dinámicamente en el DOM
+ */
+export function initAdminFormListeners() {
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
-export async function estaSuscrito(tipo, eventoId) {
-    const usuarioId = localStorage.getItem("usuario_id");
-    if (!usuarioId) return false;
+    // 👥 REGISTRO DE VOLUNTARIOS CON CÓDIGO ÚNICO
+    const formUsuario = document.getElementById('form-nuevo-usuario');
+    if (formUsuario) {
+        formUsuario.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = formUsuario.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerText = 'Registrando...';
 
-    let codigoTipo = "OPR";
-    if (tipo === "preventivos") codigoTipo = "NRP";
-    if (tipo === "emergencias") codigoTipo = "EMR";
+            // Captura estricta del nuevo identificador alternativo e inputs físicos
+            const nombre = document.getElementById('usuario-nombre').value.trim();
+            const codigo = document.getElementById('usuario-codigo').value.trim().toUpperCase();
+            const telefono = document.getElementById('usuario-telefono').value.trim();
+            const cumpleDia = parseInt(document.getElementById('usuario-cumple-dia').value, 10) || null;
+            const cumpleMes = parseInt(document.getElementById('usuario-cumple-mes').value, 10) || null;
 
-    const { data } = await supabase
-        .from("suscripciones")
-        .select("*")
-        .eq("usuario_id", usuarioId)
-        .eq("tipo", codigoTipo)
-        .eq("evento_id", String(eventoId))
-        .maybeSingle();
+            try {
+                const response = await fetch(`${supabase.functionsUrl}/admin-create-user-ts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        admin_id: adminId,
+                        nombre,
+                        codigo_voluntario: codigo, // 🌟 Parámetro inyectado al microservicio
+                        telefono,
+                        cumple_dia: cumpleDia,
+                        cumple_mes: cumpleMes
+                    })
+                });
 
-    return !!data;
-}
+                const resultado = await response.json();
+                if (!response.ok) throw new Error(resultado.error || 'Error en el microservicio.');
 
-window.toggleSuscripcion = async function(tipo, eventoId) {
-    const usuarioId = localStorage.getItem("usuario_id");
-    if (!usuarioId) {
-        alert("No se ha seleccionado ningún voluntario activo.");
-        return;
+                formUsuario.reset();
+                alert('Voluntario registrado con éxito.');
+                cargarUsuariosAdmin(); // Recarga reactiva del listado compartido
+
+            } catch (err) {
+                console.error('Error al crear voluntario:', err);
+                alert(`No se pudo registrar: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Registrar';
+            }
+        });
     }
 
-    const suscrito = await estaSuscrito(tipo, eventoId);
-    let codigoTipo = tipo === "operativos" ? "OPR" : (tipo === "preventivos" ? "NRP" : "EMR");
-
-    try {
-        if (!suscrito) {
-            const { error } = await supabase.functions.invoke('admin-create-suscripcion-ts', {
-                body: { 
-                    usuario_id: usuarioId, 
-                    evento_id: isNaN(eventoId) ? eventoId : Number(eventoId), 
-                    tipo: tipo, 
-                    admin_id: usuarioId 
-                }
-            });
-            if (error) throw error;
-            alert("Inscripción realizada con éxito.");
-        } else {
-            const { error } = await supabase
-                .from("suscripciones")
-                .delete()
-                .eq("usuario_id", usuarioId)
-                .eq("tipo", codigoTipo)
-                .eq("evento_id", String(eventoId));
-            if (error) throw error;
-            alert("Inscripción cancelada.");
-        }
-
-        await cargarTodosLosEventosEdge();
-        await cargarUsuariosAdmin();
-        
-    } catch (err) {
-        alert("Error en la operación de suscripción: " + err.message);
-    }
-};
-
-// =========================================================================
-// 2. LISTADOS DINÁMICOS UNIFICADOS INTELIGENTES (Admin y Voluntarios)
-// =========================================================================
-
-export async function cargarTodosLosEventosEdge() {
-    const usuarioId = localStorage.getItem("usuario_id");
-    if (!usuarioId) {
-        console.warn("Falta usuario_id para la autenticación en el Edge.");
-        return;
+    // 🚨 REGISTRO DE EMERGENCIAS (MÁXIMA PRIORIDAD)
+    const formEmergencias = document.getElementById('form-emergencias');
+    if (formEmergencias) {
+        formEmergencias.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(formEmergencias);
+            await crearElementoEdge({
+                titulo: formData.get('titulo'),
+                tipo: 'EMR',
+                meta: { gravedad: formData.get('nivel') }
+            }, formEmergencias);
+        });
     }
 
-    // Identificamos quirurgicamente dónde estamos renderizando
-    const adminEmergencias = document.getElementById('contenedor-listado-emergencias');
-    const adminOperativos = document.getElementById('contenedor-listado-operativos');
-    const adminPreventivos = document.getElementById('contenedor-listado-preventivos');
-
-    const screenEmergencias = document.getElementById('emergencias');
-    const screenOperativos = document.getElementById('operativos');
-    const screenPreventivos = document.getElementById('preventivos');
-
-    // 1. Preparar contenedores con sus esqueletos si estamos en pantallas limpias de voluntario
-    if (screenEmergencias && !adminEmergencias) {
-        screenEmergencias.innerHTML = `<h2>🚨 Central de Emergencias</h2><div id="vol-lista-emergencias" style="max-height:80vh; overflow-y:auto;">🔄 Cargando alertas...</div>`;
-    }
-    if (screenOperativos && !adminOperativos) {
-        screenOperativos.innerHTML = `<h2>🔧 Dispositivos Operativos</h2><div id="vol-lista-operativos" style="max-height:80vh; overflow-y:auto;">🔄 Cargando dispositivos...</div>`;
-    }
-    if (screenPreventivos && !adminPreventivos) {
-        screenPreventivos.innerHTML = `<h2>🛡️ Servicios Preventivos</h2><div id="vol-lista-preventivos" style="max-height:80vh; overflow-y:auto;">🔄 Cargando preventivos...</div>`;
+    // 🔧 REGISTRO DE DISPOSITIVOS OPERATIVOS
+    const formOperativos = document.getElementById('form-operativos');
+    if (formOperativos) {
+        formOperativos.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(formOperativos);
+            await crearElementoEdge({
+                titulo: formData.get('titulo'),
+                lugar: formData.get('lugar'),
+                fecha: formData.get('fecha'),
+                tipo: 'OPR'
+            }, formOperativos);
+        });
     }
 
-    // Nodos reales de inyección final
-    const targetEmergencias = adminEmergencias || document.getElementById('vol-lista-emergencias');
-    const targetOperativos = adminOperativos || document.getElementById('vol-lista-operativos');
-    const targetPreventivos = adminPreventivos || document.getElementById('vol-lista-preventivos');
-
-    try {
-        const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-elements-ts?admin_id=${usuarioId}`);
-        if (error) throw error;
-
-        const listaCompleta = respuestaEdge?.data || [];
-
-        // 🚨 RENDERIZAR EMERGENCIAS
-        if (targetEmergencias) {
-            const emergencias = listaCompleta.filter(item => item.tipo === 'emergencias');
-            const promesasEm = emergencias.map(async (e) => {
-                const inscrito = await estaSuscrito('emergencias', e.id);
-                return `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; background: ${e.activa ? '#fef2f2' : '#fff'}; margin-bottom:5px; border-radius:4px; border-left: 4px solid ${e.activa ? '#dc2626' : '#9ca3af'}; font-family:sans-serif;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
-                            <div><strong style="color:#dc2626;">${e.titulo}</strong> ${e.activa ? '<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-left:5px;">🚨 ACTIVA</span>' : ''}</div>
-                            <div style="display:flex; gap:5px;">
-                                <button onclick="toggleSuscripcion('emergencias', '${e.id}')" style="background:${inscrito ? '#9ca3af' : '#dc2626'}; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Dar de Baja' : '✍️ Suscribirse'}</button>
-                                ${e.activa && adminEmergencias ? `<button onclick="cerrarEmergenciaActiva('${e.id}')" style="background:#6b7280; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">Cerrar Evento</button>` : ''}
-                            </div>
-                        </div>
-                        <small style="display:block; margin-top:4px; color:#4b5563;">📅 Inicio: ${e.fecha_inicio ? new Date(e.fecha_inicio).toLocaleString('es-ES') : 'S/F'} | ⚠️ Nivel: ${e.nivel || 'medio'}</small>
-                    </div>
-                `;
-            });
-            targetEmergencias.innerHTML = (await Promise.all(promesasEm)).join('') || '<p style="color:#888; font-size:14px;">No hay emergencias registradas.</p>';
-        }
-        // 🔧 RENDERIZAR OPERATIVOS
-        if (targetOperativos) {
-            const operativos = listaCompleta.filter(item => item.tipo === 'operativos');
-            const promesasOp = operativos.map(async (o) => {
-                const inscrito = await estaSuscrito('operativos', o.id);
-                return `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                        <div>
-                            <strong style="color:#0284c7; font-size:15px;">${o.titulo}</strong><br>
-                            <small style="color:#555; display:block; margin-top:2px;">📅 ${o.fecha ? new Date(o.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${o.lugar || 'No asignado'}</small>
-                        </div>
-                        <button onclick="toggleSuscripcion('operativos', '${o.id}')" style="background:${inscrito ? '#6b7280' : '#0284c7'}; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
-                    </div>
-                `;
-            });
-            targetOperativos.innerHTML = (await Promise.all(promesasOp)).join('') || '<p style="color:#888; font-size:14px;">No hay operativos registrados.</p>';
-        }
-
-        // 🛡️ RENDERIZAR PREVENTIVOS
-        if (targetPreventivos) {
-            const preventivos = listaCompleta.filter(item => item.tipo === 'preventivos');
-            const promesasPr = preventivos.map(async (p) => {
-                const inscrito = await estaSuscrito('preventivos', p.id);
-                return `
-                    <div style="padding: 12px; border-bottom: 1px solid #eee; background:#fff; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                        <div>
-                            <strong style="color:#b45309; font-size:15px;">${p.titulo}</strong><br>
-                            <small style="color:#555; display:block; margin-top:2px;">📅 ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'S/F'} | 📍 ${p.lugar || 'No asignado'}</small>
-                        </div>
-                        <button onclick="toggleSuscripcion('preventivos', '${p.id}')" style="background:${inscrito ? '#6b7280' : '#b45309'}; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">${inscrito ? '❌ Cancelar' : '✍️ Suscribirse'}</button>
-                    </div>
-                `;
-            });
-            targetPreventivos.innerHTML = (await Promise.all(promesasPr)).join('') || '<p style="color:#888; font-size:14px;">No hay preventivos registrados.</p>';
-        }
-
-    } catch (err) {
-        const errorHtml = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
-        if (targetEmergencias) targetEmergencias.innerHTML = errorHtml;
-        if (targetOperativos) targetOperativos.innerHTML = errorHtml;
-        if (targetPreventivos) targetPreventivos.innerHTML = errorHtml;
+    // 🛡️ REGISTRO DE SERVICIOS PREVENTIVOS
+    const formPreventivos = document.getElementById('form-preventivos');
+    if (formPreventivos) {
+        formPreventivos.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(formPreventivos);
+            await crearElementoEdge({
+                titulo: formData.get('titulo'),
+                lugar: formData.get('lugar'),
+                fecha: formData.get('fecha'),
+                tipo: 'NRP'
+            }, formPreventivos);
+        });
     }
 }
 
-window.cerrarEmergenciaActiva = async function(id) {
-    if (!confirm('¿Seguro que deseas dar por finalizada esta emergencia?')) return;
+/**
+ * Abstracción genérica para disparar microservicios de creación de elementos físicos
+ */
+async function crearElementoEdge(payload, formulario) {
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+    const btn = formulario.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
     try {
-        const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'close', id: id } });
-        if (error) throw error;
-        alert('Emergencia cerrada con éxito.');
+        const res = await fetch(`${supabase.functionsUrl}/admin-create-element-ts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_id: adminId, ...payload })
+        });
+        if (!res.ok) throw new Error('Error al impactar el microservicio de elementos.');
+        formulario.reset();
         await cargarTodosLosEventosEdge();
-    } catch (err) { alert('Error en Edge Function: ' + err.message); }
-};
-
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
 // =========================================================================
-// 3. SECCIÓN ADMINISTRATIVA DE VOLUNTARIOS
+// ARCHIVO: admin.js (PARTE 2: READ Y CO-SUSCRIPCIÓN EN PANEL DE CONTROL)
 // =========================================================================
 
+/**
+ * Consulta de forma reactiva el padrón de voluntarios llamando a la Edge Function segura
+ */
 export async function cargarUsuariosAdmin() {
     const contenedor = document.getElementById('contenedor-usuarios-admin');
     if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color:#666; font-size:14px;">🔄 Conectando con Edge...</p>';
-    
-    const usuarioId = localStorage.getItem("usuario_id");
+
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+    contenedor.innerHTML = `<p style="padding:15px; color:#4b5563;">Consultando microservicio de usuarios...</p>`;
+
     try {
-        const { data: respuestaEdge, error } = await supabase.functions.invoke(`admin-list-users-ts?admin_id=${usuarioId}`);
-        if (error) throw error;
-        
-        let usuarios = [];
-        if (Array.isArray(respuestaEdge)) usuarios = respuestaEdge;
-        else if (respuestaEdge && Array.isArray(respuestaEdge.data)) usuarios = respuestaEdge.data;
-        else if (respuestaEdge && Array.isArray(respuestaEdge.usuarios)) usuarios = respuestaEdge.usuarios;
-        
+        const res = await fetch(`${supabase.functionsUrl}/admin-list-users-ts?admin_id=${adminId}`);
+        if (!res.ok) {
+            if (res.status === 403) throw new Error('Acceso denegado: Tu sesión no dispone de rol de Administrador.');
+            throw new Error('Error al conectar con el servidor.');
+        }
+
+        const { data } = await res.json();
+        const usuarios = data || [];
+
         if (usuarios.length === 0) {
-            contenedor.innerHTML = '<p style="color:#888; font-size:14px;">No hay usuarios registrados aún.</p>';
+            contenedor.innerHTML = `<p style="padding:15px; color:#6b7280;">No existen voluntarios registrados.</p>`;
             return;
         }
 
-        let tablaHTML = `
-          <table style="width:100%; border-collapse: collapse; margin-top:10px; background:#fff; border:1px solid #ddd; font-family:sans-serif;">
-            <thead>
-              <tr style="background:#f3f4f6; border-bottom:1px solid #ddd; text-align:left;">
-                <th style="padding:10px;">Nombre</th>
-                <th style="padding:10px;">Teléfono</th>
-                <th style="padding:10px;">Cumpleaños</th>
-                <th style="padding:10px;">Horas Totales</th>
-              </tr>
-            </thead>
-            <tbody>
+        // Estructura de tabla limpia y responsiva para gestión de Jefatura
+        let html = `
+            <table style="width:100%; border-collapse:collapse; font-family:sans-serif; text-align:left; font-size:14px;">
+                <thead>
+                    <tr style="background:#f3f4f6; border-bottom:1px solid #e5e7eb;">
+                        <th style="padding:10px; color:#374151;">Código</th>
+                        <th style="padding:10px; color:#374151;">Nombre</th>
+                        <th style="padding:10px; color:#374151;">Teléfono</th>
+                        <th style="padding:10px; color:#374151;">Cumpleaños</th>
+                    </tr>
+                </thead>
+                <tbody>
         `;
 
-        usuarios.forEach(u => {
-          const cumpleStr = (u.cumple_dia && u.cumple_mes) ? `${u.cumple_dia}/${u.cumple_mes}` : 'No configurado';
-          tablaHTML += `
-            <tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="localStorage.setItem('usuario_id','${u.id}'); alert('Voluntario activo seleccionado: ${u.nombre}'); cargarTodosLosEventosEdge();">
-              <td style="padding:10px; font-weight:500; color:#111827;">${u.nombre}</td>
-              <td style="padding:10px; color:#4b5563;">${u.telefono || '-'}</td>
-              <td style="padding:10px; color:#0284c7;">🎂 ${cumpleStr}</td>
-              <td style="padding:10px; font-weight:bold; color:#059669;">⏱️ ${parseFloat(u.horas || 0).toFixed(2)} hrs</td>
-            </tr>
-          `;
+        usuarios.forEach(user => {
+            // Evaluamos defensivamente el código de voluntario mapeado de la BD
+            const codVoluntario = user.codigo_voluntario || '<span style="color:#9ca3af; font-size:12px;">Sin código</span>';
+            const cumple = user.cumple_dia && user.cumple_mes ? `${user.cumple_dia}/${user.cumple_mes}` : '-';
+            
+            html += `
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                    <td style="padding:10px; font-weight:bold; color:#1f2937;">${codVoluntario}</td>
+                    <td style="padding:10px; color:#4b5563;">${escapeHTML(user.nombre)}</td>
+                    <td style="padding:10px; color:#4b5563;">${escapeHTML(user.telefono || '-')}</td>
+                    <td style="padding:10px; color:#4b5563;">${cumple}</td>
+                </tr>
+            `;
         });
 
-        tablaHTML += '</tbody></table><small style="color:#6b7280; display:block; margin-top:8px; font-family:sans-serif;">💡 Truco: Haz click en la fila de cualquier voluntario para seleccionarlo como activo y gestionar sus suscripciones.</small>';
-        contenedor.innerHTML = tablaHTML;
+        html += `</tbody></table>`;
+        contenedor.innerHTML = html;
+
     } catch (err) {
-        contenedor.innerHTML = `<p style="color:red; font-size:13px;">⚠️ Error Edge: ${err.message}</p>`;
+        contenedor.innerHTML = `<p style="padding:15px; color:#dc2626; font-weight:bold;">${err.message}</p>`;
     }
 }
 
-export function initAdminFormListeners() {
-    document.getElementById('form-emergencias')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const { error } = await supabase.functions.invoke('emergencia-ts', { body: { accion: 'create', titulo: formData.get('titulo'), nivel: formData.get('nivel') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
-    });
+/**
+ * Consulta unificada que descarga todas las emergencias, preventivos e incidentes de la Edge Function
+ */
+export async function cargarTodosLosEventosEdge() {
+    const cEmergencias = document.getElementById('contenedor-listado-emergencias');
+    const cOperativos = document.getElementById('contenedor-listado-operativos');
+    const cPreventivos = document.getElementById('contenedor-listado-preventivos');
 
-    document.getElementById('form-nuevo-usuario')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const diaValor = document.getElementById('usuario-cumple-dia').value;
-        const mesValor = document.getElementById('usuario-cumple-mes').value;
-        const { error } = await supabase.functions.invoke('admin-create-user-ts', { body: { nombre: document.getElementById('usuario-nombre').value, telefono: document.getElementById('usuario-telefono').value || null, cumple_dia: diaValor ? parseInt(diaValor, 10) : null, cumple_mes: mesValor ? parseInt(mesValor, 10) : null } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarUsuariosAdmin(); }
-    });
+    if (!cEmergencias || !cOperativos || !cPreventivos) return;
 
-    document.getElementById('form-operativos')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'operativos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
-    });
+    try {
+        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts`);
+        if (!res.ok) throw new Error('Error al listar catálogo unificado.');
 
-    document.getElementById('form-preventivos')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const { error } = await supabase.functions.invoke('admin-create-element-ts', { body: { tipo: 'preventivos', titulo: formData.get('titulo'), lugar: formData.get('lugar'), fecha: formData.get('fecha') } });
-        if (error) alert('Error: ' + error.message); else { e.target.reset(); await cargarTodosLosEventosEdge(); }
-    });
+        const { elementos } = await res.json();
+        const lista = elementos || [];
+
+        // Limpieza reactiva previa de contenedores
+        cEmergencias.innerHTML = '';
+        cOperativos.innerHTML = '';
+        cPreventivos.innerHTML = '';
+
+        if (lista.length === 0) {
+            const vacio = `<p style="color:#9ca3af; font-size:13px; margin:0;">No constan elementos en este módulo.</p>`;
+            cEmergencias.innerHTML = vacio;
+            cOperativos.innerHTML = vacio;
+            cPreventivos.innerHTML = vacio;
+            return;
+        }
+
+        // Clasificación por tipo físico real de BD ('EMR', 'OPR', 'NRP')
+        lista.forEach(item => {
+            const divNode = document.createElement('div');
+            divNode.style.cssText = "padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:8px; display:flex; justify-content:between; align-items:center; font-family:sans-serif; justify-content: space-between;";
+            
+            let colorTipo = "#4b5563";
+            if (item.tipo === 'EMR') colorTipo = "#dc2626";
+            if (item.tipo === 'OPR') colorTipo = "#0284c7";
+            if (item.tipo === 'NRP') colorTipo = "#b45309";
+
+            divNode.innerHTML = `
+                <div>
+                    <strong style="color:${colorTipo};">${escapeHTML(item.nombre)}</strong>
+                    <span style="font-size:12px; color:#6b7280; margin-left:8px;">${item.fecha || item.meta?.gravedad || ''}</span>
+                </div>
+                <button class="btn-suscripcion-cross" data-id="${item.id}" data-tipo="${item.tipo}" 
+                        style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:3px; cursor:pointer;">
+                    + Inscribir
+                </button>
+            `;
+
+            // Vinculación reactiva del botón de co-suscripción para la administración
+            divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', async (e) => {
+                const targetId = e.target.getAttribute('data-id');
+                const tAbrev = e.target.getAttribute('data-tipo');
+                await levantarModalInscripcionRapida(targetId, tAbrev);
+            });
+
+            if (item.tipo === 'EMR') cEmergencias.appendChild(divNode);
+            if (item.tipo === 'OPR') cOperativos.appendChild(divNode);
+            if (item.tipo === 'NRP') cPreventivos.appendChild(divNode);
+        });
+
+    } catch (err) {
+        console.error("Error al actualizar vistas de eventos:", err);
+    }
 }
 
-// =========================================================================
-// 4. PUENTES DE COMPATIBILIDAD MODULAR EXPORTABLES (Para app.js)
-// =========================================================================
-export async function cargarEmergencias() { await cargarTodosLosEventosEdge(); }
-export async function cargarOperativos() { await cargarTodosLosEventosEdge(); }
-export async function cargarPreventivos() { await cargarTodosLosEventosEdge(); }
+/**
+ * Lógica auxiliar para inscribir de forma remota a voluntarios en eventos específicos
+ */
+async function levantarModalInscripcionRapida(elementoId, tipoAbrev) {
+    const vId = prompt("Ingrese el UUID del 'usuario_id' del voluntario a inscribir:");
+    if (!vId) return;
+
+    // Normalización defensiva para cumplir estrictamente la regla 2 de la Edge Function
+    let tipoCompleto = "operativos";
+    if (tipoAbrev === "NRP") tipoCompleto = "preventivos";
+    if (tipoAbrev === "EMR") tipoCompleto = "emergencias";
+
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+
+    try {
+        const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuario_id: vId,
+                evento_id: elementoId,
+                tipo: tipoCompleto,
+                admin_id: adminId
+            })
+        });
+
+        const rJson = await res.json();
+        if (!res.ok) throw new Error(rJson.error || "Excepción de red.");
+        
+        alert("Suscripción procesada de forma correcta.");
+    } catch (err) {
+        alert(`Fallo en inscripción cruzada: ${err.message}`);
+    }
+}
+
+// Helper nativo anti inyecciones HTML
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
