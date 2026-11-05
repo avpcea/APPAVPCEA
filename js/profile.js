@@ -1,36 +1,28 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: FICHA PERSONAL Y CONEXIÓN CON MICROSERVICIOS)
+// ARCHIVO: profile.js (PARTE 1: DIAGNÓSTICO EN VIVO DE PAYLOADS)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
 
-// Mapeo de los nombres físicos que devuelve la Edge Function ('operativos', etc.)
 const TIPO_MAP_TEXTO = {
     'operativos': 'Operativo',
     'preventivos': 'Preventivo',
     'emergencias': 'Emergencia',
-    'OPR': 'Operativo', // Mantenemos compatibilidad por si acaso
+    'OPR': 'Operativo',
     'NRP': 'Preventivo',
     'EMR': 'Emergencia'
 };
 
-/**
- * Inicializa y renderiza la ficha personal del voluntario activo leyendo de forma segura la DB
- * @param {string} usuarioId - El id del voluntario recuperado desde window.usuario_id
- */
 export async function initProfileScreen(usuarioId) {
     const profileContainer = document.getElementById('profile-subscriptions-container');
     if (!profileContainer) return;
 
-    // 1. Estado de carga inicial (Visual skeleton nativo)
     profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
-        // 2. Consulta en paralelo: Datos del usuario y sus suscripciones directas de las tablas, 
-        // y el catálogo global de eventos desde la Edge Function oficializada.
         const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes').eq('id', usuarioId).single(),
-            supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
+            supabase.from('suscripciones').select('*').eq('usuario_id', usuarioId), // 🔍 Traemos todo el objeto para auditar sus columnas reales
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${usuarioId}`)
         ]);
 
@@ -41,11 +33,14 @@ export async function initProfileScreen(usuarioId) {
         const usuario = usuarioRes.data;
         const listaSuscripciones = suscripcionesRes.data || [];
         
-        // Extraemos la propiedad 'data' del payload real de la Edge Function admin-list-elements-ts
         const { data } = await eventosRes.json();
         const listaEventos = data || [];
 
-        // 3. Renderizar metadatos del usuario con el botón de desconexión incorporado
+        // 🚨 CHIVATO DE DIAGNÓSTICO: Abre la consola (F12) para inspeccionar qué estructura física tienen las tablas relacionales reales
+        console.log("--- 🕵️ AUDITORÍA DE DATOS AVPCEA ---");
+        console.log("Mis Suscripciones en BD:", listaSuscripciones);
+        console.log("Catálogo Global de Eventos (Edge):", listaEventos);
+
         const headerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
@@ -62,18 +57,19 @@ export async function initProfileScreen(usuarioId) {
         `;
         profileContainer.innerHTML = headerHTML;
 
-        // Escuchador reactivo para el cierre de sesión seguro
         document.getElementById('btn-logout-voluntario')?.addEventListener('click', () => {
             if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
                 cerrarSesionVoluntario();
             }
         });
 
-        // 4. Filtrar y cruzar en cliente las suscripciones usando el id del evento en formato string
+        // Intentamos un cruce adaptativo por si la columna física en la tabla es 'id' del elemento o algo diferente
         const eventosSuscritos = listaEventos.filter(evento => {
-            return listaSuscripciones.some(suscripcion => 
-                String(suscripcion.evento_id) === String(evento.id)
-            );
+            return listaSuscripciones.some(suscripcion => {
+                // Buscamos coincidencia dinámica de IDs cruzando las propiedades comunes de tu base de datos
+                const refIdSuscripcion = suscripcion.evento_id || suscripcion.id_elemento || suscripcion.id;
+                return String(refIdSuscripcion) === String(evento.id);
+            });
         });
 
         const listInnerContainer = document.getElementById('profile-events-inner-list');
