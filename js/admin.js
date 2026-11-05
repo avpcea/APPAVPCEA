@@ -200,8 +200,13 @@ export async function cargarTodosLosEventosEdge() {
 
     if (!cEmergencias || !cOperativos || !cPreventivos) return;
 
+    // 🛠️ REPARACIÓN COLECTIVA: Recuperamos el identificador de seguridad requerido por el microservicio
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+
     try {
-        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts`);
+        // Inyectamos el query string exigido (?admin_id=...) de forma idéntica a admin-list-users-ts
+        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${adminId}`);
+        
         if (!res.ok) throw new Error('Error al listar catálogo unificado.');
 
         const { elementos } = await res.json();
@@ -223,7 +228,7 @@ export async function cargarTodosLosEventosEdge() {
         // Clasificación por tipo físico real de BD ('EMR', 'OPR', 'NRP')
         lista.forEach(item => {
             const divNode = document.createElement('div');
-            divNode.style.cssText = "padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:8px; display:flex; justify-content:between; align-items:center; font-family:sans-serif; justify-content: space-between;";
+            divNode.style.cssText = "padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif;";
             
             let colorTipo = "#4b5563";
             if (item.tipo === 'EMR') colorTipo = "#dc2626";
@@ -241,7 +246,6 @@ export async function cargarTodosLosEventosEdge() {
                 </button>
             `;
 
-            // Vinculación reactiva del botón de co-suscripción para la administración
             divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', async (e) => {
                 const targetId = e.target.getAttribute('data-id');
                 const tAbrev = e.target.getAttribute('data-tipo');
