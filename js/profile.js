@@ -1,13 +1,15 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: FICHA PERSONAL Y CIERRE DE SESIÓN SEGURO)
+// ARCHIVO: profile.js (PARTE 1: FICHA PERSONAL Y CONEXIÓN CON MICROSERVICIOS)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
-// 🚀 Importamos la lógica de desconexión nativa que expone tu orquestador central
 import { cerrarSesionVoluntario } from './app.js';
 
-// Mapeo defensivo de códigos físicos de base de datos a texto legible
+// Mapeo de los nombres físicos que devuelve la Edge Function ('operativos', etc.)
 const TIPO_MAP_TEXTO = {
-    'OPR': 'Operativo',
+    'operativos': 'Operativo',
+    'preventivos': 'Preventivo',
+    'emergencias': 'Emergencia',
+    'OPR': 'Operativo', // Mantenemos compatibilidad por si acaso
     'NRP': 'Preventivo',
     'EMR': 'Emergencia'
 };
@@ -24,25 +26,28 @@ export async function initProfileScreen(usuarioId) {
     profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
-        // 2. Consulta paralela segura directo a Postgres a través del cliente configurado
+        // 2. Consulta en paralelo: Datos del usuario y sus suscripciones directas de las tablas, 
+        // y el catálogo global de eventos desde la Edge Function oficializada.
         const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes').eq('id', usuarioId).single(),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
-            supabase.from('elementos').select('id, nombre, descripcion, fecha, tipo')
+            fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${usuarioId}`)
         ]);
 
         if (usuarioRes.error) throw new Error(`Error al cargar perfil: ${usuarioRes.error.message}`);
         if (suscripcionesRes.error) throw new Error(`Error al cargar suscripciones: ${suscripcionesRes.error.message}`);
-        if (eventosRes.error) throw new Error(`Error al cargar el catálogo de eventos: ${eventosRes.error.message}`);
+        if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio de eventos.');
 
         const usuario = usuarioRes.data;
         const listaSuscripciones = suscripcionesRes.data || [];
-        const listaEventos = eventosRes.data || [];
+        
+        // Extraemos la propiedad 'data' del payload real de la Edge Function admin-list-elements-ts
+        const { data } = await eventosRes.json();
+        const listaEventos = data || [];
 
-        // 3. Renderizar metadatos del usuario con el nuevo botón de desconexión incorporado
+        // 3. Renderizar metadatos del usuario con el botón de desconexión incorporado
         const headerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
-                <!-- 🚪 BOTÓN DE CIERRE DE SESIÓN (Estilizado en la esquina superior derecha) -->
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
                     🚪 Salir
                 </button>
@@ -57,14 +62,14 @@ export async function initProfileScreen(usuarioId) {
         `;
         profileContainer.innerHTML = headerHTML;
 
-        // 🌟 BINDING REACTIVO: Escuchador para borrar el almacenamiento local y recargar filtros
+        // Escuchador reactivo para el cierre de sesión seguro
         document.getElementById('btn-logout-voluntario')?.addEventListener('click', () => {
-            if (confirm("¿Estás seguro de que deseas cerrar sesión en este dispositivo?")) {
+            if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
                 cerrarSesionVoluntario();
             }
         });
 
-        // 4. Filtrar y cruzar de forma reactiva en cliente las relaciones por id en formato string plano
+        // 4. Filtrar y cruzar en cliente las suscripciones usando el id del evento en formato string
         const eventosSuscritos = listaEventos.filter(evento => {
             return listaSuscripciones.some(suscripcion => 
                 String(suscripcion.evento_id) === String(evento.id)
@@ -86,6 +91,8 @@ export async function initProfileScreen(usuarioId) {
         document.getElementById('btn-retry-profile')?.addEventListener('click', () => initProfileScreen(usuarioId));
     }
 }
+
+
 /**
  * Renderiza la colección de tarjetas de eventos suscritos en el contenedor del DOM
  * @param {HTMLElement} container - Contenedor interno exclusivo de la lista
