@@ -2,7 +2,6 @@
 
 // Importamos la conexión segura de tu configuración local
 import { db as supabase } from './supabase-config.js';
-// 🚀 Interceptor Reactivo: Importamos la lógica para re-pintar dinámicamente el perfil
 import { initProfileScreen } from './profile.js';
 
 // Estados locales de la alerta de audio
@@ -50,20 +49,121 @@ export function showScreen(screenId) {
         console.warn(`La pantalla con ID "${screenId}" no existe en el DOM.`);
     }
 
-    // 🌟 REPARACIÓN OPERATIVA: Si la pantalla activada es el Perfil, forzamos su pintado asíncrono
-    // dándole un contenedor base limpio para que profile.js inyecte los datos frescos.
+    // 🌟 INTERCEPTOR 1: Renderizado asíncrono de la Ficha Personal
     if (screenId === 'perfil') {
         const currentUserId = window.usuario_id;
         if (currentUserId) {
-            // Aseguramos el nodo esqueleto sobre el cual profile.js pintará la ficha técnica y las tarjetas
-            currentScreen.innerHTML = `
-                <div style="padding:20px; font-family:sans-serif;">
-                    <div id="profile-subscriptions-container"></div>
-                </div>
-            `;
-            // Disparamos la lectura directa a las tablas de Supabase
+            currentScreen.innerHTML = `<div style="padding:20px; font-family:sans-serif;"><div id="profile-subscriptions-container"></div></div>`;
             initProfileScreen(currentUserId);
         }
+    }
+
+    // 🌟 INTERCEPTOR 2: Si el usuario entra a las pantallas públicas de voluntarios, pintamos su catálogo reactivo
+    if (screenId === 'operativos' || screenId === 'preventivos' || screenId === 'emergencias') {
+        cargarCatalogoPublicoVoluntarios(screenId);
+    }
+}
+
+/**
+ * Descarga y renderiza el catálogo unificado para los voluntarios con botones de auto-inscripción rápida
+ */
+async function cargarCatalogoPublicoVoluntarios(screenId) {
+    const contenedorPantalla = document.getElementById(screenId);
+    if (!contenedorPantalla) return;
+
+    contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#4b5563;">Consultando dispositivos disponibles...</p>`;
+
+    // Mapeo semántico para ajustar los títulos según la sección
+    const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
+    const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
+
+    try {
+        const uId = window.usuario_id;
+        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`);
+        if (!res.ok) throw new Error('Error al conectar con el microservicio.');
+
+        const { data } = await res.json();
+        const lista = data || [];
+
+        // Filtramos para que en cada pantalla solo salgan los elementos de su respectivo tipo
+        const elementosFiltrados = lista.filter(item => String(item.tipo).toLowerCase() === screenId);
+
+        let html = `
+            <div style="padding:20px; font-family:sans-serif;">
+                <h2 style="color:${colorSeccion[screenId]}; margin-bottom:20px;">${titulosSeccion[screenId]}</h2>
+                <div id="lista-publica-${screenId}" style="display:flex; flex-direction:column; gap:15px;"></div>
+            </div>
+        `;
+        contenedorPantalla.innerHTML = html;
+        const listaCardsContainer = document.getElementById(`lista-publica-${screenId}`);
+
+        if (elementosFiltrados.length === 0) {
+            listaCardsContainer.innerHTML = `<p style="color:#6b7280; font-size:14px; padding:10px; background:#f9fafb; border:1px dashed #d1d5db; border-radius:6px;">No constan servicios programados en esta sección actualmente.</p>`;
+            return;
+        }
+
+        elementosFiltrados.forEach(item => {
+            const card = document.createElement('div');
+            card.style.cssText = `background:#fff; padding:15px; border-radius:8px; border:1px solid #e5e7eb; border-left:5px solid ${colorSeccion[screenId]}; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;`;
+
+            const titulo = item.titulo || item.nombre || 'Servicio sin título';
+            const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
+
+            card.innerHTML = `
+                <div style="flex:1; padding-right:15px;">
+                    <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${titulo}</h4>
+                    <p style="margin:0 0 6px 0; color:#4b5563; font-size:13px;">${metadata}</p>
+                    <p style="margin:0; color:#6b7280; font-size:13px; line-height:1.4;">${item.descripcion || 'Sin descripción adicional.'}</p>
+                </div>
+                <button class="btn-autounirse" data-id="${item.id}" data-tipo="${item.tipo}" style="padding:8px 14px; background:${colorSeccion[screenId]}; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;">
+                    ✍️ Apuntarme
+                </button>
+            `;
+
+            // Enlace interactivo: Al pulsar "Apuntarme", el voluntario se inscribe a sí mismo usando su variable de sesión
+            card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
+                e.target.disabled = true;
+                e.target.innerText = "Procesando...";
+                
+                const exito = await ejecutarAutoInscripcion(item.id, item.tipo);
+                if (exito) {
+                    e.target.style.background = "#e6f4ea";
+                    e.target.style.color = "#137333";
+                    e.target.innerText = "✅ Inscrito";
+                } else {
+                    e.target.disabled = false;
+                    e.target.innerText = "✍️ Apuntarme";
+                }
+            });
+
+            listaCardsContainer.appendChild(card);
+        });
+
+    } catch (err) {
+        contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
+    }
+}
+
+/**
+ * Función puente que impacta la Edge Function de suscripciones usando el usuario logueado
+ */
+async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
+    const adminId = window.usuario_id;
+    try {
+        const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuario_id: adminId,
+                evento_id: elementoId,
+                tipo: tipoOriginal,
+                admin_id: adminId
+            })
+        });
+        return res.ok;
+    } catch (err) {
+        console.error(err);
+        return false;
     }
 }
 
@@ -79,7 +179,7 @@ export function initNavigation(callbacks = {}) {
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 
-                // Si entra a la pestaña Admin, autoejecutamos el esqueleto y sus cargas Edge
+                // Si el voluntario entra a la pestaña Admin, autoejecutamos el esqueleto y sus cargas Edge
                 if (targetScreen === 'admin') {
                     cargarListadoAdmin();
                 }
@@ -89,6 +189,7 @@ export function initNavigation(callbacks = {}) {
         });
     });
 }
+
 
 // --- ⚙️ ORQUESTACIÓN MODULAR DEL PANEL DE ADMINISTRACIÓN ---
 
