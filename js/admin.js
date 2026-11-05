@@ -153,7 +153,6 @@ export async function cargarUsuariosAdmin() {
             return;
         }
 
-        // Estructura de tabla limpia y responsiva para gestión de Jefatura
         let html = `
             <table style="width:100%; border-collapse:collapse; font-family:sans-serif; text-align:left; font-size:14px;">
                 <thead>
@@ -168,7 +167,6 @@ export async function cargarUsuariosAdmin() {
         `;
 
         usuarios.forEach(user => {
-            // Evaluamos defensivamente el código de voluntario mapeado de la BD
             const codVoluntario = user.codigo_voluntario || '<span style="color:#9ca3af; font-size:12px;">Sin código</span>';
             const cumple = user.cumple_dia && user.cumple_mes ? `${user.cumple_dia}/${user.cumple_mes}` : '-';
             
@@ -200,17 +198,16 @@ export async function cargarTodosLosEventosEdge() {
 
     if (!cEmergencias || !cOperativos || !cPreventivos) return;
 
-    // 🛠️ REPARACIÓN COLECTIVA: Recuperamos el identificador de seguridad requerido por el microservicio
+    // 1. Inyectamos de forma segura el admin_id para evitar el Bad Request (400)
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
     try {
-        // Inyectamos el query string exigido (?admin_id=...) de forma idéntica a admin-list-users-ts
         const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${adminId}`);
-        
         if (!res.ok) throw new Error('Error al listar catálogo unificado.');
 
-        const { elementos } = await res.json();
-        const lista = elementos || [];
+        // 2. CORRECCIÓN CLAVE: Extraemos la propiedad 'data' que es la que envía el backend real
+        const { data } = await res.json();
+        const lista = data || [];
 
         // Limpieza reactiva previa de contenedores
         cEmergencias.innerHTML = '';
@@ -225,20 +222,21 @@ export async function cargarTodosLosEventosEdge() {
             return;
         }
 
-        // Clasificación por tipo físico real de BD ('EMR', 'OPR', 'NRP')
+        // Clasificación adaptada a los strings completos que inyecta la función loop de Deno ('emergencias', 'operativos', 'preventivos')
         lista.forEach(item => {
             const divNode = document.createElement('div');
             divNode.style.cssText = "padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif;";
             
             let colorTipo = "#4b5563";
-            if (item.tipo === 'EMR') colorTipo = "#dc2626";
-            if (item.tipo === 'OPR') colorTipo = "#0284c7";
-            if (item.tipo === 'NRP') colorTipo = "#b45309";
+            // Normalizamos la validación visual según los nombres físicos de tus tablas
+            if (item.tipo === 'emergencias' || item.tipo === 'EMR') colorTipo = "#dc2626";
+            if (item.tipo === 'operativos' || item.tipo === 'OPR') colorTipo = "#0284c7";
+            if (item.tipo === 'preventivos' || item.tipo === 'NRP') colorTipo = "#b45309";
 
             divNode.innerHTML = `
                 <div>
-                    <strong style="color:${colorTipo};">${escapeHTML(item.nombre)}</strong>
-                    <span style="font-size:12px; color:#6b7280; margin-left:8px;">${item.fecha || item.meta?.gravedad || ''}</span>
+                    <strong style="color:${colorTipo};">${escapeHTML(item.nombre || item.titulo || 'Sin nombre')}</strong>
+                    <span style="font-size:12px; color:#6b7280; margin-left:8px;">${item.fecha || item.meta?.gravedad || item.nivel || ''}</span>
                 </div>
                 <button class="btn-suscripcion-cross" data-id="${item.id}" data-tipo="${item.tipo}" 
                         style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:3px; cursor:pointer;">
@@ -252,9 +250,9 @@ export async function cargarTodosLosEventosEdge() {
                 await levantarModalInscripcionRapida(targetId, tAbrev);
             });
 
-            if (item.tipo === 'EMR') cEmergencias.appendChild(divNode);
-            if (item.tipo === 'OPR') cOperativos.appendChild(divNode);
-            if (item.tipo === 'NRP') cPreventivos.appendChild(divNode);
+            if (item.tipo === 'emergencias' || item.tipo === 'EMR') cEmergencias.appendChild(divNode);
+            if (item.tipo === 'operativos' || item.tipo === 'OPR') cOperativos.appendChild(divNode);
+            if (item.tipo === 'preventivos' || item.tipo === 'NRP') cPreventivos.appendChild(divNode);
         });
 
     } catch (err) {
@@ -269,10 +267,9 @@ async function levantarModalInscripcionRapida(elementoId, tipoAbrev) {
     const vId = prompt("Ingrese el UUID del 'usuario_id' del voluntario a inscribir:");
     if (!vId) return;
 
-    // Normalización defensiva para cumplir estrictamente la regla 2 de la Edge Function
     let tipoCompleto = "operativos";
-    if (tipoAbrev === "NRP") tipoCompleto = "preventivos";
-    if (tipoAbrev === "EMR") tipoCompleto = "emergencias";
+    if (tipoAbrev === "preventivos" || tipoAbrev === "NRP") tipoCompleto = "preventivos";
+    if (tipoAbrev === "emergencias" || tipoAbrev === "EMR") tipoCompleto = "emergencias";
 
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
@@ -297,7 +294,6 @@ async function levantarModalInscripcionRapida(elementoId, tipoAbrev) {
     }
 }
 
-// Helper nativo anti inyecciones HTML
 function escapeHTML(str) {
     if (!str) return '';
     return str.replace(/[&<>'"]/g, 
