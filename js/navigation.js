@@ -2,7 +2,7 @@
 
 // Importamos la conexión segura de tu configuración local
 import { db as supabase } from './supabase-config.js';
-// 🚀 Interceptor Reactivo: Importamos la lógica de carga para la ficha del voluntario
+// 🚀 Interceptor Reactivo: Importamos la lógica para re-pintar dinámicamente el perfil
 import { initProfileScreen } from './profile.js';
 
 // Estados locales de la alerta de audio
@@ -50,19 +50,19 @@ export function showScreen(screenId) {
         console.warn(`La pantalla con ID "${screenId}" no existe en el DOM.`);
     }
 
-    // 🌟 INTERCEPTOR REACTIVO: Si la pantalla que se activa es la de Perfil, cargamos sus datos en tiempo real
-    if (screenId === 'profile-screen' || screenId === 'profile') {
+    // 🌟 REPARACIÓN OPERATIVA: Si la pantalla activada es el Perfil, forzamos su pintado asíncrono
+    // dándole un contenedor base limpio para que profile.js inyecte los datos frescos.
+    if (screenId === 'perfil') {
         const currentUserId = window.usuario_id;
-
         if (currentUserId) {
-            // Orquestamos la petición reactiva delegando el peso al microservicio en profile.js
+            // Aseguramos el nodo esqueleto sobre el cual profile.js pintará la ficha técnica y las tarjetas
+            currentScreen.innerHTML = `
+                <div style="padding:20px; font-family:sans-serif;">
+                    <div id="profile-subscriptions-container"></div>
+                </div>
+            `;
+            // Disparamos la lectura directa a las tablas de Supabase
             initProfileScreen(currentUserId);
-        } else {
-            console.warn("Advertencia: No se detectó 'window.usuario_id' en la sesión actual.");
-            const container = document.getElementById('profile-subscriptions-container');
-            if (container) {
-                container.innerHTML = `<p style="color:#ef4444; padding:20px; font-family:sans-serif;">Sesión no válida o expirada. Por favor, reautentícate.</p>`;
-            }
         }
     }
 }
@@ -79,7 +79,7 @@ export function initNavigation(callbacks = {}) {
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 
-                // Si el voluntario entra a la pestaña Admin, autoejecutamos el esqueleto y sus cargas Edge
+                // Si entra a la pestaña Admin, autoejecutamos el esqueleto y sus cargas Edge
                 if (targetScreen === 'admin') {
                     cargarListadoAdmin();
                 }
@@ -89,6 +89,7 @@ export function initNavigation(callbacks = {}) {
         });
     });
 }
+
 // --- ⚙️ ORQUESTACIÓN MODULAR DEL PANEL DE ADMINISTRACIÓN ---
 
 export async function cargarListadoAdmin() {
@@ -129,7 +130,7 @@ export async function cargarListadoAdmin() {
                 <div style="flex:2; min-width:180px;">
                     <input type="text" id="usuario-nombre" placeholder="Nombre completo del voluntario" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
                 </div>
-                <!-- 🌟 NUEVO CAMPO: Identificador Único de Acceso Alternativo -->
+                <!-- 🌟 Identificador Único de Acceso Alternativo -->
                 <div style="flex:1; min-width:100px;">
                     <input type="text" id="usuario-codigo" placeholder="Cód. Voluntario (Ej: V-104)" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; text-transform:uppercase;">
                 </div>
@@ -177,7 +178,7 @@ export async function cargarListadoAdmin() {
     const adminModule = await import('./admin.js');
     adminModule.initAdminFormListeners();
     adminModule.cargarUsuariosAdmin();
-    await adminModule.cargarTodosLosEventosEdge(); // 👈 Llama a la nueva consulta unificada
+    await adminModule.cargarTodosLosEventosEdge();
 }
 
 // Función puente para mantener compatibilidad con modales externos de actualización
