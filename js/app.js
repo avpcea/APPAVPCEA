@@ -1,20 +1,19 @@
 // =========================================================================
-// ARCHIVO: app.js (PARTE 1 MODIFICADA: TOKEN GLOBAL DINÁMICO DESDE SUPABASE)
+// ARCHIVO: app.js (PARTE 1 MODIFICADA: FLUJO DE ACCESO SIN DESTRUCCIÓN DEL DOM)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { initNavigation, showScreen } from './navigation.js';
 
-const APP_VERSION_ACTUAL = "2.1.0"; // Versión física local actual del frontend
+const APP_VERSION_ACTUAL = "2.1.0"; 
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. CONTROL DE VERSIÓN AUTOMATIZADO
+    // 1. CONTROL DE VERSIÓN AUTOMATIZADO (Preserva el DOM si es correcta)
     const versionValida = await verificarVersionApp();
     if (!versionValida) return; 
 
     // 2. COMPROBACIÓN DEL FILTRO 1: Token Global de Acceso (Persiste por pestaña)
     const tokenValidado = sessionStorage.getItem("token_global_aprobado");
     if (!tokenValidado) {
-        // Consultamos el token fresco directamente desde la base de datos
         await solicitarTokenGlobalDinamico();
         return;
     }
@@ -24,9 +23,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     if (usuarioIdGuardado) {
         window.usuario_id = usuarioIdGuardado;
-        initNavigation();
         
-        // 🚀 CORRECCIÓN: Apuntamos directamente al ID real de tu pantalla de perfil
+        // Inicializamos los botones e interfaces nativas que ya existen en el HTML
+        initNavigation();
+        // Forzamos el aterrizaje reactivo en tu pantalla de perfil pactada
         showScreen('perfil'); 
     } else {
         solicitarIdentificacionVoluntario();
@@ -48,7 +48,7 @@ async function verificarVersionApp() {
 
         if (data && data.valor !== APP_VERSION_ACTUAL) {
             document.body.innerHTML = `
-                <div style="padding:40px; text-align:center; font-family:sans-serif; background:#fef2f2; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <div style="padding:40px; text-align:center; font-family:sans-serif; background:#fef2f2; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:999999; position:fixed; top:0; left:0; width:100vw; box-sizing:border-box;">
                     <h2 style="color:#dc2626; margin-bottom:10px;">🔄 Actualización Requerida</h2>
                     <p style="color:#4b5563; max-width:400px; line-height:1.5;">Estás usando la versión v${APP_VERSION_ACTUAL}. Existe una versión crítica más reciente (v${data.valor}). Limpia la caché de tu navegador para actualizar de inmediato.</p>
                 </div>
@@ -64,7 +64,7 @@ async function verificarVersionApp() {
 }
 
 /**
- * Descarga el token vigente de la base de datos y despliega la pasarela visual
+ * Superpone el Filtro 1 en una capa absoluta sin destruir la estructura nativa del index.html
  */
 async function solicitarTokenGlobalDinamico() {
     let tokenRemoto = "";
@@ -79,33 +79,39 @@ async function solicitarTokenGlobalDinamico() {
         if (error) throw error;
         tokenRemoto = data?.valor;
     } catch (err) {
-        console.error("Error crítico: No se pudo obtener el token de autorización remota.", err);
-        document.body.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626; text-align:center;">Fallo de enlace de seguridad con Supabase. Contacte con Sistemas.</p>`;
+        console.error("Error crítico de enlace:", err);
+        alert("Fallo de enlace de seguridad con Supabase.");
         return;
     }
 
-    document.body.innerHTML = `
-        <div id="filtro-token" style="padding:30px; font-family:sans-serif; text-align:center; margin-top:15vh;">
-            <h2 style="color:#1f2937;">Acceso al Ecosistema AVPCEA</h2>
-            <p style="color:#6b7280; font-size:14px; margin-bottom:20px;">Introduce el token general de autorización de la agrupación.</p>
-            <input type="password" id="input-token-global" placeholder="Token General de Acceso" style="padding:10px; border:1px solid #ccc; border-radius:4px; width:260px; text-align:center; margin-bottom:15px; font-size:16px;"><br>
-            <button id="btn-validar-token" style="padding:10px 20px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Validar Token</button>
-            <p id="error-token" style="color:#dc2626; font-size:13px; margin-top:10px; display:none;">Token incorrecto. Acceso denegado.</p>
-        </div>
+    // Creamos un contenedor flotante absoluto (modal de bloqueo)
+    const bloqueoElemento = document.createElement('div');
+    bloqueoElemento.id = "bloqueo-pantalla-token";
+    bloqueoElemento.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; z-index:99999; padding-top:15vh; font-family:sans-serif; text-align:center; box-sizing:border-box;";
+    
+    bloqueoElemento.innerHTML = `
+        <h2 style="color:#1f2937;">Acceso al Ecosistema AVPCEA</h2>
+        <p style="color:#6b7280; font-size:14px; margin-bottom:20px;">Introduce el token general de autorización de la agrupación.</p>
+        <input type="password" id="input-token-global" placeholder="Token General de Acceso" style="padding:10px; border:1px solid #ccc; border-radius:4px; width:260px; text-align:center; margin-bottom:15px; font-size:16px;"><br>
+        <button id="btn-validar-token" style="padding:10px 20px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Validar Token</button>
+        <p id="error-token" style="color:#dc2626; font-size:13px; margin-top:10px; display:none;">Token incorrecto. Acceso denegado.</p>
     `;
+
+    document.body.appendChild(bloqueoElemento);
 
     document.getElementById('btn-validar-token').addEventListener('click', () => {
         const input = document.getElementById('input-token-global').value.trim();
         
-        // Validación contra el registro en tiempo real de la base de datos
         if (input === tokenRemoto) {
             sessionStorage.setItem("token_global_aprobado", "true");
-            location.reload(); 
+            bloqueoElemento.remove(); // Removemos la capa de bloqueo de la memoria viva
+            location.reload(); // Recargamos para inicializar las pantallas reales intactas
         } else {
             document.getElementById('error-token').style.display = 'block';
         }
     });
 }
+
 // =========================================================================
 // ARCHIVO: app.js (PARTE 2: INTERFAZ DE IDENTIFICACIÓN DINÁMICA DE VOLUNTARIOS)
 // =========================================================================
