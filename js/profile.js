@@ -123,9 +123,9 @@ function renderListaTarjetas(container, eventos) {
         
         // Mapeo dinámico de estilos de borde por tipo de evento físico relacional
         let borderStyle = '4px solid #9ca3af'; // Por defecto
-        if (evento.tipo === 'EMR') borderStyle = '4px solid #dc2626'; // Emergencias
-        if (evento.tipo === 'OPR') borderStyle = '4px solid #0284c7'; // Operativos
-        if (evento.tipo === 'NRP') borderStyle = '4px solid #b45309'; // Preventivos
+        if (evento.tipo === 'emergencias' || evento.tipo === 'EMR') borderStyle = '4px solid #dc2626'; // Emergencias
+        if (evento.tipo === 'operativos' || evento.tipo === 'OPR') borderStyle = '4px solid #0284c7'; // Operativos
+        if (evento.tipo === 'preventivos' || evento.tipo === 'NRP') borderStyle = '4px solid #b45309'; // Preventivos
 
         tarjeta.style.background = '#fff';
         tarjeta.style.padding = '15px';
@@ -135,15 +135,19 @@ function renderListaTarjetas(container, eventos) {
         tarjeta.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
 
         const tipoTexto = TIPO_MAP_TEXTO[evento.tipo] || evento.tipo;
+        
+        // 🛠️ REPARACIÓN DEFENSIVA: Si la columna física es 'titulo' en vez de 'nombre', se mapea correctamente
+        const tituloSuscripcion = evento.nombre || evento.titulo || 'Elemento sin título';
+        const fechaSuscripcion = evento.fecha || 'Sin fecha asignada';
 
         tarjeta.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <h4 style="margin: 0; color: #111827; font-size: 16px; font-weight: 600;">${escapeHTML(evento.nombre)}</h4>
+                <h4 style="margin: 0; color: #111827; font-size: 16px; font-weight: 600;">${escapeHTML(tituloSuscripcion)}</h4>
                 <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 3px 8px; border-radius: 12px; background: #f3f4f6; color: #374151;">
                     ${tipoTexto}
                 </span>
             </div>
-            <p style="margin: 0 0 6px 0; color: #4b5563; font-size: 13px;"><strong>📅 Fecha:</strong> ${evento.fecha || 'Sin fecha asignada'}</p>
+            <p style="margin: 0 0 6px 0; color: #4b5563; font-size: 13px;"><strong>📅 Fecha:</strong> ${fechaSuscripcion}</p>
             <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.4;">${escapeHTML(evento.descripcion || 'Sin descripción disponible.')}</p>
         `;
 
