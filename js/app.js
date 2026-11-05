@@ -25,7 +25,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (usuarioIdGuardado) {
         window.usuario_id = usuarioIdGuardado;
         initNavigation();
-        showScreen('home-screen'); 
+        
+        // 🚀 CORRECCIÓN: Apuntamos directamente al ID real de tu pantalla de perfil
+        showScreen('perfil'); 
     } else {
         solicitarIdentificacionVoluntario();
     }
