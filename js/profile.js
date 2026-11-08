@@ -1,16 +1,12 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: DIAGNÓSTICO EN VIVO DE PAYLOADS)
+// ARCHIVO: profile.js (PARTE 1: VISUALIZACIÓN DE METADATOS Y TOKEN INDIVIDUAL)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
 
 const TIPO_MAP_TEXTO = {
-    'operativos': 'Operativo',
-    'preventivos': 'Preventivo',
-    'emergencias': 'Emergencia',
-    'OPR': 'Operativo',
-    'NRP': 'Preventivo',
-    'EMR': 'Emergencia'
+    'operativos': 'Operativo', 'preventivos': 'Preventivo', 'emergencias': 'Emergencia',
+    'OPR': 'Operativo', 'NRP': 'Preventivo', 'EMR': 'Emergencia'
 };
 
 export async function initProfileScreen(usuarioId) {
@@ -20,9 +16,10 @@ export async function initProfileScreen(usuarioId) {
     profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
+        // 🚀 Traemos 'codigo_voluntario' explícitamente desde la tabla usuarios
         const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
-            supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes').eq('id', usuarioId).single(),
-            supabase.from('suscripciones').select('*').eq('usuario_id', usuarioId), // 🔍 Traemos todo el objeto para auditar sus columnas reales
+            supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes, codigo_voluntario').eq('id', usuarioId).single(),
+            supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${usuarioId}`)
         ]);
 
@@ -31,16 +28,11 @@ export async function initProfileScreen(usuarioId) {
         if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio de eventos.');
 
         const usuario = usuarioRes.data;
-        const listaSuscripciones = suscripcionesRes.data || [];
-        
+        const listaSuscripciones = suscripcionesRes.data ||;
         const { data } = await eventosRes.json();
-        const listaEventos = data || [];
+        const listaEventos = data ||;
 
-        // 🚨 CHIVATO DE DIAGNÓSTICO: Abre la consola (F12) para inspeccionar qué estructura física tienen las tablas relacionales reales
-        console.log("--- 🕵️ AUDITORÍA DE DATOS AVPCEA ---");
-        console.log("Mis Suscripciones en BD:", listaSuscripciones);
-        console.log("Catálogo Global de Eventos (Edge):", listaEventos);
-
+        // 🌟 RENDERIZADO TÉCNICO: Mostramos el Token Individual (Código) bien visible
         const headerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
@@ -51,6 +43,14 @@ export async function initProfileScreen(usuarioId) {
                 <p style="margin:4px 0; color:#4b5563;"><strong>Nombre:</strong> ${escapeHTML(usuario.nombre)}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Cumpleaños:</strong> ${usuario.cumple_dia && usuario.cumple_mes ? `${usuario.cumple_dia}/${usuario.cumple_mes}` : 'No definido'}</p>
+                
+                <!-- 🔑 VISUALIZACIÓN DEL TOKEN INDIVIDUAL DE ACCESO -->
+                <p style="margin:10px 0 0 0; padding-top:10px; border-top:1px dashed #d1d5db; color:#4b5563;">
+                    <strong>🔑 Mi Token Individual (Código):</strong> 
+                    <span style="font-family:monospace; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:14px;">
+                        ${escapeHTML(usuario.codigo_voluntario || 'SIN ASIGNAR')}
+                    </span>
+                </p>
             </div>
             <h3 style="font-family:sans-serif; color:#1f2937; margin-bottom:15px;">📅 Mis Dispositivos y Eventos Suscritos</h3>
             <div id="profile-events-inner-list"></div>
@@ -63,13 +63,8 @@ export async function initProfileScreen(usuarioId) {
             }
         });
 
-        // Intentamos un cruce adaptativo por si la columna física en la tabla es 'id' del elemento o algo diferente
         const eventosSuscritos = listaEventos.filter(evento => {
-            return listaSuscripciones.some(suscripcion => {
-                // Buscamos coincidencia dinámica de IDs cruzando las propiedades comunes de tu base de datos
-                const refIdSuscripcion = suscripcion.evento_id || suscripcion.id_elemento || suscripcion.id;
-                return String(refIdSuscripcion) === String(evento.id);
-            });
+            return listaSuscripciones.some(suscripcion => String(suscripcion.evento_id) === String(evento.id));
         });
 
         const listInnerContainer = document.getElementById('profile-events-inner-list');
@@ -77,16 +72,10 @@ export async function initProfileScreen(usuarioId) {
 
     } catch (error) {
         console.error('Excepción en ProfileModule:', error);
-        profileContainer.innerHTML = `
-            <div class="error-container" style="padding:20px; font-family:sans-serif; text-align:center;">
-                <p style="color:#dc2626; font-weight:bold;">No se pudo procesar tu ficha personal.</p>
-                <p style="color:#6b7280; font-size:13px;">${error.message}</p>
-                <button id="btn-retry-profile" style="padding:8px 15px; background:#4b5563; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Reintentar</button>
-            </div>
-        `;
-        document.getElementById('btn-retry-profile')?.addEventListener('click', () => initProfileScreen(usuarioId));
+        profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px;">Error al cargar ficha.</p>`;
     }
 }
+
 
 
 /**
