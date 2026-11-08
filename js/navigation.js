@@ -65,7 +65,7 @@ export function showScreen(screenId) {
 }
 
 /**
- * Descarga y renderiza el catálogo unificado cruzando las suscripciones reales del voluntario
+ * Descarga y renderiza el catálogo unificado cruzando de forma estricta ID + Tipo
  */
 async function cargarCatalogoPublicoVoluntarios(screenId) {
     const contenedorPantalla = document.getElementById(screenId);
@@ -76,10 +76,17 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
     const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
 
+    // Diccionario de equivalencias para emparejar la Edge Function con los códigos cortos de la BD
+    const traductorTipoBD = {
+        'operativos': 'OPR',
+        'preventivos': 'NRP',
+        'emergencias': 'EMR'
+    };
+
     try {
         const uId = window.usuario_id;
 
-        // 🚀 MEJORA CRÍTICA: Descargamos en paralelo los eventos globales y las suscripciones reales del voluntario activo
+        // Descargamos en paralelo el catálogo de la Edge y las suscripciones físicas de Postgres
         const [eventosRes, misSuscripcionesRes] = await Promise.all([
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
@@ -116,8 +123,16 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
             const titulo = item.titulo || item.nombre || 'Servicio sin título';
             const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
 
-            // 🚀 VERIFICACIÓN REACTIVA: Evaluamos si el voluntario ya consta como inscrito en este dispositivo específico
-            const yaInscrito = misSuscripciones.some(s => String(s.evento_id) === String(item.id));
+            // 🚀 REPARACIÓN COMPUESTA CRÍTICA:
+            // Buscamos que coincida el ID del evento AND que el tipo guardado en la BD ('OPR'/'NRP') 
+            // se corresponda con el tipo que entrega la Edge Function ('operativos'/'preventivos')
+            const yaInscrito = misSuscripciones.some(s => {
+                const mismoId = String(s.evento_id) === String(item.id);
+                const codigoCortoEsperado = traductorTipoBD[String(item.tipo).toLowerCase()];
+                const mismoTipo = String(s.tipo).toUpperCase() === String(codigoCortoEsperado);
+                
+                return mismoId && mismoTipo;
+            });
 
             // Configuramos los estilos del botón según el estado real de la BD
             let textoBoton = "✍️ Apuntarme";
@@ -139,7 +154,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
                 </button>
             `;
 
-            // Escuchador de inscripción directa (solo se activa si no estaba inscrito previamente)
             if (!yaInscrito) {
                 card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
                     e.target.disabled = true;
@@ -165,6 +179,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
     }
 }
+
 
 
 /**
