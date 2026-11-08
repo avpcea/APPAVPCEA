@@ -1,13 +1,63 @@
 // =========================================================================
-// ARCHIVO: admin.js (PARTE 1: ESCUCHADORES DE FORMULARIOS Y COMMITS EDGE)
+// ARCHIVO: admin.js (PARTE 1: ESCUCHADORES DE FORMULARIOS Y PARÁMETROS JEFATURA)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
+
+/**
+ * Descarga los parámetros vigentes de Supabase y rellena el formulario de Jefatura
+ */
+export async function cargarConfiguracionesGlobalesForm() {
+    const txtToken = document.getElementById('cfg-token-global');
+    const txtVersion = document.getElementById('cfg-version-minima');
+    if (!txtToken || !txtVersion) return;
+
+    try {
+        const { data, error } = await supabase.from('configuraciones').select('*');
+        if (error) throw error;
+
+        data.forEach(param => {
+            if (param.clave === 'token_global_acceso') txtToken.value = param.valor;
+            if (param.clave === 'version_minima') txtVersion.value = param.valor;
+        });
+    } catch (err) {
+        console.error("Error al poblar formulario técnico:", err.message);
+    }
+}
 
 /**
  * Inicializa los listeners de los formularios inyectados dinámicamente en el DOM
  */
 export function initAdminFormListeners() {
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+
+    // ⚙️ ACTUALIZACIÓN DE PARÁMETROS CRÍTICOS (JEFATURA)
+    const formConfig = document.getElementById('form-configuraciones-globales');
+    if (formConfig) {
+        formConfig.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = formConfig.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerText = 'Guardando...';
+
+            const nuevoToken = document.getElementById('cfg-token-global').value.trim();
+            const nuevaVersion = document.getElementById('cfg-version-minima').value.trim();
+
+            try {
+                // Actualizamos ambos registros de forma paralela en la tabla configuraciones
+                await Promise.all([
+                    supabase.from('configuraciones').update({ valor: nuevoToken }).eq('clave', 'token_global_acceso'),
+                    supabase.from('configuraciones').update({ valor: nuevaVersion }).eq('clave', 'version_minima')
+                ]);
+
+                alert('Parámetros globales del ecosistema actualizados con éxito.');
+            } catch (err) {
+                alert(`Error al guardar en Supabase: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Guardar Parámetros';
+            }
+        });
+    }
 
     // 👥 REGISTRO DE VOLUNTARIOS CON CÓDIGO ÚNICO
     const formUsuario = document.getElementById('form-nuevo-usuario');
@@ -18,7 +68,6 @@ export function initAdminFormListeners() {
             btn.disabled = true;
             btn.innerText = 'Registrando...';
 
-            // Captura estricta del nuevo identificador alternativo e inputs físicos
             const nombre = document.getElementById('usuario-nombre').value.trim();
             const codigo = document.getElementById('usuario-codigo').value.trim().toUpperCase();
             const telefono = document.getElementById('usuario-telefono').value.trim();
@@ -32,7 +81,7 @@ export function initAdminFormListeners() {
                     body: JSON.stringify({
                         admin_id: adminId,
                         nombre,
-                        codigo_voluntario: codigo, // 🌟 Parámetro inyectado al microservicio
+                        codigo_voluntario: codigo,
                         telefono,
                         cumple_dia: cumpleDia,
                         cumple_mes: cumpleMes
@@ -44,10 +93,9 @@ export function initAdminFormListeners() {
 
                 formUsuario.reset();
                 alert('Voluntario registrado con éxito.');
-                cargarUsuariosAdmin(); // Recarga reactiva del listado compartido
+                cargarUsuariosAdmin();
 
             } catch (err) {
-                console.error('Error al crear voluntario:', err);
                 alert(`No se pudo registrar: ${err.message}`);
             } finally {
                 btn.disabled = false;
@@ -55,6 +103,7 @@ export function initAdminFormListeners() {
             }
         });
     }
+
 
     // 🚨 REGISTRO DE EMERGENCIAS (MÁXIMA PRIORIDAD)
     const formEmergencias = document.getElementById('form-emergencias');
