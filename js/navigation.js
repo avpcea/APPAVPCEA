@@ -197,7 +197,7 @@ export async function cargarListadoAdmin() {
     const adminScreen = document.getElementById('admin') || document.querySelector('.screen-active') || document.getElementById('app');
     if (!adminScreen) return;
 
-    // Pintamos el esqueleto HTML con el orden estructurado solicitado (Emergencias ARRIBA del todo)
+    // Pintamos el esqueleto HTML con el orden estructurado solicitado
     adminScreen.innerHTML = `
       <h2 style="margin-bottom:20px; font-family:sans-serif; color:#1f2937;">Panel de Control AVPCEA</h2>
       
@@ -231,7 +231,6 @@ export async function cargarListadoAdmin() {
                 <div style="flex:2; min-width:180px;">
                     <input type="text" id="usuario-nombre" placeholder="Nombre completo del voluntario" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
                 </div>
-                <!-- 🌟 Identificador Único de Acceso Alternativo -->
                 <div style="flex:1; min-width:100px;">
                     <input type="text" id="usuario-codigo" placeholder="Cód. Voluntario (Ej: V-104)" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; text-transform:uppercase;">
                 </div>
@@ -272,17 +271,33 @@ export async function cargarListadoAdmin() {
             <div id="contenedor-listado-preventivos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
+        <!-- ⚙️ 5. PARÁMETROS CRÍTICOS DEL SISTEMA (EXCLUSIVO JEFATURA) -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #4b5563; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin-top:0; color:#4b5563; margin-bottom:15px;">⚙️ Configuración del Ecosistema Remoto</h3>
+            <form id="form-configuraciones-globales" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">🔑 Nuevo Token Global de Acceso:</label>
+                    <input type="text" id="cfg-token-global" required placeholder="Cargando token actual..." style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <div style="flex:1; min-width:120px;">
+                    <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">🔄 Versión Mínima App:</label>
+                    <input type="text" id="cfg-version-minima" required placeholder="Ej: 2.1.0" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <button type="submit" style="padding:9px 15px; background:#4b5563; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Guardar Parámetros</button>
+            </form>
+        </div>
+
       </div>
     `;
 
-    // 🚀 Inyección asíncrona limpia: Importamos el módulo y disparamos sus cargas de Edge Functions
+    // Inyección asíncrona: cargamos listeners de admin.js
     const adminModule = await import('./admin.js');
     adminModule.initAdminFormListeners();
     adminModule.cargarUsuariosAdmin();
     await adminModule.cargarTodosLosEventosEdge();
+    adminModule.cargarConfiguracionesGlobalesForm(); // 🚀 Carga inicial del formulario técnico
 }
 
-// Función puente para mantener compatibilidad con modales externos de actualización
 export async function cargarUsuariosAdmin() {
     const adminModule = await import('./admin.js');
     adminModule.cargarUsuariosAdmin();
