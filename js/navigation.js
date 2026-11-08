@@ -65,7 +65,8 @@ export function showScreen(screenId) {
 }
 
 /**
- * Descarga y renderiza el catálogo unificado cruzando de forma estricta ID + Tipo
+ * Descarga y renderiza el catálogo unificado, distinguiendo estrictamente por Tipo + ID,
+ * y habilita botones reversibles para apuntarse y borrarse en tiempo real.
  */
 async function cargarCatalogoPublicoVoluntarios(screenId) {
     const contenedorPantalla = document.getElementById(screenId);
@@ -76,7 +77,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
     const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
 
-    // Diccionario de equivalencias para emparejar la Edge Function con los códigos cortos de la BD
+    // Diccionario estricto para mapear lo que escupe la Edge Function contra los códigos físicos reales guardados en la BD
     const traductorTipoBD = {
         'operativos': 'OPR',
         'preventivos': 'NRP',
@@ -86,7 +87,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     try {
         const uId = window.usuario_id;
 
-        // Descargamos en paralelo el catálogo de la Edge y las suscripciones físicas de Postgres
+        // Descargamos de forma paralela los elementos globales y las suscripciones del voluntario activo
         const [eventosRes, misSuscripcionesRes] = await Promise.all([
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
@@ -96,10 +97,10 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         if (misSuscripcionesRes.error) throw new Error(`Error en tabla suscripciones: ${misSuscripcionesRes.error.message}`);
 
         const { data } = await eventosRes.json();
-        const listaGlobal = data || [];
-        const misSuscripciones = misSuscripcionesRes.data || [];
+        const listaGlobal = data ||;
+        const misSuscripciones = misSuscripcionesRes.data ||;
 
-        // Filtramos para que en cada pantalla solo salgan los elementos de su respectivo tipo
+        // Filtramos para que en cada pantalla solo salgan los elementos de su tipo nativo
         const elementosFiltrados = listaGlobal.filter(item => String(item.tipo).toLowerCase() === screenId);
 
         let html = `
@@ -123,54 +124,66 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
             const titulo = item.titulo || item.nombre || 'Servicio sin título';
             const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
 
-            // 🚀 REPARACIÓN COMPUESTA CRÍTICA:
-            // Buscamos que coincida el ID del evento AND que el tipo guardado en la BD ('OPR'/'NRP') 
-            // se corresponda con el tipo que entrega la Edge Function ('operativos'/'preventivos')
+            // 🎯 COMPROBACIÓN COMPUESTA EXACTA FIX:
+            // Forzamos la comparación usando los códigos reales que guarda tu base de datos ('OPR', 'NRP', 'EMR')
+            const codigoCortoEsperado = traductorTipoBD[String(item.tipo).toLowerCase()];
             const yaInscrito = misSuscripciones.some(s => {
                 const mismoId = String(s.evento_id) === String(item.id);
-                const codigoCortoEsperado = traductorTipoBD[String(item.tipo).toLowerCase()];
                 const mismoTipo = String(s.tipo).toUpperCase() === String(codigoCortoEsperado);
-                
                 return mismoId && mismoTipo;
             });
 
-            // Configuramos los estilos del botón según el estado real de la BD
+            // Definición reactiva de los estados del botón (Apuntarse / Darse de baja)
             let textoBoton = "✍️ Apuntarme";
             let estiloBoton = `background:${colorSeccion[screenId]}; color:#fff; cursor:pointer;`;
             if (yaInscrito) {
-                textoBoton = "✅ Inscrito";
-                estiloBoton = `background:#e6f4ea; color:#137333; cursor:default; font-weight:bold;`;
+                textoBoton = "❌ Darse de baja";
+                estiloBoton = `background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`;
             }
 
             card.innerHTML = `
                 <div style="flex:1; padding-right:15px;">
-                    <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${titulo}</h4>
+                    <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${escapeHTML(titulo)}</h4>
                     <p style="margin:0 0 6px 0; color:#4b5563; font-size:13px;">${metadata}</p>
                     <p style="margin:0; color:#6b7280; font-size:13px; line-height:1.4;">${item.descripcion || 'Sin descripción adicional.'}</p>
                 </div>
-                <button class="btn-autounirse" data-id="${item.id}" data-tipo="${item.tipo}" ${yaInscrito ? 'disabled' : ''} 
+                <button class="btn-autounirse" data-id="${item.id}" data-tipo="${item.tipo}" data-estado="${yaInscrito ? 'inscrito' : 'libre'}"
                         style="padding:8px 14px; border:none; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; ${estiloBoton}">
                     ${textoBoton}
                 </button>
             `;
 
-            if (!yaInscrito) {
-                card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
-                    e.target.disabled = true;
-                    e.target.innerText = "Procesando...";
-                    
+            // Escuchador dinámico polimórfico
+            card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
+                e.preventDefault();
+                const btn = e.target;
+                const estadoActual = btn.getAttribute('data-estado');
+                btn.disabled = true;
+                btn.innerText = "Procesando...";
+
+                if (estadoActual === 'libre') {
+                    // ➕ FLUJO DE ALTA RUTA EDGE FUNCTION
                     const exito = await ejecutarAutoInscripcion(item.id, item.tipo);
                     if (exito) {
-                        e.target.style.background = "#e6f4ea";
-                        e.target.style.color = "#137333";
-                        e.target.innerText = "✅ Inscrito";
-                        e.target.style.cursor = "default";
+                        btn.setAttribute('data-estado', 'inscrito');
+                        btn.style.cssText = `padding:8px 14px; border:none; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`;
+                        btn.innerText = "❌ Darse de baja";
                     } else {
-                        e.target.disabled = false;
-                        e.target.innerText = "✍️ Apuntarme";
+                        btn.innerText = "✍️ Apuntarme";
                     }
-                });
-            }
+                } else {
+                    // ➖ FLUJO DE BAJA RUTA DIRECTA POSTGRES (Desinscripción)
+                    const exitoBaja = await ejecutarBajaDirectaPostgres(item.id, codigoCortoEsperado);
+                    if (exitoBaja) {
+                        btn.setAttribute('data-estado', 'libre');
+                        btn.style.cssText = `padding:8px 14px; border:none; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:${colorSeccion[screenId]}; color:#fff; cursor:pointer;`;
+                        btn.innerText = "✍️ Apuntarme";
+                    } else {
+                        btn.innerText = "❌ Darse de baja";
+                    }
+                }
+                btn.disabled = false;
+            });
 
             listaCardsContainer.appendChild(card);
         });
@@ -180,53 +193,69 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     }
 }
 
-
-
 /**
  * Función puente que impacta la Edge Function de suscripciones usando el usuario logueado
  */
 async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
     const voluntarioId = window.usuario_id;
-    
-    // Normalización estricta para cumplir con el mapeo defensivo de la Edge Function
     let tipoCompleto = "operativos";
     const tNorm = String(tipoOriginal).toLowerCase();
     if (tNorm === "preventivos" || tNorm === "nrp") tipoCompleto = "preventivos";
     if (tNorm === "emergencias" || tNorm === "emr") tipoCompleto = "emergencias";
 
-    // Extraemos de forma defensiva la clave anon o el token de autorización del cliente seguro configurado
-    // Nota: Si en tu 'supabase-config.js' exportas el cliente directamente, accedemos a sus propiedades internas.
-    const apiKeySegura = supabase.supabaseKey || supabase.auth?.session?.()?.access_token || "";
+    const apiKeySegura = supabase.supabaseKey || "";
 
     try {
         const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                // 🚀 SOLUCIÓN CRÍTICA: Inyectamos la cabecera exigida por el API Gateway de Supabase Edge Functions
-                'Authorization': `Bearer ${apiKeySegura || 'tu-clave-anon-fija-si-falla-la-propiedad'}`
+                'Authorization': `Bearer ${apiKeySegura}`
             },
             body: JSON.stringify({
                 usuario_id: voluntarioId,
-                evento_id: String(elementoId), // Convertido a String plano tal como exige tu tabla
+                evento_id: String(elementoId),
                 tipo: tipoCompleto
-                // Al NO enviar 'admin_id', la Edge Function salta la verificación de roles administrativos
             })
         });
 
-        if (!res.ok) {
-            const errJson = await res.json().catch(() => ({}));
-            console.error("Rechazo del microservicio de suscripciones:", errJson);
-            alert(`Error al inscribirse: ${errJson.error || 'Permisos insuficientes'}`);
-            return false;
-        }
-
-        return true;
+        return res.ok;
     } catch (err) {
-        console.error("Fallo de red en auto-inscripción:", err);
+        console.error(err);
         return false;
     }
 }
+
+/**
+ * 🚀 NUEVO MÉTODO NATIVO DESACOPLADO: Ejecuta el borrado directo de la suscripción
+ * cruzando de forma estricta ID + Tipo Corto físico de base de datos
+ */
+async function ejecutarBajaDirectaPostgres(elementoId, codigoCortoTipo) {
+    const voluntarioId = window.usuario_id;
+    try {
+        const { error } = await supabase
+            .from('suscripciones')
+            .delete()
+            .eq('usuario_id', voluntarioId)
+            .eq('evento_id', String(elementoId))
+            .eq('tipo', codigoCortoTipo); // Filtro compuesto estricto: ej. 'OPR'
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error("Error al procesar baja en Postgres:", err.message);
+        alert(`No se pudo procesar la baja: ${err.message}`);
+        return false;
+    }
+}
+
+// Helper anti XSS
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+}
+
+
 
 
 
