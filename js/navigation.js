@@ -148,24 +148,42 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
  * Función puente que impacta la Edge Function de suscripciones usando el usuario logueado
  */
 async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
-    const adminId = window.usuario_id;
+    const voluntarioId = window.usuario_id;
+    
+    // Normalización estricta para cumplir con el mapeo defensivo de la Edge Function
+    let tipoCompleto = "operativos";
+    const tNorm = String(tipoOriginal).toLowerCase();
+    if (tNorm === "preventivos" || tNorm === "nrp") tipoCompleto = "preventivos";
+    if (tNorm === "emergencias" || tNorm === "emr") tipoCompleto = "emergencias";
+
     try {
         const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                usuario_id: adminId,
-                evento_id: elementoId,
-                tipo: tipoOriginal,
-                admin_id: adminId
+                usuario_id: voluntarioId,
+                evento_id: String(elementoId), // Convertido a String plano tal como exige tu tabla
+                tipo: tipoCompleto
+                // 🚀 Al NO enviar 'admin_id', la Edge Function permite la auto-inscripción libre 
+                // del voluntario sin exigirle que tenga rol de administrador en 'dispositivos'.
             })
         });
-        return res.ok;
+
+        // Si el backend da un error, leemos el JSON para dar visibilidad en consola
+        if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            console.error("Rechazo del microservicio de suscripciones:", errJson);
+            alert(`Error al inscribirse: ${errJson.error || 'Permisos insuficientes'}`);
+            return false;
+        }
+
+        return true;
     } catch (err) {
-        console.error(err);
+        console.error("Fallo de red en auto-inscripción:", err);
         return false;
     }
 }
+
 
 // Inicializador de la barra de navegación inferior automatizada con Admin
 export function initNavigation(callbacks = {}) {
