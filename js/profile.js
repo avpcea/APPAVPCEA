@@ -57,11 +57,16 @@ export async function initProfileScreen(usuarioId) {
         `;
         profileContainer.innerHTML = headerHTML;
 
-        document.getElementById('btn-logout-voluntario')?.addEventListener('click', () => {
+        // 🌟 REPARACIÓN DE SALIDA: Detenemos la propagación para aislar el evento del resto de la App
+        document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 👈 Corta el flujo hacia arriba evitando que salten triggers antiguos
+
             if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
                 cerrarSesionVoluntario();
             }
         });
+
 
         const eventosSuscritos = listaEventos.filter(evento => {
             return listaSuscripciones.some(suscripcion => String(suscripcion.evento_id) === String(evento.id));
