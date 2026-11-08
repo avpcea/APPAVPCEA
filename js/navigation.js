@@ -156,20 +156,26 @@ async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
     if (tNorm === "preventivos" || tNorm === "nrp") tipoCompleto = "preventivos";
     if (tNorm === "emergencias" || tNorm === "emr") tipoCompleto = "emergencias";
 
+    // Extraemos de forma defensiva la clave anon o el token de autorización del cliente seguro configurado
+    // Nota: Si en tu 'supabase-config.js' exportas el cliente directamente, accedemos a sus propiedades internas.
+    const apiKeySegura = supabase.supabaseKey || supabase.auth?.session?.()?.access_token || "";
+
     try {
         const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                // 🚀 SOLUCIÓN CRÍTICA: Inyectamos la cabecera exigida por el API Gateway de Supabase Edge Functions
+                'Authorization': `Bearer ${apiKeySegura || 'tu-clave-anon-fija-si-falla-la-propiedad'}`
+            },
             body: JSON.stringify({
                 usuario_id: voluntarioId,
                 evento_id: String(elementoId), // Convertido a String plano tal como exige tu tabla
                 tipo: tipoCompleto
-                // 🚀 Al NO enviar 'admin_id', la Edge Function permite la auto-inscripción libre 
-                // del voluntario sin exigirle que tenga rol de administrador en 'dispositivos'.
+                // Al NO enviar 'admin_id', la Edge Function salta la verificación de roles administrativos
             })
         });
 
-        // Si el backend da un error, leemos el JSON para dar visibilidad en consola
         if (!res.ok) {
             const errJson = await res.json().catch(() => ({}));
             console.error("Rechazo del microservicio de suscripciones:", errJson);
@@ -183,6 +189,7 @@ async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
         return false;
     }
 }
+
 
 
 // Inicializador de la barra de navegación inferior automatizada con Admin
