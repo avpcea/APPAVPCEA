@@ -28,9 +28,10 @@ export async function initProfileScreen(usuarioId) {
         if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio de eventos.');
 
         const usuario = usuarioRes.data;
-        const listaSuscripciones = suscripcionesRes.data ||;
+        // 🛠️ REPARACIÓN DE SINTAXIS: Se añade el array de contingencia [] antes del punto y coma
+        const listaSuscripciones = suscripcionesRes.data || [];
         const { data } = await eventosRes.json();
-        const listaEventos = data ||;
+        const listaEventos = data || [];
 
         // RENDERIZADO INTERACTIVO: Añadimos el botón de Modificar Código
         const headerHTML = `
@@ -62,7 +63,7 @@ export async function initProfileScreen(usuarioId) {
         `;
         profileContainer.innerHTML = headerHTML;
 
-        // 🌟 LISTENER 1: CIERRE DE SESIÓN PROTEGIDO CON CORTA-PROPAGACIÓN
+        // LISTENER 1: CIERRE DE SESIÓN PROTEGIDO CON CORTA-PROPAGACIÓN
         document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -71,7 +72,7 @@ export async function initProfileScreen(usuarioId) {
             }
         });
 
-        // 🌟 LISTENER 2: ACCIÓN REACTIVA PARA ACTUALIZAR EL TOKEN INDIVIDUAL
+        // LISTENER 2: ACCIÓN REACTIVA PARA ACTUALIZAR EL TOKEN INDIVIDUAL
         document.getElementById('btn-cambiar-token-individual')?.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -79,7 +80,7 @@ export async function initProfileScreen(usuarioId) {
             const actualToken = usuario.codigo_voluntario || "";
             const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso (Ej: V-104 o un PIN único):", actualToken);
             
-            if (nuevoToken === null) return; // Cancelado por el voluntario
+            if (nuevoToken === null) return; 
             
             const tokenLimpio = nuevoToken.trim().toUpperCase();
             if (!tokenLimpio) {
@@ -87,27 +88,24 @@ export async function initProfileScreen(usuarioId) {
                 return;
             }
 
-            if (tokenLimpio === actualToken) return; // Es idéntico, no operamos
+            if (tokenLimpio === actualToken) return; 
 
             try {
-                // Modificación directa sobre la fila del voluntario activo
                 const { error: updateError } = await supabase
                     .from('usuarios')
                     .update({ codigo_voluntario: tokenLimpio })
                     .eq('id', usuarioId);
 
                 if (updateError) {
-                    // Si Postgres salta con el código 23505 significa que está duplicado
                     if (updateError.code === '23505') {
                         throw new Error("Este token ya está siendo utilizado por otro compañero. Por favor, introduce uno diferente.");
                     }
                     throw updateError;
                 }
 
-                // Sincronización reactiva inmediata en la vista sin recargar la página
                 document.getElementById('lbl-token-individual').innerText = tokenLimpio;
                 usuario.codigo_voluntario = tokenLimpio;
-                alert("Tu token individual de acceso se ha modificado correctamente. Recuérdalo para tu próximo inicio de sesión.");
+                alert("Tu token individual de acceso se ha modificado correctamente.");
 
             } catch (err) {
                 alert(`Fallo al actualizar credencial: ${err.message}`);
@@ -126,6 +124,7 @@ export async function initProfileScreen(usuarioId) {
         profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px;">Error al cargar tu ficha personal.</p>`;
     }
 }
+
 
 
 
