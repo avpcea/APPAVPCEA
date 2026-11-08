@@ -1,10 +1,9 @@
-// js/navigation.js
-
-// Importamos la conexión segura de tu configuración local
+// =========================================================================
+// ARCHIVO: navigation.js (PARTE 1A: AUDIO E INTERCEPTOR CENTRAL DE PANTALLAS)
+// =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { initProfileScreen } from './profile.js';
 
-// Estados locales de la alerta de audio
 let ac = null, os = null;
 
 export function activarPitidoEmergencia() {
@@ -58,11 +57,16 @@ export function showScreen(screenId) {
         }
     }
 
-    // 🌟 INTERCEPTOR 2: Si el usuario entra a las pantallas públicas de voluntarios, pintamos su catálogo reactivo
+    // 🌟 INTERCEPTOR 2: Catálogos públicos reactivos de los Voluntarios
     if (screenId === 'operativos' || screenId === 'preventivos' || screenId === 'emergencias') {
         cargarCatalogoPublicoVoluntarios(screenId);
     }
 }
+
+
+// =========================================================================
+// ARCHIVO: navigation.js (PARTE 1B: MOTOR DE RENDERIZADO DEL CATÁLOGO PÚBLICO)
+// =========================================================================
 
 /**
  * Descarga y renderiza el catálogo unificado, distinguiendo estrictamente por Tipo + ID,
@@ -77,7 +81,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
     const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
 
-    // Diccionario estricto para mapear lo que escupe la Edge Function contra los códigos físicos reales guardados en la BD
     const traductorTipoBD = {
         'operativos': 'OPR',
         'preventivos': 'NRP',
@@ -87,7 +90,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
     try {
         const uId = window.usuario_id;
 
-        // Descargamos de forma paralela los elementos globales y las suscripciones del voluntario activo
         const [eventosRes, misSuscripcionesRes] = await Promise.all([
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
@@ -97,10 +99,9 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         if (misSuscripcionesRes.error) throw new Error(`Error en tabla suscripciones: ${misSuscripcionesRes.error.message}`);
 
         const { data } = await eventosRes.json();
-        const listaGlobal = data ||;
-        const misSuscripciones = misSuscripcionesRes.data ||;
+        const listaGlobal = data || [];
+        const misSuscripciones = misSuscripcionesRes.data || [];
 
-        // Filtramos para que en cada pantalla solo salgan los elementos de su tipo nativo
         const elementosFiltrados = listaGlobal.filter(item => String(item.tipo).toLowerCase() === screenId);
 
         let html = `
@@ -124,8 +125,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
             const titulo = item.titulo || item.nombre || 'Servicio sin título';
             const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
 
-            // 🎯 COMPROBACIÓN COMPUESTA EXACTA FIX:
-            // Forzamos la comparación usando los códigos reales que guarda tu base de datos ('OPR', 'NRP', 'EMR')
             const codigoCortoEsperado = traductorTipoBD[String(item.tipo).toLowerCase()];
             const yaInscrito = misSuscripciones.some(s => {
                 const mismoId = String(s.evento_id) === String(item.id);
@@ -133,7 +132,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
                 return mismoId && mismoTipo;
             });
 
-            // Definición reactiva de los estados del botón (Apuntarse / Darse de baja)
             let textoBoton = "✍️ Apuntarme";
             let estiloBoton = `background:${colorSeccion[screenId]}; color:#fff; cursor:pointer;`;
             if (yaInscrito) {
@@ -153,7 +151,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
                 </button>
             `;
 
-            // Escuchador dinámico polimórfico
             card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
                 e.preventDefault();
                 const btn = e.target;
@@ -162,7 +159,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
                 btn.innerText = "Procesando...";
 
                 if (estadoActual === 'libre') {
-                    // ➕ FLUJO DE ALTA RUTA EDGE FUNCTION
                     const exito = await ejecutarAutoInscripcion(item.id, item.tipo);
                     if (exito) {
                         btn.setAttribute('data-estado', 'inscrito');
@@ -172,7 +168,6 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
                         btn.innerText = "✍️ Apuntarme";
                     }
                 } else {
-                    // ➖ FLUJO DE BAJA RUTA DIRECTA POSTGRES (Desinscripción)
                     const exitoBaja = await ejecutarBajaDirectaPostgres(item.id, codigoCortoEsperado);
                     if (exitoBaja) {
                         btn.setAttribute('data-estado', 'libre');
@@ -192,6 +187,11 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
     }
 }
+
+
+// =========================================================================
+// ARCHIVO: navigation.js (PARTE 1C: OPERACIONES ASÍNCRONAS E INICIALIZACIÓN)
+// =========================================================================
 
 /**
  * Función puente que impacta la Edge Function de suscripciones usando el usuario logueado
@@ -227,8 +227,7 @@ async function ejecutarAutoInscripcion(elementoId, tipoOriginal) {
 }
 
 /**
- * 🚀 NUEVO MÉTODO NATIVO DESACOPLADO: Ejecuta el borrado directo de la suscripción
- * cruzando de forma estricta ID + Tipo Corto físico de base de datos
+ * Ejecuta el borrado directo de la suscripción cruzando de forma estricta ID + Tipo Corto físico
  */
 async function ejecutarBajaDirectaPostgres(elementoId, codigoCortoTipo) {
     const voluntarioId = window.usuario_id;
@@ -238,7 +237,7 @@ async function ejecutarBajaDirectaPostgres(elementoId, codigoCortoTipo) {
             .delete()
             .eq('usuario_id', voluntarioId)
             .eq('evento_id', String(elementoId))
-            .eq('tipo', codigoCortoTipo); // Filtro compuesto estricto: ej. 'OPR'
+            .eq('tipo', codigoCortoTipo);
 
         if (error) throw error;
         return true;
@@ -249,15 +248,10 @@ async function ejecutarBajaDirectaPostgres(elementoId, codigoCortoTipo) {
     }
 }
 
-// Helper anti XSS
 function escapeHTML(str) {
     if (!str) return '';
     return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
-
-
-
-
 
 // Inicializador de la barra de navegación inferior automatizada con Admin
 export function initNavigation(callbacks = {}) {
@@ -281,6 +275,7 @@ export function initNavigation(callbacks = {}) {
         });
     });
 }
+
 
 
 // --- ⚙️ ORQUESTACIÓN MODULAR DEL PANEL DE ADMINISTRACIÓN ---
