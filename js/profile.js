@@ -1,5 +1,5 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: VISUALIZACIÓN DE METADATOS Y TOKEN INDIVIDUAL)
+// ARCHIVO: profile.js (PARTE 1: VISUALIZACIÓN Y CAMBIO DE TOKEN INDIVIDUAL)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
@@ -16,7 +16,7 @@ export async function initProfileScreen(usuarioId) {
     profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
-        // 🚀 Traemos 'codigo_voluntario' explícitamente desde la tabla usuarios
+        // Traemos los metadatos y el código de voluntario activo
         const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes, codigo_voluntario').eq('id', usuarioId).single(),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
@@ -32,7 +32,7 @@ export async function initProfileScreen(usuarioId) {
         const { data } = await eventosRes.json();
         const listaEventos = data ||;
 
-        // 🌟 RENDERIZADO TÉCNICO: Mostramos el Token Individual (Código) bien visible
+        // RENDERIZADO INTERACTIVO: Añadimos el botón de Modificar Código
         const headerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
@@ -44,29 +44,75 @@ export async function initProfileScreen(usuarioId) {
                 <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Cumpleaños:</strong> ${usuario.cumple_dia && usuario.cumple_mes ? `${usuario.cumple_dia}/${usuario.cumple_mes}` : 'No definido'}</p>
                 
-                <!-- 🔑 VISUALIZACIÓN DEL TOKEN INDIVIDUAL DE ACCESO -->
-                <p style="margin:10px 0 0 0; padding-top:10px; border-top:1px dashed #d1d5db; color:#4b5563;">
-                    <strong>🔑 Mi Token Individual (Código):</strong> 
-                    <span style="font-family:monospace; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:14px;">
-                        ${escapeHTML(usuario.codigo_voluntario || 'SIN ASIGNAR')}
-                    </span>
-                </p>
+                <!-- SECCIÓN DEL TOKEN INDIVIDUAL EDITABLE -->
+                <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #d1d5db; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <p style="margin:0; color:#4b5563;">
+                        <strong>🔑 Mi Token Individual:</strong> 
+                        <span id="lbl-token-individual" style="font-family:monospace; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:14px;">
+                            ${escapeHTML(usuario.codigo_voluntario || 'SIN ASIGNAR')}
+                        </span>
+                    </p>
+                    <button id="btn-cambiar-token-individual" style="padding:4px 10px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">
+                        ✏️ Cambiar Token
+                    </button>
+                </div>
             </div>
             <h3 style="font-family:sans-serif; color:#1f2937; margin-bottom:15px;">📅 Mis Dispositivos y Eventos Suscritos</h3>
             <div id="profile-events-inner-list"></div>
         `;
         profileContainer.innerHTML = headerHTML;
 
-        // 🌟 REPARACIÓN DE SALIDA: Detenemos la propagación para aislar el evento del resto de la App
+        // 🌟 LISTENER 1: CIERRE DE SESIÓN PROTEGIDO CON CORTA-PROPAGACIÓN
         document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation(); // 👈 Corta el flujo hacia arriba evitando que salten triggers antiguos
-
+            e.stopPropagation();
             if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
                 cerrarSesionVoluntario();
             }
         });
 
+        // 🌟 LISTENER 2: ACCIÓN REACTIVA PARA ACTUALIZAR EL TOKEN INDIVIDUAL
+        document.getElementById('btn-cambiar-token-individual')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const actualToken = usuario.codigo_voluntario || "";
+            const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso (Ej: V-104 o un PIN único):", actualToken);
+            
+            if (nuevoToken === null) return; // Cancelado por el voluntario
+            
+            const tokenLimpio = nuevoToken.trim().toUpperCase();
+            if (!tokenLimpio) {
+                alert("El token de acceso no puede quedarse en blanco.");
+                return;
+            }
+
+            if (tokenLimpio === actualToken) return; // Es idéntico, no operamos
+
+            try {
+                // Modificación directa sobre la fila del voluntario activo
+                const { error: updateError } = await supabase
+                    .from('usuarios')
+                    .update({ codigo_voluntario: tokenLimpio })
+                    .eq('id', usuarioId);
+
+                if (updateError) {
+                    // Si Postgres salta con el código 23505 significa que está duplicado
+                    if (updateError.code === '23505') {
+                        throw new Error("Este token ya está siendo utilizado por otro compañero. Por favor, introduce uno diferente.");
+                    }
+                    throw updateError;
+                }
+
+                // Sincronización reactiva inmediata en la vista sin recargar la página
+                document.getElementById('lbl-token-individual').innerText = tokenLimpio;
+                usuario.codigo_voluntario = tokenLimpio;
+                alert("Tu token individual de acceso se ha modificado correctamente. Recuérdalo para tu próximo inicio de sesión.");
+
+            } catch (err) {
+                alert(`Fallo al actualizar credencial: ${err.message}`);
+            }
+        });
 
         const eventosSuscritos = listaEventos.filter(evento => {
             return listaSuscripciones.some(suscripcion => String(suscripcion.evento_id) === String(evento.id));
@@ -77,7 +123,7 @@ export async function initProfileScreen(usuarioId) {
 
     } catch (error) {
         console.error('Excepción en ProfileModule:', error);
-        profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px;">Error al cargar ficha.</p>`;
+        profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px;">Error al cargar tu ficha personal.</p>`;
     }
 }
 
