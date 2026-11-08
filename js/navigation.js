@@ -65,7 +65,7 @@ export function showScreen(screenId) {
 }
 
 /**
- * Descarga y renderiza el catálogo unificado para los voluntarios con botones de auto-inscripción rápida
+ * Descarga y renderiza el catálogo unificado cruzando las suscripciones reales del voluntario
  */
 async function cargarCatalogoPublicoVoluntarios(screenId) {
     const contenedorPantalla = document.getElementById(screenId);
@@ -73,20 +73,27 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
 
     contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#4b5563;">Consultando dispositivos disponibles...</p>`;
 
-    // Mapeo semántico para ajustar los títulos según la sección
     const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
     const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
 
     try {
         const uId = window.usuario_id;
-        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`);
-        if (!res.ok) throw new Error('Error al conectar con el microservicio.');
 
-        const { data } = await res.json();
-        const lista = data || [];
+        // 🚀 MEJORA CRÍTICA: Descargamos en paralelo los eventos globales y las suscripciones reales del voluntario activo
+        const [eventosRes, misSuscripcionesRes] = await Promise.all([
+            fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`),
+            supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
+        ]);
+
+        if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio.');
+        if (misSuscripcionesRes.error) throw new Error(`Error en tabla suscripciones: ${misSuscripcionesRes.error.message}`);
+
+        const { data } = await eventosRes.json();
+        const listaGlobal = data || [];
+        const misSuscripciones = misSuscripcionesRes.data || [];
 
         // Filtramos para que en cada pantalla solo salgan los elementos de su respectivo tipo
-        const elementosFiltrados = lista.filter(item => String(item.tipo).toLowerCase() === screenId);
+        const elementosFiltrados = listaGlobal.filter(item => String(item.tipo).toLowerCase() === screenId);
 
         let html = `
             <div style="padding:20px; font-family:sans-serif;">
@@ -109,32 +116,47 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
             const titulo = item.titulo || item.nombre || 'Servicio sin título';
             const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
 
+            // 🚀 VERIFICACIÓN REACTIVA: Evaluamos si el voluntario ya consta como inscrito en este dispositivo específico
+            const yaInscrito = misSuscripciones.some(s => String(s.evento_id) === String(item.id));
+
+            // Configuramos los estilos del botón según el estado real de la BD
+            let textoBoton = "✍️ Apuntarme";
+            let estiloBoton = `background:${colorSeccion[screenId]}; color:#fff; cursor:pointer;`;
+            if (yaInscrito) {
+                textoBoton = "✅ Inscrito";
+                estiloBoton = `background:#e6f4ea; color:#137333; cursor:default; font-weight:bold;`;
+            }
+
             card.innerHTML = `
                 <div style="flex:1; padding-right:15px;">
                     <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${titulo}</h4>
                     <p style="margin:0 0 6px 0; color:#4b5563; font-size:13px;">${metadata}</p>
                     <p style="margin:0; color:#6b7280; font-size:13px; line-height:1.4;">${item.descripcion || 'Sin descripción adicional.'}</p>
                 </div>
-                <button class="btn-autounirse" data-id="${item.id}" data-tipo="${item.tipo}" style="padding:8px 14px; background:${colorSeccion[screenId]}; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;">
-                    ✍️ Apuntarme
+                <button class="btn-autounirse" data-id="${item.id}" data-tipo="${item.tipo}" ${yaInscrito ? 'disabled' : ''} 
+                        style="padding:8px 14px; border:none; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; ${estiloBoton}">
+                    ${textoBoton}
                 </button>
             `;
 
-            // Enlace interactivo: Al pulsar "Apuntarme", el voluntario se inscribe a sí mismo usando su variable de sesión
-            card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
-                e.target.disabled = true;
-                e.target.innerText = "Procesando...";
-                
-                const exito = await ejecutarAutoInscripcion(item.id, item.tipo);
-                if (exito) {
-                    e.target.style.background = "#e6f4ea";
-                    e.target.style.color = "#137333";
-                    e.target.innerText = "✅ Inscrito";
-                } else {
-                    e.target.disabled = false;
-                    e.target.innerText = "✍️ Apuntarme";
-                }
-            });
+            // Escuchador de inscripción directa (solo se activa si no estaba inscrito previamente)
+            if (!yaInscrito) {
+                card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
+                    e.target.disabled = true;
+                    e.target.innerText = "Procesando...";
+                    
+                    const exito = await ejecutarAutoInscripcion(item.id, item.tipo);
+                    if (exito) {
+                        e.target.style.background = "#e6f4ea";
+                        e.target.style.color = "#137333";
+                        e.target.innerText = "✅ Inscrito";
+                        e.target.style.cursor = "default";
+                    } else {
+                        e.target.disabled = false;
+                        e.target.innerText = "✍️ Apuntarme";
+                    }
+                });
+            }
 
             listaCardsContainer.appendChild(card);
         });
@@ -143,6 +165,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
     }
 }
+
 
 /**
  * Función puente que impacta la Edge Function de suscripciones usando el usuario logueado
