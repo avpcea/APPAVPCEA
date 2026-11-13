@@ -1,5 +1,5 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: VISUALIZACIÓN Y CAMBIO DE TOKEN INDIVIDUAL)
+// ARCHIVO: profile.js (PARTE 1: COMPATIBLE CON CUALQUIER VOLUNTARIO)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
@@ -16,24 +16,28 @@ export async function initProfileScreen(usuarioId) {
     profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
 
     try {
-        // Traemos los metadatos y el código de voluntario activo
-        const [usuarioRes, suscripcionesRes, eventosRes] = await Promise.all([
+        // 🚀 SOLUCIÓN: Consultamos directo a las tablas para evitar el bloqueo 403 de admin-list-elements-ts
+        const [usuarioRes, suscripcionesRes, oprRes, nrpRes, emrRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes, codigo_voluntario').eq('id', usuarioId).single(),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
-            fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${usuarioId}`)
+            supabase.from('operativos').select('*'),
+            supabase.from('preventivos').select('*'),
+            supabase.from('emergencias').select('*')
         ]);
 
         if (usuarioRes.error) throw new Error(`Error al cargar perfil: ${usuarioRes.error.message}`);
         if (suscripcionesRes.error) throw new Error(`Error al cargar suscripciones: ${suscripcionesRes.error.message}`);
-        if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio de eventos.');
 
         const usuario = usuarioRes.data;
-        // 🛠️ REPARACIÓN DE SINTAXIS: Se añade el array de contingencia [] antes del punto y coma
         const listaSuscripciones = suscripcionesRes.data || [];
-        const { data } = await eventosRes.json();
-        const listaEventos = data || [];
 
-        // RENDERIZADO INTERACTIVO: Añadimos el botón de Modificar Código
+        // Unificamos el catálogo de las tres tablas inyectando su identificador de tipo
+        const listaEventos = [
+            ...(oprRes.data || []).map(item => ({ ...item, tipo: 'OPR' })),
+            ...(nrpRes.data || []).map(item => ({ ...item, tipo: 'NRP' })),
+            ...(emrRes.data || []).map(item => ({ ...item, tipo: 'EMR' }))
+        ];
+
         const headerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
@@ -45,7 +49,6 @@ export async function initProfileScreen(usuarioId) {
                 <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Cumpleaños:</strong> ${usuario.cumple_dia && usuario.cumple_mes ? `${usuario.cumple_dia}/${usuario.cumple_mes}` : 'No definido'}</p>
                 
-                <!-- SECCIÓN DEL TOKEN INDIVIDUAL EDITABLE -->
                 <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #d1d5db; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <p style="margin:0; color:#4b5563;">
                         <strong>🔑 Mi Token Individual:</strong> 
@@ -63,7 +66,6 @@ export async function initProfileScreen(usuarioId) {
         `;
         profileContainer.innerHTML = headerHTML;
 
-        // LISTENER 1: CIERRE DE SESIÓN PROTEGIDO CON CORTA-PROPAGACIÓN
         document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -72,23 +74,16 @@ export async function initProfileScreen(usuarioId) {
             }
         });
 
-        // LISTENER 2: ACCIÓN REACTIVA PARA ACTUALIZAR EL TOKEN INDIVIDUAL
         document.getElementById('btn-cambiar-token-individual')?.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
 
             const actualToken = usuario.codigo_voluntario || "";
-            const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso (Ej: V-104 o un PIN único):", actualToken);
-            
+            const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso:", actualToken);
             if (nuevoToken === null) return; 
             
             const tokenLimpio = nuevoToken.trim().toUpperCase();
-            if (!tokenLimpio) {
-                alert("El token de acceso no puede quedarse en blanco.");
-                return;
-            }
-
-            if (tokenLimpio === actualToken) return; 
+            if (!tokenLimpio || tokenLimpio === actualToken) return; 
 
             try {
                 const { error: updateError } = await supabase
@@ -97,28 +92,23 @@ export async function initProfileScreen(usuarioId) {
                     .eq('id', usuarioId);
 
                 if (updateError) {
-                    if (updateError.code === '23505') {
-                        throw new Error("Este token ya está siendo utilizado por otro compañero. Por favor, introduce uno diferente.");
-                    }
+                    if (updateError.code === '23505') throw new Error("Este token ya está en uso por otro compañero.");
                     throw updateError;
                 }
 
                 document.getElementById('lbl-token-individual').innerText = tokenLimpio;
                 usuario.codigo_voluntario = tokenLimpio;
-                alert("Tu token individual de acceso se ha modificado correctamente.");
-
+                alert("Token individual actualizado correctamente.");
             } catch (err) {
                 alert(`Fallo al actualizar credencial: ${err.message}`);
             }
         });
 
-        const traductorTipoBD = { 'operativos': 'OPR', 'preventivos': 'NRP', 'emergencias': 'EMR' };
-
+        // Filtrado compuesto estricto (ID + Tipo)
         const eventosSuscritos = listaEventos.filter(evento => {
-            const tipoEventoAbrev = traductorTipoBD[String(evento.tipo).toLowerCase()] || evento.tipo;
             return listaSuscripciones.some(suscripcion => 
                 String(suscripcion.evento_id) === String(evento.id) &&
-                String(suscripcion.tipo).trim().toUpperCase() === String(tipoEventoAbrev).toUpperCase()
+                String(suscripcion.tipo).trim().toUpperCase() === evento.tipo
             );
         });
 
@@ -127,10 +117,9 @@ export async function initProfileScreen(usuarioId) {
 
     } catch (error) {
         console.error('Excepción en ProfileModule:', error);
-        profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px;">Error al cargar tu ficha personal.</p>`;
+        profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px; font-family:sans-serif;">Error al cargar tu ficha personal: ${error.message}</p>`;
     }
 }
-
 
 
 
