@@ -34,6 +34,14 @@ export function detenerPitidoEmergencia() {
 }
 
 export function showScreen(screenId) {
+    // Seguridad: Si piden 'admin', verificamos que el botón esté visible (indicador de permiso)
+    if (screenId === 'admin') {
+        const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-screen="admin"]');
+        if (adminBtn && adminBtn.style.display === 'none') {
+            console.warn("Intento de acceso no autorizado al panel de administración.");
+            return;
+        }
+    }
     const screens = document.querySelectorAll('.app-screen'); 
     screens.forEach(screen => {
         screen.style.display = 'none'; 
@@ -215,12 +223,46 @@ function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
 
-export function initNavigation(callbacks = {}) {
+export async function initNavigation(callbacks = {}) {
     const navButtons = document.querySelectorAll('.bottom-nav .nav-btn');
+    const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-screen="admin"]');
+    
+    // 1. Ocultamos el botón por defecto hasta verificar permisos
+    if (adminBtn) adminBtn.style.display = 'none';
+
+    // 2. Consultamos en Supabase si el usuario activo es administrador
+    const uId = window.usuario_id;
+    let esAdmin = false;
+
+    if (uId) {
+        try {
+            const { data } = await supabase
+                .from('dispositivos')
+                .select('rol')
+                .eq('id', uId)
+                .maybeSingle();
+
+            if (data && data.rol === 'admin') {
+                esAdmin = true;
+                if (adminBtn) adminBtn.style.display = ''; // Restaura la visualización original
+            }
+        } catch (err) {
+            console.warn("No se pudo verificar el rol de administrador:", err);
+        }
+    }
+
+    // 3. Asignamos los eventos de navegación con bloqueo de seguridad
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault(); 
             const targetScreen = button.getAttribute('data-screen');
+            
+            // Bloqueo extra por si intentan forzar el clic
+            if (targetScreen === 'admin' && !esAdmin) {
+                alert("Acceso denegado: No tienes permisos de administrador.");
+                return;
+            }
+
             if (targetScreen) {
                 showScreen(targetScreen);
                 navButtons.forEach(btn => btn.classList.remove('active'));
@@ -235,6 +277,7 @@ export function initNavigation(callbacks = {}) {
         });
     });
 }
+
 
 
 // =========================================================================
