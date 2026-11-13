@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.usuario_id = usuarioIdGuardado;
         
         // Inicializamos los botones e interfaces nativas que ya existen en el HTML
-        initNavigation();
+        await initNavigation();
         // Forzamos el aterrizaje reactivo en tu pantalla de perfil pactada
         showScreen('perfil'); 
     } else {
