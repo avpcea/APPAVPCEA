@@ -234,8 +234,10 @@ export function initNavigation(callbacks = {}) {
         });
     });
 }
+
+
 // =========================================================================
-// ARCHIVO: js/navigation.js (BLOQUE 2A: PANEL DE ADMINISTRACIÓN - EMERGENCIAS Y VOLUNTARIOS)
+// ARCHIVO: js/navigation.js (PANEL DE ADMINISTRACIÓN - REORDENADO PARTE A)
 // =========================================================================
 
 export async function cargarListadoAdmin() {
@@ -268,7 +270,30 @@ export async function cargarListadoAdmin() {
             <div id="contenedor-listado-emergencias" style="max-height:220px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
-        <!-- 👥 2. GESTIÓN DE VOLUNTARIOS -->
+        <!-- 🔧 2. DISPOSITIVOS OPERATIVOS -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin-top:0; color:#0284c7; margin-bottom:15px;">🔧 Configurar Dispositivos Operativos</h3>
+            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
+                <input type="text" name="titulo" placeholder="Título del dispositivo" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" name="lugar" placeholder="Ubicación / Base" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <button type="submit" style="background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Operativo</button>
+            </form>
+            <div id="contenedor-listado-operativos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+        </div>
+
+        <!-- 🛡️ 3. SERVICIOS PREVENTIVOS -->
+        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #b45309; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="margin-top:0; color:#b45309; margin-bottom:15px;">🛡️ Coberturas y Servicios Preventivos</h3>
+            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
+                <input type="text" name="titulo" placeholder="Título del servicio" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" name="lugar" placeholder="Lugar del evento" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <button type="submit" style="background:#b45309; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Preventivo</button>
+            </form>
+            <div id="contenedor-listado-preventivos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+        </div>
+        <!-- 👥 4. GESTIÓN DE VOLUNTARIOS -->
         <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <h3 style="margin-top:0; color:#059669; margin-bottom:15px;">👥 Registro de Voluntarios</h3>
             <form id="form-nuevo-usuario" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;">
@@ -289,29 +314,6 @@ export async function cargarListadoAdmin() {
                 <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Registrar</button>
             </form>
             <div id="contenedor-usuarios-admin" style="border:1px solid #e5e7eb; border-radius:6px; overflow:hidden;"></div>
-        </div>
-        <!-- 🔧 3. DISPOSITIVOS OPERATIVOS -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="margin-top:0; color:#0284c7; margin-bottom:15px;">🔧 Configurar Dispositivos Operativos</h3>
-            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
-                <input type="text" name="titulo" placeholder="Título del dispositivo" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="text" name="lugar" placeholder="Ubicación / Base" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <button type="submit" style="background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Operativo</button>
-            </form>
-            <div id="contenedor-listado-operativos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
-        </div>
-
-        <!-- 🛡️ 4. SERVICIOS PREVENTIVOS -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #b45309; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="margin-top:0; color:#b45309; margin-bottom:15px;">🛡️ Coberturas y Servicios Preventivos</h3>
-            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
-                <input type="text" name="titulo" placeholder="Título del servicio" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="text" name="lugar" placeholder="Lugar del evento" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <button type="submit" style="background:#b45309; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Preventivo</button>
-            </form>
-            <div id="contenedor-listado-preventivos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
         <!-- ⚙️ 5. PARÁMETROS CRÍTICOS DEL SISTEMA (EXCLUSIVO JEFATURA) -->
