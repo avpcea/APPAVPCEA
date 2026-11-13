@@ -73,19 +73,18 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
 
     try {
         const uId = window.usuario_id;
-        const [eventosRes, misSuscripcionesRes] = await Promise.all([
-            fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${uId}`),
+        
+        // Consulta directa a la tabla correspondiente (operativos, preventivos o emergencias)
+        const [tablaRes, misSuscripcionesRes] = await Promise.all([
+            supabase.from(screenId).select('*').order('id', { ascending: false }),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
         ]);
 
-        if (!eventosRes.ok) throw new Error('Error al conectar con el microservicio.');
-        if (misSuscripcionesRes.error) throw new Error(`Error en tabla suscripciones: ${misSuscripcionesRes.error.message}`);
+        if (tablaRes.error) throw new Error(`Error al leer ${screenId}: ${tablaRes.error.message}`);
+        if (misSuscripcionesRes.error) throw new Error(`Error en suscripciones: ${misSuscripcionesRes.error.message}`);
 
-        const { data } = await eventosRes.json();
-        const listaGlobal = data || [];
+        const elementosFiltrados = tablaRes.data || [];
         const misSuscripciones = misSuscripcionesRes.data || [];
-
-        const elementosFiltrados = listaGlobal.filter(item => String(item.tipo).toLowerCase() === screenId);
 
         contenedorPantalla.innerHTML = `
             <div style="padding:20px; font-family:sans-serif;">
@@ -101,6 +100,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         }
 
         const codigoCortoSeccion = traductorTipoBD[screenId];
+
         elementosFiltrados.forEach(item => {
             const card = document.createElement('div');
             card.style.cssText = `background:#fff; padding:15px; border-radius:8px; border:1px solid #e5e7eb; border-left:5px solid ${colorSeccion[screenId]}; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;`;
@@ -166,6 +166,7 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
         contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
     }
 }
+
 
 async function ejecutarAutoInscripcion(elementoId, screenId) {
     const voluntarioId = window.usuario_id;
