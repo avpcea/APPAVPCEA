@@ -247,50 +247,79 @@ export async function cargarTodosLosEventosEdge() {
 
     if (!cEmergencias || !cOperativos || !cPreventivos) return;
 
-    // 1. Inyectamos de forma segura el admin_id para evitar el Bad Request (400)
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+    const traductorTipoBD = { 'emergencias': 'EMR', 'operativos': 'OPR', 'preventivos': 'NRP' };
 
     try {
-        const res = await fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${adminId}`);
-        if (!res.ok) throw new Error('Error al listar catálogo unificado.');
+        // Consultamos en paralelo el catálogo, las suscripciones y los nombres de voluntarios
+        const [resEventos, resSuscripciones, resUsuarios] = await Promise.all([
+            fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${adminId}`),
+            supabase.from('suscripciones').select('usuario_id, evento_id, tipo'),
+            supabase.from('usuarios').select('id, nombre')
+        ]);
 
-        // 2. CORRECCIÓN CLAVE: Extraemos la propiedad 'data' que es la que envía el backend real
-        const { data } = await res.json();
+        if (!resEventos.ok) throw new Error('Error al listar catálogo unificado.');
+        if (resSuscripciones.error) throw resSuscripciones.error;
+        if (resUsuarios.error) throw resUsuarios.error;
+
+        const { data } = await resEventos.json();
         const lista = data || [];
+        const suscripciones = resSuscripciones.data || [];
+        const usuarios = resUsuarios.data || [];
 
-        // Limpieza reactiva previa de contenedores
+        // Creamos un mapa rápido ID -> Nombre para cruzar en milisegundos
+        const mapaNombres = {};
+        usuarios.forEach(u => { mapaNombres[u.id] = u.nombre; });
+
         cEmergencias.innerHTML = '';
         cOperativos.innerHTML = '';
         cPreventivos.innerHTML = '';
 
-        if (lista.length === 0) {
-            const vacio = `<p style="color:#9ca3af; font-size:13px; margin:0;">No constan elementos en este módulo.</p>`;
-            cEmergencias.innerHTML = vacio;
-            cOperativos.innerHTML = vacio;
-            cPreventivos.innerHTML = vacio;
-            return;
-        }
-
-        // Clasificación adaptada a los strings completos que inyecta la función loop de Deno ('emergencias', 'operativos', 'preventivos')
         lista.forEach(item => {
             const divNode = document.createElement('div');
-            divNode.style.cssText = "padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:4px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; font-family:sans-serif;";
+            divNode.style.cssText = "padding:10px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:8px; font-family:sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05);";
             
             let colorTipo = "#4b5563";
-            // Normalizamos la validación visual según los nombres físicos de tus tablas
-            if (item.tipo === 'emergencias' || item.tipo === 'EMR') colorTipo = "#dc2626";
-            if (item.tipo === 'operativos' || item.tipo === 'OPR') colorTipo = "#0284c7";
-            if (item.tipo === 'preventivos' || item.tipo === 'NRP') colorTipo = "#b45309";
+            const tipoNorm = String(item.tipo).toLowerCase();
+            if (tipoNorm === 'emergencias' || tipoNorm === 'emr') colorTipo = "#dc2626";
+            if (tipoNorm === 'operativos' || tipoNorm === 'opr') colorTipo = "#0284c7";
+            if (tipoNorm === 'preventivos' || tipoNorm === 'nrp') colorTipo = "#b45309";
+
+            const tituloVisual = item.titulo || item.nombre || 'Dispositivo sin título';
+            const metadataVisual = item.lugar ? `${item.lugar} - ${item.fecha || ''}` : `${item.fecha || ''}`;
+
+            // Filtramos los voluntarios inscritos exactamente en este evento y tipo
+            const codigoCorto = traductorTipoBD[tipoNorm] || item.tipo.toUpperCase();
+            const inscritosEvento = suscripciones.filter(s => 
+                String(s.evento_id) === String(item.id) && 
+                String(s.tipo).trim().toUpperCase() === codigoCorto
+            );
+
+            // Construimos las etiquetas visuales de los voluntarios apuntados
+            let htmlInscritos = `<span style="font-size:11px; color:#9ca3af; font-style:italic;">Sin voluntarios apuntados aún.</span>`;
+            if (inscritosEvento.length > 0) {
+                const badges = inscritosEvento.map(s => {
+                    const nombreVol = mapaNombres[s.usuario_id] || 'Usuario desconocido';
+                    return `<span style="display:inline-block; background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:12px; margin:2px 4px 2px 0;">👤 ${escapeHTML(nombreVol)}</span>`;
+                }).join('');
+                htmlInscritos = `<div style="margin-top:4px;">${badges}</div>`;
+            }
 
             divNode.innerHTML = `
-                <div>
-                    <strong style="color:${colorTipo};">${escapeHTML(item.nombre || item.titulo || 'Sin nombre')}</strong>
-                    <span style="font-size:12px; color:#6b7280; margin-left:8px;">${item.fecha || item.meta?.gravedad || item.nivel || ''}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1; padding-right:10px;">
+                        <span style="display:block; font-weight:bold; color:${colorTipo}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
+                        <span style="font-size:12px; color:#6b7280;">📍 ${escapeHTML(metadataVisual)}</span>
+                    </div>
+                    <button class="btn-suscripcion-cross" data-id="${item.id}" data-tipo="${item.tipo}" 
+                            style="padding:5px 10px; font-size:12px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">
+                        + Inscribir
+                    </button>
                 </div>
-                <button class="btn-suscripcion-cross" data-id="${item.id}" data-tipo="${item.tipo}" 
-                        style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:3px; cursor:pointer;">
-                    + Inscribir
-                </button>
+                <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb;">
+                    <span style="font-size:11px; font-weight:bold; color:#4b5563;">Inscritos (${inscritosEvento.length}):</span>
+                    ${htmlInscritos}
+                </div>
             `;
 
             divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', async (e) => {
@@ -299,15 +328,21 @@ export async function cargarTodosLosEventosEdge() {
                 await levantarModalInscripcionRapida(targetId, tAbrev);
             });
 
-            if (item.tipo === 'emergencias' || item.tipo === 'EMR') cEmergencias.appendChild(divNode);
-            if (item.tipo === 'operativos' || item.tipo === 'OPR') cOperativos.appendChild(divNode);
-            if (item.tipo === 'preventivos' || item.tipo === 'NRP') cPreventivos.appendChild(divNode);
+            if (tipoNorm === 'emergencias' || tipoNorm === 'emr') cEmergencias.appendChild(divNode);
+            if (tipoNorm === 'operativos' || tipoNorm === 'opr') cOperativos.appendChild(divNode);
+            if (tipoNorm === 'preventivos' || tipoNorm === 'nrp') cPreventivos.appendChild(divNode);
         });
+
+        const emptyPlaceholder = `<p style="color:#9ca3af; font-size:13px; margin:0; padding:5px;">No constan elementos activos.</p>`;
+        if (cEmergencias.children.length === 0) cEmergencias.innerHTML = emptyPlaceholder;
+        if (cOperativos.children.length === 0) cOperativos.innerHTML = emptyPlaceholder;
+        if (cPreventivos.children.length === 0) cPreventivos.innerHTML = emptyPlaceholder;
 
     } catch (err) {
         console.error("Error al actualizar vistas de eventos:", err);
     }
 }
+
 
 /**
  * Lógica auxiliar para inscribir de forma remota a voluntarios en eventos específicos
