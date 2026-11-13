@@ -112,8 +112,14 @@ export async function initProfileScreen(usuarioId) {
             }
         });
 
+        const traductorTipoBD = { 'operativos': 'OPR', 'preventivos': 'NRP', 'emergencias': 'EMR' };
+
         const eventosSuscritos = listaEventos.filter(evento => {
-            return listaSuscripciones.some(suscripcion => String(suscripcion.evento_id) === String(evento.id));
+            const tipoEventoAbrev = traductorTipoBD[String(evento.tipo).toLowerCase()] || evento.tipo;
+            return listaSuscripciones.some(suscripcion => 
+                String(suscripcion.evento_id) === String(evento.id) &&
+                String(suscripcion.tipo).trim().toUpperCase() === String(tipoEventoAbrev).toUpperCase()
+            );
         });
 
         const listInnerContainer = document.getElementById('profile-events-inner-list');
