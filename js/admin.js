@@ -373,6 +373,7 @@ async function levantarModalInscripcionRapida(elementoId, tipoAbrev) {
         if (!res.ok) throw new Error(rJson.error || "Excepción de red.");
         
         alert("Suscripción procesada de forma correcta.");
+        await cargarTodosLosEventosEdge();
     } catch (err) {
         alert(`Fallo en inscripción cruzada: ${err.message}`);
     }
