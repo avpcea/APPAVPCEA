@@ -292,13 +292,22 @@ export async function cargarListadoAdmin() {
       <div style="font-family:sans-serif; width:100%;">
         <h2 style="margin-bottom:15px; color:#1f2937;">Panel de Control AVPCEA</h2>
         
-        <!-- BARRA DE SUBPESTAÑAS INTERNAS -->
-        <div id="admin-subtabs" style="display:flex; gap:6px; overflow-x:auto; border-bottom:2px solid #e5e7eb; padding-bottom:10px; margin-bottom:20px;">
-            <button class="admin-tab-btn active" data-tab="tab-emergencias" style="padding:8px 14px; border:none; border-radius:6px; background:#dc2626; color:#fff; font-weight:bold; cursor:pointer; white-space:nowrap;">🚨 Emergencias</button>
-            <button class="admin-tab-btn" data-tab="tab-operativos" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">🔧 Operativos</button>
-            <button class="admin-tab-btn" data-tab="tab-preventivos" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">🛡️ Preventivos</button>
-            <button class="admin-tab-btn" data-tab="tab-voluntarios" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">👥 Voluntarios</button>
-            <button class="admin-tab-btn" data-tab="tab-sistema" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">⚙️ Sistema</button>
+        <!-- BARRA DE SUBPESTAÑAS INTERNAS EN DOS FILAS -->
+        <div id="admin-subtabs" style="display:flex; flex-direction:column; gap:8px; border-bottom:2px solid #e5e7eb; padding-bottom:12px; margin-bottom:20px;">
+            
+            <!-- Fila 1: Dispositivos y Alertas -->
+            <div style="display:flex; gap:6px; width:100%;">
+                <button class="admin-tab-btn active" data-tab="tab-emergencias" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#dc2626; color:#fff; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🚨 Emergencias</button>
+                <button class="admin-tab-btn" data-tab="tab-operativos" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🔧 Operativos</button>
+                <button class="admin-tab-btn" data-tab="tab-preventivos" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🛡️ Preventivos</button>
+            </div>
+
+            <!-- Fila 2: Administración y Sistema -->
+            <div style="display:flex; gap:6px; width:100%;">
+                <button class="admin-tab-btn" data-tab="tab-voluntarios" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">👥 Voluntarios</button>
+                <button class="admin-tab-btn" data-tab="tab-sistema" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">⚙️ Sistema</button>
+            </div>
+
         </div>
 
         <!-- 🚨 PESTAÑA 1: EMERGENCIAS (Visible por defecto) -->
