@@ -289,14 +289,22 @@ export async function cargarListadoAdmin() {
     if (!adminScreen) return;
 
     adminScreen.innerHTML = `
-      <h2 style="margin-bottom:20px; font-family:sans-serif; color:#1f2937;">Panel de Control AVPCEA</h2>
-      
-      <div style="display: flex; flex-direction: column; gap: 25px; width:100%; font-family:sans-serif;">
-      
-        <!-- 🚨 1. EMERGENCIAS (MÁXIMA PRIORIDAD) -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #fca5a5; border-top: 4px solid #dc2626; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <div style="font-family:sans-serif; width:100%;">
+        <h2 style="margin-bottom:15px; color:#1f2937;">Panel de Control AVPCEA</h2>
+        
+        <!-- BARRA DE SUBPESTAÑAS INTERNAS -->
+        <div id="admin-subtabs" style="display:flex; gap:6px; overflow-x:auto; border-bottom:2px solid #e5e7eb; padding-bottom:10px; margin-bottom:20px;">
+            <button class="admin-tab-btn active" data-tab="tab-emergencias" style="padding:8px 14px; border:none; border-radius:6px; background:#dc2626; color:#fff; font-weight:bold; cursor:pointer; white-space:nowrap;">🚨 Emergencias</button>
+            <button class="admin-tab-btn" data-tab="tab-operativos" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">🔧 Operativos</button>
+            <button class="admin-tab-btn" data-tab="tab-preventivos" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">🛡️ Preventivos</button>
+            <button class="admin-tab-btn" data-tab="tab-voluntarios" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">👥 Voluntarios</button>
+            <button class="admin-tab-btn" data-tab="tab-sistema" style="padding:8px 14px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; white-space:nowrap;">⚙️ Sistema</button>
+        </div>
+
+        <!-- 🚨 PESTAÑA 1: EMERGENCIAS (Visible por defecto) -->
+        <div id="tab-emergencias" class="admin-tab-content" style="display:block; background:#fff; padding:20px; border-radius:8px; border:1px solid #fca5a5; border-top:4px solid #dc2626;">
             <h3 style="margin-top:0; color:#dc2626; margin-bottom:15px;">🚨 Gestión de Emergencias Activas</h3>
-            <form id="form-emergencias" style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px; flex-wrap:wrap;">
+            <form id="form-emergencias" style="display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap;">
                 <div style="flex:2; min-width:200px;">
                     <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">Título del Incidente:</label>
                     <input type="text" name="titulo" required placeholder="Ej. Incendio Forestal Sector Norte" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
@@ -311,34 +319,34 @@ export async function cargarListadoAdmin() {
                 </div>
                 <button type="submit" style="padding:9px 15px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Desplegar Alerta</button>
             </form>
-            <div id="contenedor-listado-emergencias" style="max-height:220px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+            <div id="contenedor-listado-emergencias" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
-        <!-- 🔧 2. DISPOSITIVOS OPERATIVOS -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #0284c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <!-- 🔧 PESTAÑA 2: OPERATIVOS -->
+        <div id="tab-operativos" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #0284c7;">
             <h3 style="margin-top:0; color:#0284c7; margin-bottom:15px;">🔧 Configurar Dispositivos Operativos</h3>
-            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
+            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px;">
                 <input type="text" name="titulo" placeholder="Título del dispositivo" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="text" name="lugar" placeholder="Ubicación / Base" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <button type="submit" style="background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Operativo</button>
             </form>
-            <div id="contenedor-listado-operativos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+            <div id="contenedor-listado-operativos" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
-
-        <!-- 🛡️ 3. SERVICIOS PREVENTIVOS -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #b45309; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <!-- 🛡️ PESTAÑA 3: PREVENTIVOS -->
+        <div id="tab-preventivos" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #b45309;">
             <h3 style="margin-top:0; color:#b45309; margin-bottom:15px;">🛡️ Coberturas y Servicios Preventivos</h3>
-            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:15px;">
+            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px;">
                 <input type="text" name="titulo" placeholder="Título del servicio" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="text" name="lugar" placeholder="Lugar del evento" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <button type="submit" style="background:#b45309; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Preventivo</button>
             </form>
-            <div id="contenedor-listado-preventivos" style="max-height:180px; overflow-y:auto; background:#f9f9f9; padding:10px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+            <div id="contenedor-listado-preventivos" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
-        <!-- 👥 4. GESTIÓN DE VOLUNTARIOS -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #059669; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+
+        <!-- 👥 PESTAÑA 4: VOLUNTARIOS -->
+        <div id="tab-voluntarios" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #059669;">
             <h3 style="margin-top:0; color:#059669; margin-bottom:15px;">👥 Registro de Voluntarios</h3>
             <form id="form-nuevo-usuario" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;">
                 <div style="flex:2; min-width:180px;">
@@ -357,11 +365,11 @@ export async function cargarListadoAdmin() {
                 </div>
                 <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Registrar</button>
             </form>
-            <div id="contenedor-usuarios-admin" style="border:1px solid #e5e7eb; border-radius:6px; overflow:hidden;"></div>
+            <div id="contenedor-usuarios-admin" style="border:1px solid #e5e7eb; border-radius:6px; overflow-x:auto;"></div>
         </div>
 
-        <!-- ⚙️ 5. PARÁMETROS CRÍTICOS DEL SISTEMA (EXCLUSIVO JEFATURA) -->
-        <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top: 4px solid #4b5563; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <!-- ⚙️ PESTAÑA 5: SISTEMA -->
+        <div id="tab-sistema" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #4b5563;">
             <h3 style="margin-top:0; color:#4b5563; margin-bottom:15px;">⚙️ Configuración del Ecosistema Remoto</h3>
             <form id="form-configuraciones-globales" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
                 <div style="flex:1; min-width:200px;">
@@ -379,7 +387,43 @@ export async function cargarListadoAdmin() {
       </div>
     `;
 
-    // Inyección asíncrona: cargamos listeners de admin.js
+    // 🎮 LÓGICA DE CONMUTACIÓN DE SUBPESTAÑAS INTERNAS
+    const coloresTab = {
+        'tab-emergencias': '#dc2626',
+        'tab-operativos': '#0284c7',
+        'tab-preventivos': '#b45309',
+        'tab-voluntarios': '#059669',
+        'tab-sistema': '#4b5563'
+    };
+
+    const tabButtons = adminScreen.querySelectorAll('.admin-tab-btn');
+    const tabContents = adminScreen.querySelectorAll('.admin-tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-tab');
+
+            // Resetear estilos de todos los botones
+            tabButtons.forEach(b => {
+                b.style.background = '#f3f4f6';
+                b.style.color = '#374151';
+                b.classList.remove('active');
+            });
+
+            // Ocultar todos los paneles
+            tabContents.forEach(content => content.style.display = 'none');
+
+            // Activar botón y panel seleccionado con su color corporativo
+            btn.style.background = coloresTab[targetId] || '#1f2937';
+            btn.style.color = '#fff';
+            btn.classList.add('active');
+
+            const activePanel = document.getElementById(targetId);
+            if (activePanel) activePanel.style.display = 'block';
+        });
+    });
+
+    // Inyección asíncrona: cargamos listeners y datos de admin.js
     const adminModule = await import('./admin.js');
     adminModule.initAdminFormListeners();
     adminModule.cargarUsuariosAdmin();
