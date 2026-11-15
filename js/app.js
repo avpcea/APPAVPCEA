@@ -100,12 +100,14 @@ async function solicitarTokenGlobalDinamico() {
     document.body.appendChild(bloqueoElemento);
 
     document.getElementById('btn-validar-token').addEventListener('click', () => {
-        const input = document.getElementById('input-token-global').value.trim();
+        // Normalizamos quitando espacios accidentales y pasando ambos a mayúsculas
+        const input = document.getElementById('input-token-global').value.trim().toUpperCase();
+        const remotoNormalizado = String(tokenRemoto || '').trim().toUpperCase();
         
-        if (input === tokenRemoto) {
+        if (input === remotoNormalizado && input !== '') {
             sessionStorage.setItem("token_global_aprobado", "true");
-            bloqueoElemento.remove(); // Removemos la capa de bloqueo de la memoria viva
-            location.reload(); // Recargamos para inicializar las pantallas reales intactas
+            bloqueoElemento.remove();
+            location.reload(); 
         } else {
             document.getElementById('error-token').style.display = 'block';
         }
