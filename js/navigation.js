@@ -1,5 +1,5 @@
 // =========================================================================
-// ARCHIVO: js/navigation.js (BLOQUE 1A: NAVEGACIÓN, AUDIO Y CATÁLOGOS)
+// ARCHIVO: js/navigation.js (BLOQUE 1: AUDIO, ENRUTADOR Y CARGA PÚBLICA)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { initProfileScreen } from './profile.js';
@@ -34,7 +34,6 @@ export function detenerPitidoEmergencia() {
 }
 
 export function showScreen(screenId) {
-    // Seguridad: Si piden 'admin', verificamos que el botón esté visible (indicador de permiso)
     if (screenId === 'admin') {
         const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-screen="admin"]');
         if (adminBtn && adminBtn.style.display === 'none') {
@@ -52,8 +51,6 @@ export function showScreen(screenId) {
     if (currentScreen) {
         currentScreen.style.display = 'block'; 
         currentScreen.classList.add('screen-active');
-    } else {
-        console.warn(`La pantalla con ID "${screenId}" no existe en el DOM.`);
     }
 
     if (screenId === 'perfil') {
@@ -64,7 +61,7 @@ export function showScreen(screenId) {
         }
     }
 
-    if (screenId === 'operativos' || screenId === 'preventivos' || screenId === 'emergencias') {
+    if (screenId === 'servicios' || screenId === 'emergencias') {
         cargarCatalogoPublicoVoluntarios(screenId);
     }
 }
@@ -75,108 +72,122 @@ async function cargarCatalogoPublicoVoluntarios(screenId) {
 
     contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#4b5563;">Consultando dispositivos disponibles...</p>`;
 
-    const titulosSeccion = { 'emergencias': '🚨 Emergencias Activas', 'operativos': '🔧 Dispositivos Operativos', 'preventivos': '🛡️ Coberturas Preventivas' };
-    const colorSeccion = { 'emergencias': '#dc2626', 'operativos': '#0284c7', 'preventivos': '#b45309' };
-    const traductorTipoBD = { 'operativos': 'OPR', 'preventivos': 'NRP', 'emergencias': 'EMR' };
-
     try {
         const uId = window.usuario_id;
-        
-        // Consulta directa a la tabla correspondiente (operativos, preventivos o emergencias)
-        const [tablaRes, misSuscripcionesRes] = await Promise.all([
-            supabase.from(screenId).select('*').order('id', { ascending: false }),
-            supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId)
-        ]);
+        const resSus = await supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', uId);
+        if (resSus.error) throw new Error(`Error en suscripciones: ${resSus.error.message}`);
 
-        if (tablaRes.error) throw new Error(`Error al leer ${screenId}: ${tablaRes.error.message}`);
-        if (misSuscripcionesRes.error) throw new Error(`Error en suscripciones: ${misSuscripcionesRes.error.message}`);
+        let elementos = [];
+        if (screenId === 'servicios') {
+            const [resOpr, resNrp] = await Promise.all([
+                supabase.from('operativos').select('*').order('id', { ascending: false }),
+                supabase.from('preventivos').select('*').order('id', { ascending: false })
+            ]);
+            if (resOpr.error) throw new Error(`Error operativos: ${resOpr.error.message}`);
+            if (resNrp.error) throw new Error(`Error preventivos: ${resNrp.error.message}`);
 
-        const elementosFiltrados = tablaRes.data || [];
-        const misSuscripciones = misSuscripcionesRes.data || [];
-
-        contenedorPantalla.innerHTML = `
-            <div style="padding:20px; font-family:sans-serif;">
-                <h2 style="color:${colorSeccion[screenId]}; margin-bottom:20px;">${titulosSeccion[screenId]}</h2>
-                <div id="lista-publica-${screenId}" style="display:flex; flex-direction:column; gap:15px;"></div>
-            </div>
-        `;
-        const listaCardsContainer = document.getElementById(`lista-publica-${screenId}`);
-
-        if (elementosFiltrados.length === 0) {
-            listaCardsContainer.innerHTML = `<p style="color:#6b7280; font-size:14px; padding:10px; background:#f9fafb; border:1px dashed #d1d5db; border-radius:6px;">No constan servicios programados en esta sección actualmente.</p>`;
-            return;
+            const oprs = (resOpr.data || []).map(i => ({ ...i, _tipo: 'OPR', _tabla: 'operativos', _color: '#0284c7', _badge: '🔧 OPERATIVO' }));
+            const nrps = (resNrp.data || []).map(i => ({ ...i, _tipo: 'NRP', _tabla: 'preventivos', _color: '#b45309', _badge: '🛡️ PREVENTIVO' }));
+            elementos = [...oprs, ...nrps].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+        } else {
+            const resEmr = await supabase.from('emergencias').select('*').order('id', { ascending: false });
+            if (resEmr.error) throw new Error(`Error emergencias: ${resEmr.error.message}`);
+            elementos = (resEmr.data || []).map(i => ({ ...i, _tipo: 'EMR', _tabla: 'emergencias', _color: '#dc2626', _badge: '🚨 EMERGENCIA' }));
         }
 
-        const codigoCortoSeccion = traductorTipoBD[screenId];
+        renderizarListaPublica(contenedorPantalla, screenId, elementos, resSus.data || []);
+    } catch (err) {
+        contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error: ${err.message}</p>`;
+    }
+}
+// =========================================================================
+// ARCHIVO: js/navigation.js (BLOQUE 2: RENDERIZADO TARJETAS E INSCRIPCIÓN)
+// =========================================================================
+function renderizarListaPublica(contenedorPantalla, screenId, elementos, misSuscripciones) {
+    const tituloCabecera = screenId === 'emergencias' ? '🚨 Emergencias Activas' : '📋 Servicios Programados';
+    const colorCabecera = screenId === 'emergencias' ? '#dc2626' : '#1f2937';
 
-        elementosFiltrados.forEach(item => {
-            const card = document.createElement('div');
-            card.style.cssText = `background:#fff; padding:15px; border-radius:8px; border:1px solid #e5e7eb; border-left:5px solid ${colorSeccion[screenId]}; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;`;
+    contenedorPantalla.innerHTML = `
+        <div style="padding:20px; font-family:sans-serif;">
+            <h2 style="color:${colorCabecera}; margin-bottom:20px;">${tituloCabecera}</h2>
+            <div id="lista-publica-${screenId}" style="display:flex; flex-direction:column; gap:15px;"></div>
+        </div>
+    `;
+    const listaCards = document.getElementById(`lista-publica-${screenId}`);
 
-            const titulo = item.titulo || item.nombre || 'Servicio sin título';
-            const metadata = item.lugar ? `📍 ${item.lugar} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
+    if (elementos.length === 0) {
+        listaCards.innerHTML = `<p style="color:#6b7280; font-size:14px; padding:10px; background:#f9fafb; border:1px dashed #d1d5db; border-radius:6px;">No constan servicios programados en esta sección actualmente.</p>`;
+        return;
+    }
 
-            const yaInscrito = misSuscripciones.some(s => 
-                String(s.evento_id) === String(item.id) && 
-                String(s.tipo).trim().toUpperCase() === codigoCortoSeccion
-            );
+    elementos.forEach(item => {
+        const card = document.createElement('div');
+        card.style.cssText = `background:#fff; padding:15px; border-radius:8px; border:1px solid #e5e7eb; border-left:5px solid ${item._color}; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;`;
 
-            let textoBoton = yaInscrito ? "❌ Darse de baja" : "✍️ Apuntarme";
-            let estiloBoton = yaInscrito 
-                ? `background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`
-                : `background:${colorSeccion[screenId]}; color:#fff; border:none; cursor:pointer;`;
+        const titulo = item.titulo || item.nombre || 'Servicio sin título';
+        const metadata = item.lugar ? `📍 ${escapeHTML(item.lugar)} — 📅 ${item.fecha || ''}` : `📅 ${item.fecha || ''}`;
 
-            card.innerHTML = `
-                <div style="flex:1; padding-right:15px;">
-                    <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${escapeHTML(titulo)}</h4>
-                    <p style="margin:0 0 6px 0; color:#4b5563; font-size:13px;">${metadata}</p>
-                    <p style="margin:0; color:#6b7280; font-size:13px; line-height:1.4;">${item.descripcion || 'Sin descripción adicional.'}</p>
-                </div>
-                <button class="btn-autounirse" data-estado="${yaInscrito ? 'inscrito' : 'libre'}"
-                        style="padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; ${estiloBoton}">
-                    ${textoBoton}
-                </button>
-            `;
+        const yaInscrito = misSuscripciones.some(s => 
+            String(s.evento_id) === String(item.id) && 
+            String(s.tipo).trim().toUpperCase() === item._tipo
+        );
 
-            card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
-                e.preventDefault();
-                const btn = e.target;
-                const estadoActual = btn.getAttribute('data-estado');
-                btn.disabled = true;
-                btn.innerText = "Procesando...";
+        const textoBoton = yaInscrito ? "❌ Darse de baja" : "✍️ Apuntarme";
+        const estiloBoton = yaInscrito 
+            ? `background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`
+            : `background:${item._color}; color:#fff; border:none; cursor:pointer;`;
 
-                if (estadoActual === 'libre') {
-                    const exito = await ejecutarAutoInscripcion(item.id, screenId);
-                    if (exito) {
-                        btn.setAttribute('data-estado', 'inscrito');
-                        btn.style.cssText = `padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`;
-                        btn.innerText = "❌ Darse de baja";
-                    } else {
-                        btn.innerText = "✍️ Apuntarme";
-                    }
+        card.innerHTML = `
+            <div style="flex:1; padding-right:15px;">
+                <span style="display:inline-block; font-size:11px; font-weight:bold; color:${item._color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:6px;">${item._badge}</span>
+                <h4 style="margin:0 0 5px 0; color:#111827; font-size:16px;">${escapeHTML(titulo)}</h4>
+                <p style="margin:0 0 6px 0; color:#4b5563; font-size:13px;">${metadata}</p>
+                <p style="margin:0; color:#6b7280; font-size:13px; line-height:1.4;">${escapeHTML(item.descripcion) || 'Sin descripción adicional.'}</p>
+            </div>
+            <button class="btn-autounirse" data-estado="${yaInscrito ? 'inscrito' : 'libre'}"
+                    style="padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; ${estiloBoton}">
+                ${textoBoton}
+            </button>
+        `;
+
+        card.querySelector('.btn-autounirse').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const btn = e.target;
+            const estadoActual = btn.getAttribute('data-estado');
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+
+            if (estadoActual === 'libre') {
+                const exito = await ejecutarAutoInscripcion(item.id, item._tabla);
+                if (exito) {
+                    btn.setAttribute('data-estado', 'inscrito');
+                    btn.style.cssText = `padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; cursor:pointer;`;
+                    btn.innerText = "❌ Darse de baja";
                 } else {
-                    const exitoBaja = await ejecutarBajaDirectaPostgres(item.id, codigoCortoSeccion);
-                    if (exitoBaja) {
-                        btn.setAttribute('data-estado', 'libre');
-                        btn.style.cssText = `padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:${colorSeccion[screenId]}; color:#fff; border:none; cursor:pointer;`;
-                        btn.innerText = "✍️ Apuntarme";
-                    } else {
-                        btn.innerText = "❌ Darse de baja";
-                    }
+                    btn.innerText = "✍️ Apuntarme";
                 }
-                btn.disabled = false;
-            });
-
-            listaCardsContainer.appendChild(card);
+            } else {
+                const exitoBaja = await ejecutarBajaDirectaPostgres(item.id, item._tipo);
+                if (exitoBaja) {
+                    btn.setAttribute('data-estado', 'libre');
+                    btn.style.cssText = `padding:8px 14px; border-radius:4px; font-weight:bold; font-size:13px; white-space:nowrap; background:${item._color}; color:#fff; border:none; cursor:pointer;`;
+                    btn.innerText = "✍️ Apuntarme";
+                } else {
+                    btn.innerText = "❌ Darse de baja";
+                }
+            }
+            btn.disabled = false;
         });
 
-    } catch (err) {
-        contenedorPantalla.innerHTML = `<p style="padding:20px; font-family:sans-serif; color:#dc2626;">Error al cargar el calendario: ${err.message}</p>`;
-    }
+        listaCards.appendChild(card);
+    });
 }
 
 
-async function ejecutarAutoInscripcion(elementoId, screenId) {
+// =========================================================================
+// ARCHIVO: js/navigation.js (BLOQUE 3: INSCRIPCIÓN, BAJA Y NAVEGACIÓN)
+// =========================================================================
+async function ejecutarAutoInscripcion(elementoId, tablaDestino) {
     const voluntarioId = window.usuario_id;
     const apiKeySegura = supabase.supabaseKey || "";
 
@@ -190,7 +201,7 @@ async function ejecutarAutoInscripcion(elementoId, screenId) {
             body: JSON.stringify({
                 usuario_id: voluntarioId,
                 evento_id: String(elementoId),
-                tipo: screenId
+                tipo: tablaDestino
             })
         });
         return res.ok;
@@ -220,17 +231,15 @@ async function ejecutarBajaDirectaPostgres(elementoId, codigoCortoTipo) {
 
 function escapeHTML(str) {
     if (!str) return '';
-    return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
 
 export async function initNavigation(callbacks = {}) {
     const navButtons = document.querySelectorAll('.bottom-nav .nav-btn');
     const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-screen="admin"]');
     
-    // 1. Ocultamos el botón por defecto hasta verificar permisos
     if (adminBtn) adminBtn.style.display = 'none';
 
-    // 2. Consultamos en Supabase si el usuario activo es administrador
     const uId = window.usuario_id;
     let esAdmin = false;
 
@@ -244,20 +253,18 @@ export async function initNavigation(callbacks = {}) {
 
             if (data && data.rol === 'admin') {
                 esAdmin = true;
-                if (adminBtn) adminBtn.style.display = ''; // Restaura la visualización original
+                if (adminBtn) adminBtn.style.display = '';
             }
         } catch (err) {
             console.warn("No se pudo verificar el rol de administrador:", err);
         }
     }
 
-    // 3. Asignamos los eventos de navegación con bloqueo de seguridad
     navButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault(); 
             const targetScreen = button.getAttribute('data-screen');
             
-            // Bloqueo extra por si intentan forzar el clic
             if (targetScreen === 'admin' && !esAdmin) {
                 alert("Acceso denegado: No tienes permisos de administrador.");
                 return;
@@ -268,22 +275,15 @@ export async function initNavigation(callbacks = {}) {
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 
-                if (targetScreen === 'admin') {
-                    cargarListadoAdmin();
-                }
-
+                if (targetScreen === 'admin') cargarListadoAdmin();
                 if (callbacks[targetScreen]) callbacks[targetScreen]();
             }
         });
     });
 }
-
-
-
 // =========================================================================
-// ARCHIVO: js/navigation.js (PANEL DE ADMINISTRACIÓN - REORDENADO PARTE A)
+// ARCHIVO: js/navigation.js (BLOQUE 4: PANEL DE ADMINISTRACIÓN UNIFICADO)
 // =========================================================================
-
 export async function cargarListadoAdmin() {
     const adminScreen = document.getElementById('admin') || document.querySelector('.screen-active') || document.getElementById('app');
     if (!adminScreen) return;
@@ -292,25 +292,17 @@ export async function cargarListadoAdmin() {
       <div style="font-family:sans-serif; width:100%;">
         <h2 style="margin-bottom:15px; color:#1f2937;">Panel de Control AVPCEA</h2>
         
-        <!-- BARRA DE SUBPESTAÑAS INTERNAS EN DOS FILAS -->
         <div id="admin-subtabs" style="display:flex; flex-direction:column; gap:8px; border-bottom:2px solid #e5e7eb; padding-bottom:12px; margin-bottom:20px;">
-            
-            <!-- Fila 1: Dispositivos y Alertas -->
             <div style="display:flex; gap:6px; width:100%;">
-                <button class="admin-tab-btn active" data-tab="tab-emergencias" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#dc2626; color:#fff; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🚨 Emergencias</button>
-                <button class="admin-tab-btn" data-tab="tab-operativos" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🔧 Operativos</button>
-                <button class="admin-tab-btn" data-tab="tab-preventivos" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">🛡️ Preventivos</button>
+                <button class="admin-tab-btn active" data-tab="tab-emergencias" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#dc2626; color:#fff; font-weight:bold; cursor:pointer; font-size:13px;">🚨 Emergencias</button>
+                <button class="admin-tab-btn" data-tab="tab-servicios" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px;">📋 Servicios (OPR/NRP)</button>
             </div>
-
-            <!-- Fila 2: Administración y Sistema -->
             <div style="display:flex; gap:6px; width:100%;">
-                <button class="admin-tab-btn" data-tab="tab-voluntarios" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">👥 Voluntarios</button>
-                <button class="admin-tab-btn" data-tab="tab-sistema" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px; text-align:center;">⚙️ Sistema</button>
+                <button class="admin-tab-btn" data-tab="tab-voluntarios" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px;">👥 Voluntarios</button>
+                <button class="admin-tab-btn" data-tab="tab-sistema" style="flex:1; padding:10px 6px; border:none; border-radius:6px; background:#f3f4f6; color:#374151; font-weight:bold; cursor:pointer; font-size:13px;">⚙️ Sistema</button>
             </div>
-
         </div>
 
-        <!-- 🚨 PESTAÑA 1: EMERGENCIAS (Visible por defecto) -->
         <div id="tab-emergencias" class="admin-tab-content" style="display:block; background:#fff; padding:20px; border-radius:8px; border:1px solid #fca5a5; border-top:4px solid #dc2626;">
             <h3 style="margin-top:0; color:#dc2626; margin-bottom:15px;">🚨 Gestión de Emergencias Activas</h3>
             <form id="form-emergencias" style="display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap;">
@@ -321,9 +313,7 @@ export async function cargarListadoAdmin() {
                 <div style="flex:1; min-width:120px;">
                     <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">Gravedad:</label>
                     <select name="nivel" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; height:35px;">
-                        <option value="bajo">Bajo</option>
-                        <option value="medio" selected>Medio</option>
-                        <option value="alto">Alto</option>
+                        <option value="bajo">Bajo</option><option value="medio" selected>Medio</option><option value="alto">Alto</option>
                     </select>
                 </div>
                 <button type="submit" style="padding:9px 15px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Desplegar Alerta</button>
@@ -331,115 +321,72 @@ export async function cargarListadoAdmin() {
             <div id="contenedor-listado-emergencias" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
-        <!-- 🔧 PESTAÑA 2: OPERATIVOS -->
-        <div id="tab-operativos" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #0284c7;">
-            <h3 style="margin-top:0; color:#0284c7; margin-bottom:15px;">🔧 Configurar Dispositivos Operativos</h3>
-            <form id="form-operativos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px;">
-                <input type="text" name="titulo" placeholder="Título del dispositivo" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="text" name="lugar" placeholder="Ubicación / Base" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <button type="submit" style="background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Operativo</button>
-            </form>
-            <div id="contenedor-listado-operativos" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
-        </div>
-        <!-- 🛡️ PESTAÑA 3: PREVENTIVOS -->
-        <div id="tab-preventivos" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #b45309;">
-            <h3 style="margin-top:0; color:#b45309; margin-bottom:15px;">🛡️ Coberturas y Servicios Preventivos</h3>
-            <form id="form-preventivos" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px;">
+        <div id="tab-servicios" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #0284c7;">
+            <h3 style="margin-top:0; color:#1f2937; margin-bottom:15px;">📋 Gestión de Servicios (Operativos y Preventivos)</h3>
+            <form id="form-servicios-unificado" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:20px;">
+                <select name="tipo_servicio" required onchange="this.closest('.admin-tab-content').style.borderTopColor = this.value === 'OPR' ? '#0284c7' : '#b45309'" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-weight:bold;">
+                    <option value="OPR">🔧 Operativo (OPR)</option>
+                    <option value="NRP">🛡️ Preventivo (NRP)</option>
+                </select>
                 <input type="text" name="titulo" placeholder="Título del servicio" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <input type="text" name="lugar" placeholder="Lugar del evento" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" name="lugar" placeholder="Ubicación / Lugar" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="date" name="fecha" required style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                <button type="submit" style="background:#b45309; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:36px;">Crear Preventivo</button>
+                <textarea name="descripcion" placeholder="Descripción y detalles operativos..." rows="2" style="grid-column: 1 / -1; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:inherit;"></textarea>
+                <button type="submit" style="grid-column: 1 / -1; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:38px;">Publicar Servicio</button>
             </form>
-            <div id="contenedor-listado-preventivos" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+            <div id="contenedor-listado-servicios" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
-        <!-- 👥 PESTAÑA 4: VOLUNTARIOS -->
         <div id="tab-voluntarios" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #059669;">
             <h3 style="margin-top:0; color:#059669; margin-bottom:15px;">👥 Registro de Voluntarios</h3>
             <form id="form-nuevo-usuario" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px;">
-                <div style="flex:2; min-width:180px;">
-                    <input type="text" id="usuario-nombre" placeholder="Nombre completo del voluntario" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
-                </div>
-                <div style="flex:1; min-width:100px;">
-                    <input type="text" id="usuario-codigo" placeholder="Cód. Voluntario (Ej: V-104)" required style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; text-transform:uppercase;">
-                </div>
-                <div style="flex:1; min-width:120px;">
-                    <input type="text" id="usuario-telefono" placeholder="Teléfono" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
-                </div>
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <input type="number" id="usuario-cumple-dia" placeholder="Día DD" min="1" max="31" style="width:65px; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
-                    <span style="font-weight:bold; color:#6b7280;">/</span>
-                    <input type="number" id="usuario-cumple-mes" placeholder="Mes MM" min="1" max="12" style="width:65px; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
-                </div>
-                <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Registrar</button>
+                <input type="text" id="usuario-nombre" placeholder="Nombre completo" required style="flex:2; min-width:160px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" id="usuario-codigo" placeholder="Cód. (Ej: V-104)" required style="flex:1; min-width:90px; padding:8px; border:1px solid #ccc; border-radius:4px; text-transform:uppercase;">
+                <input type="text" id="usuario-telefono" placeholder="Teléfono" style="flex:1; min-width:110px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Registrar</button>
             </form>
-            <div id="contenedor-usuarios-admin" style="border:1px solid #e5e7eb; border-radius:6px; overflow-x:auto;"></div>
+            <div id="contenedor-listado-usuarios" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
-        <!-- ⚙️ PESTAÑA 5: SISTEMA -->
         <div id="tab-sistema" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #4b5563;">
             <h3 style="margin-top:0; color:#4b5563; margin-bottom:15px;">⚙️ Configuración del Ecosistema Remoto</h3>
             <form id="form-configuraciones-globales" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
                 <div style="flex:1; min-width:200px;">
                     <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">🔑 Nuevo Token Global de Acceso:</label>
-                    <input type="text" id="cfg-token-global" required placeholder="Cargando token actual..." style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" id="cfg-token-global" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                 </div>
                 <div style="flex:1; min-width:120px;">
                     <label style="display:block; margin-bottom:4px; font-size:13px; font-weight:bold; color:#4b5563;">🔄 Versión Mínima App:</label>
-                    <input type="text" id="cfg-version-minima" required placeholder="Ej: 2.1.0" style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" id="cfg-version-minima" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
                 </div>
                 <button type="submit" style="padding:9px 15px; background:#4b5563; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; height:35px;">Guardar Parámetros</button>
             </form>
         </div>
-
       </div>
     `;
 
-    // 🎮 LÓGICA DE CONMUTACIÓN DE SUBPESTAÑAS INTERNAS
-    const coloresTab = {
-        'tab-emergencias': '#dc2626',
-        'tab-operativos': '#0284c7',
-        'tab-preventivos': '#b45309',
-        'tab-voluntarios': '#059669',
-        'tab-sistema': '#4b5563'
-    };
-
+    const coloresTab = { 'tab-emergencias': '#dc2626', 'tab-servicios': '#0284c7', 'tab-voluntarios': '#059669', 'tab-sistema': '#4b5563' };
     const tabButtons = adminScreen.querySelectorAll('.admin-tab-btn');
     const tabContents = adminScreen.querySelectorAll('.admin-tab-content');
 
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetId = btn.getAttribute('data-tab');
-
-            // Resetear estilos de todos los botones
-            tabButtons.forEach(b => {
-                b.style.background = '#f3f4f6';
-                b.style.color = '#374151';
-                b.classList.remove('active');
-            });
-
-            // Ocultar todos los paneles
+            tabButtons.forEach(b => { b.style.background = '#f3f4f6'; b.style.color = '#374151'; b.classList.remove('active'); });
             tabContents.forEach(content => content.style.display = 'none');
-
-            // Activar botón y panel seleccionado con su color corporativo
             btn.style.background = coloresTab[targetId] || '#1f2937';
             btn.style.color = '#fff';
             btn.classList.add('active');
-
             const activePanel = document.getElementById(targetId);
             if (activePanel) activePanel.style.display = 'block';
         });
     });
 
-    // Inyección asíncrona: cargamos listeners y datos de admin.js
     const adminModule = await import('./admin.js');
     adminModule.initAdminFormListeners();
     adminModule.cargarUsuariosAdmin();
     await adminModule.cargarTodosLosEventosEdge();
-    if (adminModule.cargarConfiguracionesGlobalesForm) {
-        adminModule.cargarConfiguracionesGlobalesForm();
-    }
+    if (adminModule.cargarConfiguracionesGlobalesForm) adminModule.cargarConfiguracionesGlobalesForm();
 }
 
 export async function cargarUsuariosAdmin() {
