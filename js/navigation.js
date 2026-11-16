@@ -345,7 +345,7 @@ export async function cargarListadoAdmin() {
                 <input type="text" id="usuario-telefono" placeholder="Teléfono" style="flex:1; min-width:110px; padding:8px; border:1px solid #ccc; border-radius:4px;">
                 <button type="submit" style="padding:9px 15px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Registrar</button>
             </form>
-            <div id="contenedor-listado-usuarios" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
+            <div id="contenedor-usuarios-admin" style="background:#f9f9f9; padding:12px; border-radius:6px; border:1px solid #e5e7eb;"></div>
         </div>
 
         <div id="tab-sistema" class="admin-tab-content" style="display:none; background:#fff; padding:20px; border-radius:8px; border:1px solid #e5e7eb; border-top:4px solid #4b5563;">
