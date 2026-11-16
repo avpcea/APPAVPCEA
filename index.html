@@ -21,8 +21,18 @@
     <!-- CONTENIDO DINÁMICO DE LA APLICACIÓN -->
     <main class="app-content">
 
-      <!-- 1. PANTALLA: PERFIL (Visible por defecto) -->
-      <section id="perfil" class="app-screen">
+      <!-- 1. PANTALLA: EMERGENCIAS (Visible por defecto) -->
+      <section id="emergencias" class="app-screen">
+        <!-- El contenido se genera dinámicamente desde JS -->
+      </section>
+
+      <!-- 2. PANTALLA: SERVICIOS UNIFICADOS (OPR + NRP) -->
+      <section id="servicios" class="app-screen" style="display: none;">
+        <!-- Filtros rápidos opcionales y listado unificado generado desde JS -->
+      </section>
+
+      <!-- 3. PANTALLA: PERFIL -->
+      <section id="perfil" class="app-screen" style="display: none;">
         <div class="card">
           <h3>Ficha de Voluntario</h3>
           <div id="perfil-datos">
@@ -33,87 +43,48 @@
         </div>
       </section>
 
-      <!-- 2. PANTALLA: OPERATIVOS (Oculta al inicio) -->
-      <section id="operativos" class="app-screen" style="display: none;">
-        <!-- El contenido se genera dinámicamente desde app.js -->
-      </section>
-
-      <!-- 3. PANTALLA: PREVENTIVOS (Oculta al inicio) -->
-      <section id="preventivos" class="app-screen" style="display: none;">
-        <!-- El contenido se genera dinámicamente desde app.js -->
-      </section>
-
-      <!-- 4. PANTALLA: EMERGENCIAS (Oculta al inicio) -->
-      <section id="emergencias" class="app-screen" style="display: none;">
-        <!-- El contenido se genera dinámicamente desde app.js -->
-      </section>
-
-      <!-- 5. PANTALLA: ADMINISTRACIÓN (Oculta al inicio) -->
+      <!-- 4. PANTALLA: ADMINISTRACIÓN -->
       <section id="admin" class="app-screen" style="display: none;">
         <h2 style="text-align: center; margin-bottom: 15px;">Panel de Administración</h2>
         
-        <!-- Formulario Operativos -->
-        <div class="card" style="border-top: 4px solid #ff6600;">
-          <h3>Crear Nuevo Operativo</h3>
+        <!-- Formulario Unificado Servicios (Operativos y Preventivos) -->
+        <div class="card" id="card-form-servicio" style="border-top: 4px solid #ff6600;">
+          <h3>Crear Nuevo Servicio</h3>
           
           <div class="form-group">
-            <label>Título:</label>
-            <input type="text" id="op-titulo" placeholder="Ej: Incendio Forestal Nocturno" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Lugar:</label>
-            <input type="text" id="op-lugar" placeholder="Ej: Zona Norte">
+            <label for="srv-tipo">Tipo de Servicio:</label>
+            <select id="srv-tipo" onchange="this.closest('.card').style.borderTopColor = this.value === 'OPR' ? '#ff6600' : '#007bff'">
+              <option value="OPR">Operativo (OPR)</option>
+              <option value="NRP">Preventivo (NRP)</option>
+            </select>
           </div>
 
           <div class="form-group">
-            <label for="op_fecha">Fecha Operativo:</label>
-            <input type="date" id="op_fecha" name="fecha" required>
+            <label for="srv-titulo">Título:</label>
+            <input type="text" id="srv-titulo" placeholder="Ej: Incendio Forestal / Carrera Ciclista" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="srv-lugar">Lugar:</label>
+            <input type="text" id="srv-lugar" placeholder="Ej: Zona Norte / Plaza Mayor">
           </div>
 
           <div class="form-group">
-            <label>Fecha y Hora de Inicio:</label>
-            <input type="datetime-local" id="op-inicio" required>
+            <label for="srv-fecha">Fecha:</label>
+            <input type="date" id="srv-fecha" name="fecha" required>
+          </div>
+
+          <div class="form-group">
+            <label for="srv-inicio">Fecha y Hora de Inicio:</label>
+            <input type="datetime-local" id="srv-inicio" required>
           </div>
           
           <div class="form-group-block">
-            <label>Descripción / Observaciones:</label>
-            <textarea id="op-descripcion" placeholder="Escribe los detalles del despliegue aquí..."></textarea>
+            <label for="srv-descripcion">Descripción / Observaciones:</label>
+            <textarea id="srv-descripcion" placeholder="Escribe los detalles del servicio aquí..."></textarea>
           </div>
           
-          <button class="btn" id="btn-crear-operativo" style="background-color: #ff6600; color: white;">Crear Operativo</button>
-        </div>
-
-        <!-- Formulario Preventivos -->
-        <div class="card" style="border-top: 4px solid #007bff;">
-          <h3>Crear Nuevo Preventivo</h3>
-          
-          <div class="form-group">
-            <label>Título:</label>
-            <input type="text" id="prev-titulo" placeholder="Ej: Carrera Ciclista" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Lugar:</label>
-            <input type="text" id="prev-lugar" placeholder="Ej: Plaza Mayor">
-          </div>
-          
-          <div class="form-group">
-            <label for="prev_fecha">Fecha Preventivo:</label>
-            <input type="date" id="prev_fecha" name="fecha" required>
-          </div>
-
-          <div class="form-group">
-            <label>Fecha y Hora de Inicio:</label>
-            <input type="datetime-local" id="prev-inicio" required>
-          </div>
-          
-          <div class="form-group-block">
-            <label>Descripción / Observaciones:</label>
-            <textarea id="prev-descripcion" placeholder="Escribe las observaciones aquí..."></textarea>
-          </div>
-          
-          <button class="btn" id="btn-crear-preventivo" style="background-color: #007bff; color: white;">Crear Preventivo</button>
+          <button class="btn" id="btn-crear-servicio" style="background-color: #28a745; color: white;">Publicar Servicio</button>
         </div>
 
         <!-- Formulario Emergencias -->
@@ -142,25 +113,27 @@
           
           <button class="btn btn-danger" id="btn-crear-emergencia" style="background-color: #dc3545; color: white;">🚨 Publicar Emergencia Activa</button>
         </div>
+
+        <!-- Contenedor para listado administrativo unificado -->
+        <div id="admin-listado-unificado"></div>
       </section>
 
     </main>
 
     <!-- BARRA DE NAVEGACIÓN INFERIOR (BOTTOM-NAV) -->
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-screen="perfil">Perfil</button>
-      <button class="nav-btn" data-screen="operativos">Operativos</button>
-      <button class="nav-btn" data-screen="preventivos">Preventivos</button>
-      <button class="nav-btn" data-screen="emergencias">Emergencias</button>
+      <button class="nav-btn active" data-screen="emergencias">Emergencias</button>
+      <button class="nav-btn" data-screen="servicios">Servicios</button>
+      <button class="nav-btn" data-screen="perfil">Perfil</button>
       <button class="nav-btn" data-screen="admin">Admin</button>
     </nav>
 
   </div>
 
-<!-- CDN Oficial y Estable de Supabase (Inyecta window.supabase globalmente) -->
+<!-- CDN Oficial y Estable de Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- Tu script central que ya tiene type="module" -->
+<!-- Tu script central modular -->
 <script type="module" src="js/app.js"></script>
 
 </body>
