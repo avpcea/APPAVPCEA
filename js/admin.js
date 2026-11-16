@@ -1,5 +1,5 @@
 // =========================================================================
-// ARCHIVO: admin.js (BLOQUE 1: PARÁMETROS, VOLUNTARIOS Y FORMULARIO UNIFICADO)
+// ARCHIVO: admin.js (PARTE 1: PARÁMETROS, VOLUNTARIOS Y FORMULARIO UNIFICADO)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 
@@ -56,14 +56,12 @@ export function initAdminFormListeners() {
             const nombre = document.getElementById('usuario-nombre').value.trim();
             const codigo = document.getElementById('usuario-codigo').value.trim().toUpperCase();
             const telefono = document.getElementById('usuario-telefono').value.trim();
-            const cumpleDia = parseInt(document.getElementById('usuario-cumple-dia')?.value, 10) || null;
-            const cumpleMes = parseInt(document.getElementById('usuario-cumple-mes')?.value, 10) || null;
 
             try {
                 const response = await fetch(`${supabase.functionsUrl}/admin-create-user-ts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ admin_id: adminId, nombre, codigo_voluntario: codigo, telefono, cumple_dia: cumpleDia, cumple_mes: cumpleMes })
+                    body: JSON.stringify({ admin_id: adminId, nombre, codigo_voluntario: codigo, telefono })
                 });
                 const resultado = await response.json();
                 if (!response.ok) throw new Error(resultado.error || 'Error en el microservicio.');
@@ -86,10 +84,7 @@ export function initAdminFormListeners() {
             const fd = new FormData(formEmergencias);
             await crearElementoEdge({
                 tipo: 'emergencias',
-                values: {
-                    titulo: fd.get('titulo'),
-                    nivel: fd.get('nivel')
-                }
+                values: { titulo: fd.get('titulo'), nivel: fd.get('nivel') }
             }, formEmergencias);
         });
     }
@@ -114,39 +109,27 @@ export function initAdminFormListeners() {
 }
 
 // =========================================================================
-// ARCHIVO: admin.js (BLOQUE 2: CREACIÓN EDGE, USUARIOS Y EVENTOS UNIFICADOS)
+// ARCHIVO: admin.js (PARTE 2: CREACIÓN EDGE, USUARIOS Y CONSULTA EVENTOS)
 // =========================================================================
-    const formEmergencias = document.getElementById('form-emergencias');
-    if (formEmergencias) {
-        formEmergencias.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fd = new FormData(formEmergencias);
-            await crearElementoEdge({
-                tipo: 'emergencias',
-                values: {
-                    titulo: fd.get('titulo'),
-                    nivel: fd.get('nivel')
-                }
-            }, formEmergencias);
-        });
-    }
+async function crearElementoEdge(payload, formulario) {
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+    const btn = formulario.querySelector('button[type="submit"]');
+    btn.disabled = true;
 
-    const formServicios = document.getElementById('form-servicios-unificado');
-    if (formServicios) {
-        formServicios.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fd = new FormData(formServicios);
-            const tablaDestino = fd.get('tipo_servicio') === 'NRP' ? 'preventivos' : 'operativos';
-            await crearElementoEdge({
-                tipo: tablaDestino,
-                values: {
-                    titulo: fd.get('titulo'),
-                    lugar: fd.get('lugar'),
-                    fecha: fd.get('fecha'),
-                    descripcion: fd.get('descripcion')
-                }
-            }, formServicios);
+    try {
+        const res = await fetch(`${supabase.functionsUrl}/admin-create-element-ts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_id: adminId, ...payload })
         });
+        const rJson = await res.json();
+        if (!res.ok) throw new Error(rJson.error || 'Error al impactar el microservicio.');
+        formulario.reset();
+        await cargarTodosLosEventosEdge();
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.disabled = false;
     }
 }
 
@@ -159,10 +142,7 @@ export async function cargarUsuariosAdmin() {
 
     try {
         const res = await fetch(`${supabase.functionsUrl}/admin-list-users-ts?admin_id=${adminId}`);
-        if (!res.ok) {
-            if (res.status === 403) throw new Error('Acceso denegado: Sin rol de Administrador.');
-            throw new Error('Error al conectar con el servidor.');
-        }
+        if (!res.ok) throw new Error('Error al conectar con el servidor de usuarios.');
 
         const { data } = await res.json();
         const usuarios = data || [];
@@ -171,21 +151,17 @@ export async function cargarUsuariosAdmin() {
             return;
         }
 
-        const filas = usuarios.map(user => {
-            const cod = user.codigo_voluntario || '<span style="color:#9ca3af; font-size:12px;">Sin código</span>';
-            const cumple = user.cumple_dia && user.cumple_mes ? `${user.cumple_dia}/${user.cumple_mes}` : '-';
-            return `<tr style="border-bottom:1px solid #e5e7eb;">
-                <td style="padding:10px; font-weight:bold; color:#1f2937;">${cod}</td>
+        const filas = usuarios.map(user => `
+            <tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px; font-weight:bold; color:#1f2937;">${user.codigo_voluntario || '-'}</td>
                 <td style="padding:10px; color:#4b5563;">${escapeHTML(user.nombre)}</td>
                 <td style="padding:10px; color:#4b5563;">${escapeHTML(user.telefono || '-')}</td>
-                <td style="padding:10px; color:#4b5563;">${cumple}</td>
-            </tr>`;
-        }).join('');
+            </tr>
+        `).join('');
 
         contenedor.innerHTML = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; text-align:left; font-size:14px;">
             <thead><tr style="background:#f3f4f6; border-bottom:1px solid #e5e7eb;">
-                <th style="padding:10px;">Código</th><th style="padding:10px;">Nombre</th>
-                <th style="padding:10px;">Teléfono</th><th style="padding:10px;">Cumpleaños</th>
+                <th style="padding:10px;">Código</th><th style="padding:10px;">Nombre</th><th style="padding:10px;">Teléfono</th>
             </tr></thead><tbody>${filas}</tbody></table>`;
     } catch (err) {
         contenedor.innerHTML = `<p style="padding:15px; color:#dc2626; font-weight:bold;">${err.message}</p>`;
@@ -215,7 +191,7 @@ export async function cargarTodosLosEventosEdge() {
 }
 
 // =========================================================================
-// ARCHIVO: admin.js (BLOQUE 3: RENDERIZADO UNIFICADO E INSCRIPCIÓN CRUZADA)
+// ARCHIVO: admin.js (PARTE 3: RENDERIZADO UNIFICADO E INSCRIPCIÓN CRUZADA)
 // =========================================================================
 function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, usuarios) {
     const traductorTipoBD = { 'emergencias': 'EMR', 'operativos': 'OPR', 'preventivos': 'NRP' };
