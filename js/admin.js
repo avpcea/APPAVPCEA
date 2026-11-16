@@ -84,7 +84,13 @@ export function initAdminFormListeners() {
         formEmergencias.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fd = new FormData(formEmergencias);
-            await crearElementoEdge({ titulo: fd.get('titulo'), tipo: 'EMR', meta: { gravedad: fd.get('nivel') } }, formEmergencias);
+            await crearElementoEdge({
+                tipo: 'emergencias',
+                values: {
+                    titulo: fd.get('titulo'),
+                    nivel: fd.get('nivel')
+                }
+            }, formEmergencias);
         });
     }
 
@@ -93,37 +99,54 @@ export function initAdminFormListeners() {
         formServicios.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fd = new FormData(formServicios);
+            const tablaDestino = fd.get('tipo_servicio') === 'NRP' ? 'preventivos' : 'operativos';
             await crearElementoEdge({
-                titulo: fd.get('titulo'),
-                lugar: fd.get('lugar'),
-                fecha: fd.get('fecha'),
-                descripcion: fd.get('descripcion'),
-                tipo: fd.get('tipo_servicio')
+                tipo: tablaDestino,
+                values: {
+                    titulo: fd.get('titulo'),
+                    lugar: fd.get('lugar'),
+                    fecha: fd.get('fecha'),
+                    descripcion: fd.get('descripcion')
+                }
             }, formServicios);
         });
     }
 }
+
 // =========================================================================
 // ARCHIVO: admin.js (BLOQUE 2: CREACIÓN EDGE, USUARIOS Y EVENTOS UNIFICADOS)
 // =========================================================================
-async function crearElementoEdge(payload, formulario) {
-    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
-    const btn = formulario.querySelector('button[type="submit"]');
-    btn.disabled = true;
-
-    try {
-        const res = await fetch(`${supabase.functionsUrl}/admin-create-element-ts`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ admin_id: adminId, ...payload })
+    const formEmergencias = document.getElementById('form-emergencias');
+    if (formEmergencias) {
+        formEmergencias.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(formEmergencias);
+            await crearElementoEdge({
+                tipo: 'emergencias',
+                values: {
+                    titulo: fd.get('titulo'),
+                    nivel: fd.get('nivel')
+                }
+            }, formEmergencias);
         });
-        if (!res.ok) throw new Error('Error al impactar el microservicio de elementos.');
-        formulario.reset();
-        await cargarTodosLosEventosEdge();
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        btn.disabled = false;
+    }
+
+    const formServicios = document.getElementById('form-servicios-unificado');
+    if (formServicios) {
+        formServicios.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(formServicios);
+            const tablaDestino = fd.get('tipo_servicio') === 'NRP' ? 'preventivos' : 'operativos';
+            await crearElementoEdge({
+                tipo: tablaDestino,
+                values: {
+                    titulo: fd.get('titulo'),
+                    lugar: fd.get('lugar'),
+                    fecha: fd.get('fecha'),
+                    descripcion: fd.get('descripcion')
+                }
+            }, formServicios);
+        });
     }
 }
 
@@ -190,6 +213,7 @@ export async function cargarTodosLosEventosEdge() {
         console.error("Error al actualizar vistas de eventos:", err);
     }
 }
+
 // =========================================================================
 // ARCHIVO: admin.js (BLOQUE 3: RENDERIZADO UNIFICADO E INSCRIPCIÓN CRUZADA)
 // =========================================================================
