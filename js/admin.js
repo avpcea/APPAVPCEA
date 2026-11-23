@@ -296,22 +296,29 @@ async function cerrarEventoAdmin(id, tablaFisica) {
 }
 
 async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres) {
-    const listadoTexto = inscritos.length
-        ? inscritos.map((s, i) => `${i + 1}. ${mapaNombres[s.usuario_id] || s.usuario_id}`).join('\n')
-        : 'No hay inscritos en este evento.';
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
+    let destinos = [];
+    let horasNum = 0;
 
-    const seleccion = prompt(`Voluntarios inscritos:\n${listadoTexto}\n\nEscribe "TODOS" para asignar a todos los inscritos, o pega el UUID del voluntario:`);
-    if (!seleccion) return;
+    if (inscritos.length === 0) {
+        if (!confirm("No hay voluntarios inscritos en este evento. ¿Registrar con 0 horas para habilitar su cierre?")) return;
+        destinos = [adminId];
+        horasNum = 0;
+    } else {
+        const listadoTexto = inscritos.map((s, i) => `${i + 1}. ${mapaNombres[s.usuario_id] || s.usuario_id}`).join('\n');
+        const seleccion = prompt(`Voluntarios inscritos:\n${listadoTexto}\n\nEscribe "TODOS" para asignar a todos, o pega el UUID del voluntario:`);
+        if (!seleccion) return;
 
-    const horasStr = prompt("Introduce el número de horas a registrar (ej: 3.5):");
-    const horasNum = parseFloat(horasStr);
-    if (isNaN(horasNum) || horasNum <= 0) return alert("Cantidad de horas no válida.");
+        const horasStr = prompt("Introduce el número de horas a registrar (ej: 3.5, o 0 si no hubo asistencia):");
+        if (horasStr === null || horasStr.trim() === '') return;
 
-    const destinos = seleccion.trim().toUpperCase() === 'TODOS'
-        ? inscritos.map(s => s.usuario_id)
-        : [seleccion.trim()];
+        horasNum = parseFloat(horasStr.replace(',', '.'));
+        if (isNaN(horasNum) || horasNum < 0) return alert("Cantidad de horas no válida.");
 
-    if (!destinos.length) return alert("No hay voluntarios destino.");
+        destinos = seleccion.trim().toUpperCase() === 'TODOS'
+            ? inscritos.map(s => s.usuario_id)
+            : [seleccion.trim()];
+    }
 
     try {
         const anioActual = new Date().getFullYear();
@@ -326,7 +333,7 @@ async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres)
         const fallida = respuestas.find(r => !r.ok);
         if (fallida) {
             const errJson = await fallida.json().catch(() => ({}));
-            throw new Error(errJson.error || "Error al guardar horas (posible registro duplicado).");
+            throw new Error(errJson.error || "Error al guardar horas.");
         }
         alert(`Se han registrado ${horasNum}h correctamente.`);
         await cargarTodosLosEventosEdge();
