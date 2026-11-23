@@ -192,7 +192,7 @@ export async function cargarTodosLosEventosEdge() {
 }
 
 // =========================================================================
-// ARCHIVO: admin.js (PARTE 3A: ORDENACIÓN POR FECHA Y VALIDACIÓN DE CIERRE)
+// ARCHIVO: admin.js (PARTE 3A: ORDEN POR FECHA Y CIERRE AL FINAL)
 // =========================================================================
 function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, usuarios, horasRegistradas) {
     const traductorTipoBD = { 'emergencias': 'EMR', 'operativos': 'OPR', 'preventivos': 'NRP' };
@@ -206,14 +206,14 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     const mapaNombres = {};
     usuarios.forEach(u => { mapaNombres[u.id] = u.nombre; });
 
+    // 1. Abiertos arriba (ordenados por fecha) | 2. Cerrados abajo al final
     const listaEnriquecida = lista.map(item => {
         const tipoNorm = String(item.tipo).toLowerCase();
         const codigoCorto = traductorTipoBD[tipoNorm] || item.tipo.toUpperCase();
         const estaCerrado = Boolean(item.fecha_fin);
         const tieneHoras = horasRegistradas.some(h => String(h.evento_id) === String(item.id) && String(h.tipo).trim().toUpperCase() === codigoCorto);
-        const pesoOrden = estaCerrado ? 2 : (tieneHoras ? 1 : 0);
-        return { ...item, tipoNorm, codigoCorto, estaCerrado, tieneHoras, pesoOrden };
-    }).sort((a, b) => a.pesoOrden - b.pesoOrden || new Date(a.fecha || 0) - new Date(b.fecha || 0));
+        return { ...item, tipoNorm, codigoCorto, estaCerrado, tieneHoras };
+    }).sort((a, b) => Number(a.estaCerrado) - Number(b.estaCerrado) || new Date(a.fecha || 0) - new Date(b.fecha || 0));
 
     cEmergencias.innerHTML = '';
     cServicios.innerHTML = '';
@@ -221,10 +221,10 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     listaEnriquecida.forEach(item => {
         const tablaFisica = mapaTabla[item.codigoCorto] || item.tipoNorm;
         const cfg = estilosPorTipo[item.codigoCorto] || { color: '#4b5563', badge: item.codigoCorto };
-        const apagado = item.estaCerrado || item.tieneHoras;
+        const cerrado = item.estaCerrado;
 
         const divNode = document.createElement('div');
-        divNode.style.cssText = `padding:10px 12px; background:${apagado ? '#f9fafb' : '#fff'}; border:1px solid #e5e7eb; border-left:5px solid ${apagado ? '#6b7280' : cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif;`;
+        divNode.style.cssText = `padding:10px 12px; background:${cerrado ? '#f9fafb' : '#fff'}; border:1px solid #e5e7eb; border-left:5px solid ${cerrado ? '#6b7280' : cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif;`;
 
         const tituloVisual = item.titulo || item.nombre || 'Dispositivo sin título';
         const metadataVisual = item.lugar ? `${item.lugar} - ${item.fecha || ''}` : `${item.fecha || ''}`;
@@ -235,20 +235,20 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
             : `<span style="font-size:11px; color:#9ca3af; font-style:italic;">Sin voluntarios apuntados aún.</span>`;
 
         const badgeHoras = item.tieneHoras ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#0369a1; background:#e0f2fe; padding:2px 6px; border-radius:4px; margin-left:4px;">⏱️ HORAS OK</span>` : '';
-        const badgeCierre = item.estaCerrado ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#166534; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">✅ CERRADO</span>` : '';
+        const badgeCierre = cerrado ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#166534; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">✅ CERRADO</span>` : '';
 
         divNode.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
                 <div style="flex:1;">
                     <span style="display:inline-block; font-size:10px; font-weight:bold; color:${cfg.color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:4px;">${cfg.badge}</span>${badgeHoras}${badgeCierre}
-                    <span style="display:block; font-weight:bold; color:${apagado ? '#4b5563' : cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
+                    <span style="display:block; font-weight:bold; color:${cerrado ? '#4b5563' : cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
                     <span style="display:block; font-size:12px; color:#6b7280;">📍 ${escapeHTML(metadataVisual)}</span>
                     ${item.descripcion ? `<p style="margin:4px 0 0 0; font-size:12px; color:#4b5563;">${escapeHTML(item.descripcion)}</p>` : ''}
                 </div>
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    ${!item.estaCerrado ? `<button class="btn-suscripcion-cross" style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">+ Inscribir</button>` : ''}
-                    ${(!item.tieneHoras && !item.estaCerrado) ? `<button class="btn-asignar-horas" style="padding:4px 8px; font-size:11px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⏱️ Horas</button>` : ''}
-                    ${!item.estaCerrado ? `<button class="btn-cerrar-evento" style="padding:4px 8px; font-size:11px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔒 Cerrar</button>` : ''}
+                    ${!cerrado ? `<button class="btn-suscripcion-cross" style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">+ Inscribir</button>` : ''}
+                    ${(!item.tieneHoras && !cerrado) ? `<button class="btn-asignar-horas" style="padding:4px 8px; font-size:11px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⏱️ Horas</button>` : ''}
+                    ${!cerrado ? `<button class="btn-cerrar-evento" style="padding:4px 8px; font-size:11px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔒 Cerrar</button>` : ''}
                 </div>
             </div>
             <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb;">
