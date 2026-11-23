@@ -176,24 +176,25 @@ export async function cargarTodosLosEventosEdge() {
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
     try {
-        const [resEventos, resSus, resUsuarios] = await Promise.all([
+        const [resEventos, resSus, resUsuarios, resHoras] = await Promise.all([
             fetch(`${supabase.functionsUrl}/admin-list-elements-ts?admin_id=${adminId}`),
             supabase.from('suscripciones').select('usuario_id, evento_id, tipo'),
-            supabase.from('usuarios').select('id, nombre')
+            supabase.from('usuarios').select('id, nombre'),
+            supabase.from('horas').select('evento_id, tipo')
         ]);
 
         if (!resEventos.ok) throw new Error('Error al listar catálogo unificado.');
         const { data } = await resEventos.json();
-        renderizarEventosAdmin(cEmergencias, cServicios, data || [], resSus.data || [], resUsuarios.data || []);
+        renderizarEventosAdmin(cEmergencias, cServicios, data || [], resSus.data || [], resUsuarios.data || [], resHoras.data || []);
     } catch (err) {
         console.error("Error al actualizar vistas de eventos:", err);
     }
 }
 
 // =========================================================================
-// ARCHIVO: admin.js (PARTE 3A: RENDERIZADO CON CIERRE Y HORAS)
+// ARCHIVO: admin.js (PARTE 3A: ORDENACIÓN POR FECHA Y VALIDACIÓN DE CIERRE)
 // =========================================================================
-function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, usuarios) {
+function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, usuarios, horasRegistradas) {
     const traductorTipoBD = { 'emergencias': 'EMR', 'operativos': 'OPR', 'preventivos': 'NRP' };
     const mapaTabla = { 'EMR': 'emergencias', 'OPR': 'operativos', 'NRP': 'preventivos' };
     const estilosPorTipo = {
@@ -205,43 +206,49 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     const mapaNombres = {};
     usuarios.forEach(u => { mapaNombres[u.id] = u.nombre; });
 
+    const listaEnriquecida = lista.map(item => {
+        const tipoNorm = String(item.tipo).toLowerCase();
+        const codigoCorto = traductorTipoBD[tipoNorm] || item.tipo.toUpperCase();
+        const estaCerrado = Boolean(item.fecha_fin);
+        const tieneHoras = horasRegistradas.some(h => String(h.evento_id) === String(item.id) && String(h.tipo).trim().toUpperCase() === codigoCorto);
+        const pesoOrden = estaCerrado ? 2 : (tieneHoras ? 1 : 0);
+        return { ...item, tipoNorm, codigoCorto, estaCerrado, tieneHoras, pesoOrden };
+    }).sort((a, b) => a.pesoOrden - b.pesoOrden || new Date(a.fecha || 0) - new Date(b.fecha || 0));
+
     cEmergencias.innerHTML = '';
     cServicios.innerHTML = '';
 
-    lista.forEach(item => {
-        const tipoNorm = String(item.tipo).toLowerCase();
-        const codigoCorto = traductorTipoBD[tipoNorm] || item.tipo.toUpperCase();
-        const tablaFisica = mapaTabla[codigoCorto] || tipoNorm;
-        const cfg = estilosPorTipo[codigoCorto] || { color: '#4b5563', badge: codigoCorto };
-        const estaCerrado = Boolean(item.fecha_fin);
+    listaEnriquecida.forEach(item => {
+        const tablaFisica = mapaTabla[item.codigoCorto] || item.tipoNorm;
+        const cfg = estilosPorTipo[item.codigoCorto] || { color: '#4b5563', badge: item.codigoCorto };
+        const apagado = item.estaCerrado || item.tieneHoras;
 
         const divNode = document.createElement('div');
-        divNode.style.cssText = `padding:10px 12px; background:${estaCerrado ? '#f9fafb' : '#fff'}; border:1px solid #e5e7eb; border-left:5px solid ${estaCerrado ? '#6b7280' : cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif;`;
+        divNode.style.cssText = `padding:10px 12px; background:${apagado ? '#f9fafb' : '#fff'}; border:1px solid #e5e7eb; border-left:5px solid ${apagado ? '#6b7280' : cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif;`;
 
         const tituloVisual = item.titulo || item.nombre || 'Dispositivo sin título';
         const metadataVisual = item.lugar ? `${item.lugar} - ${item.fecha || ''}` : `${item.fecha || ''}`;
-        const inscritos = suscripciones.filter(s => String(s.evento_id) === String(item.id) && String(s.tipo).trim().toUpperCase() === codigoCorto);
+        const inscritos = suscripciones.filter(s => String(s.evento_id) === String(item.id) && String(s.tipo).trim().toUpperCase() === item.codigoCorto);
 
         const htmlInscritos = inscritos.length > 0
             ? `<div style="margin-top:4px;">${inscritos.map(s => `<span style="display:inline-block; background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:12px; margin:2px 4px 2px 0;">👤 ${escapeHTML(mapaNombres[s.usuario_id] || 'Desconocido')}</span>`).join('')}</div>`
             : `<span style="font-size:11px; color:#9ca3af; font-style:italic;">Sin voluntarios apuntados aún.</span>`;
 
-        const estadoBadge = estaCerrado
-            ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#166534; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">✅ CERRADO</span>`
-            : '';
+        const badgeHoras = item.tieneHoras ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#0369a1; background:#e0f2fe; padding:2px 6px; border-radius:4px; margin-left:4px;">⏱️ HORAS OK</span>` : '';
+        const badgeCierre = item.estaCerrado ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#166534; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">✅ CERRADO</span>` : '';
 
         divNode.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
                 <div style="flex:1;">
-                    <span style="display:inline-block; font-size:10px; font-weight:bold; color:${cfg.color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:4px;">${cfg.badge}</span>${estadoBadge}
-                    <span style="display:block; font-weight:bold; color:${estaCerrado ? '#4b5563' : cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
+                    <span style="display:inline-block; font-size:10px; font-weight:bold; color:${cfg.color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:4px;">${cfg.badge}</span>${badgeHoras}${badgeCierre}
+                    <span style="display:block; font-weight:bold; color:${apagado ? '#4b5563' : cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
                     <span style="display:block; font-size:12px; color:#6b7280;">📍 ${escapeHTML(metadataVisual)}</span>
                     ${item.descripcion ? `<p style="margin:4px 0 0 0; font-size:12px; color:#4b5563;">${escapeHTML(item.descripcion)}</p>` : ''}
                 </div>
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <button class="btn-suscripcion-cross" style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">+ Inscribir</button>
-                    <button class="btn-asignar-horas" style="padding:4px 8px; font-size:11px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⏱️ Horas</button>
-                    ${!estaCerrado ? `<button class="btn-cerrar-evento" style="padding:4px 8px; font-size:11px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔒 Cerrar</button>` : ''}
+                    ${!item.estaCerrado ? `<button class="btn-suscripcion-cross" style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">+ Inscribir</button>` : ''}
+                    ${(!item.tieneHoras && !item.estaCerrado) ? `<button class="btn-asignar-horas" style="padding:4px 8px; font-size:11px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⏱️ Horas</button>` : ''}
+                    ${!item.estaCerrado ? `<button class="btn-cerrar-evento" style="padding:4px 8px; font-size:11px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔒 Cerrar</button>` : ''}
                 </div>
             </div>
             <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb;">
@@ -250,11 +257,14 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
             </div>
         `;
 
-        divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', () => levantarModalInscripcionRapida(item.id, tablaFisica));
-        divNode.querySelector('.btn-asignar-horas').addEventListener('click', () => asignarHorasManual(item.id, codigoCorto, inscritos, mapaNombres));
-        divNode.querySelector('.btn-cerrar-evento')?.addEventListener('click', () => cerrarEventoAdmin(item.id, tablaFisica));
+        divNode.querySelector('.btn-suscripcion-cross')?.addEventListener('click', () => levantarModalInscripcionRapida(item.id, tablaFisica));
+        divNode.querySelector('.btn-asignar-horas')?.addEventListener('click', () => asignarHorasManual(item.id, item.codigoCorto, inscritos, mapaNombres));
+        divNode.querySelector('.btn-cerrar-evento')?.addEventListener('click', () => {
+            if (!item.tieneHoras) return alert("⚠️ Primero debes calcular y asignar las horas de este evento antes de poder cerrarlo.");
+            cerrarEventoAdmin(item.id, tablaFisica);
+        });
 
-        if (codigoCorto === 'EMR') cEmergencias.appendChild(divNode);
+        if (item.codigoCorto === 'EMR') cEmergencias.appendChild(divNode);
         else cServicios.appendChild(divNode);
     });
 
@@ -262,6 +272,7 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     if (!cEmergencias.children.length) cEmergencias.innerHTML = vacio;
     if (!cServicios.children.length) cServicios.innerHTML = vacio;
 }
+
 // =========================================================================
 // ARCHIVO: admin.js (PARTE 3B: ACCIONES DE CIERRE, HORAS Y HELPERS)
 // =========================================================================
@@ -318,6 +329,7 @@ async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres)
             throw new Error(errJson.error || "Error al guardar horas (posible registro duplicado).");
         }
         alert(`Se han registrado ${horasNum}h correctamente.`);
+        await cargarTodosLosEventosEdge();
     } catch (err) {
         alert(`Fallo al asignar horas: ${err.message}`);
     }
