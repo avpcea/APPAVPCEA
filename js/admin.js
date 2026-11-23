@@ -191,10 +191,11 @@ export async function cargarTodosLosEventosEdge() {
 }
 
 // =========================================================================
-// ARCHIVO: admin.js (PARTE 3: RENDERIZADO UNIFICADO E INSCRIPCIÓN CRUZADA)
+// ARCHIVO: admin.js (PARTE 3A: RENDERIZADO CON CIERRE Y HORAS)
 // =========================================================================
 function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, usuarios) {
     const traductorTipoBD = { 'emergencias': 'EMR', 'operativos': 'OPR', 'preventivos': 'NRP' };
+    const mapaTabla = { 'EMR': 'emergencias', 'OPR': 'operativos', 'NRP': 'preventivos' };
     const estilosPorTipo = {
         'EMR': { color: '#dc2626', badge: '🚨 EMERGENCIA' },
         'OPR': { color: '#0284c7', badge: '🔧 OPERATIVO' },
@@ -210,34 +211,38 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     lista.forEach(item => {
         const tipoNorm = String(item.tipo).toLowerCase();
         const codigoCorto = traductorTipoBD[tipoNorm] || item.tipo.toUpperCase();
+        const tablaFisica = mapaTabla[codigoCorto] || tipoNorm;
         const cfg = estilosPorTipo[codigoCorto] || { color: '#4b5563', badge: codigoCorto };
+        const estaCerrado = Boolean(item.fecha_fin);
 
         const divNode = document.createElement('div');
-        divNode.style.cssText = `padding:10px 12px; background:#fff; border:1px solid #e5e7eb; border-left:5px solid ${cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05);`;
+        divNode.style.cssText = `padding:10px 12px; background:${estaCerrado ? '#f9fafb' : '#fff'}; border:1px solid #e5e7eb; border-left:5px solid ${estaCerrado ? '#6b7280' : cfg.color}; border-radius:6px; margin-bottom:8px; font-family:sans-serif;`;
 
         const tituloVisual = item.titulo || item.nombre || 'Dispositivo sin título';
         const metadataVisual = item.lugar ? `${item.lugar} - ${item.fecha || ''}` : `${item.fecha || ''}`;
-
-        const inscritos = suscripciones.filter(s => 
-            String(s.evento_id) === String(item.id) && String(s.tipo).trim().toUpperCase() === codigoCorto
-        );
+        const inscritos = suscripciones.filter(s => String(s.evento_id) === String(item.id) && String(s.tipo).trim().toUpperCase() === codigoCorto);
 
         const htmlInscritos = inscritos.length > 0
             ? `<div style="margin-top:4px;">${inscritos.map(s => `<span style="display:inline-block; background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:12px; margin:2px 4px 2px 0;">👤 ${escapeHTML(mapaNombres[s.usuario_id] || 'Desconocido')}</span>`).join('')}</div>`
             : `<span style="font-size:11px; color:#9ca3af; font-style:italic;">Sin voluntarios apuntados aún.</span>`;
 
+        const estadoBadge = estaCerrado
+            ? `<span style="display:inline-block; font-size:10px; font-weight:bold; color:#166534; background:#dcfce7; padding:2px 6px; border-radius:4px; margin-left:4px;">✅ CERRADO</span>`
+            : '';
+
         divNode.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div style="flex:1; padding-right:10px;">
-                    <span style="display:inline-block; font-size:10px; font-weight:bold; color:${cfg.color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:4px;">${cfg.badge}</span>
-                    <span style="display:block; font-weight:bold; color:${cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div style="flex:1;">
+                    <span style="display:inline-block; font-size:10px; font-weight:bold; color:${cfg.color}; background:#f3f4f6; padding:2px 6px; border-radius:4px; margin-bottom:4px;">${cfg.badge}</span>${estadoBadge}
+                    <span style="display:block; font-weight:bold; color:${estaCerrado ? '#4b5563' : cfg.color}; font-size:14px;">${escapeHTML(tituloVisual)}</span>
                     <span style="display:block; font-size:12px; color:#6b7280;">📍 ${escapeHTML(metadataVisual)}</span>
                     ${item.descripcion ? `<p style="margin:4px 0 0 0; font-size:12px; color:#4b5563;">${escapeHTML(item.descripcion)}</p>` : ''}
                 </div>
-                <button class="btn-suscripcion-cross" data-id="${item.id}" data-tipo="${item.tipo}" 
-                        style="padding:5px 10px; font-size:12px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; white-space:nowrap;">
-                    + Inscribir
-                </button>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <button class="btn-suscripcion-cross" style="padding:4px 8px; font-size:11px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">+ Inscribir</button>
+                    <button class="btn-asignar-horas" style="padding:4px 8px; font-size:11px; background:#059669; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⏱️ Horas</button>
+                    ${!estaCerrado ? `<button class="btn-cerrar-evento" style="padding:4px 8px; font-size:11px; background:#dc2626; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔒 Cerrar</button>` : ''}
+                </div>
             </div>
             <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e5e7eb;">
                 <span style="font-size:11px; font-weight:bold; color:#4b5563;">Inscritos (${inscritos.length}):</span>
@@ -245,9 +250,9 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
             </div>
         `;
 
-        divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', async (e) => {
-            await levantarModalInscripcionRapida(e.target.getAttribute('data-id'), e.target.getAttribute('data-tipo'));
-        });
+        divNode.querySelector('.btn-suscripcion-cross').addEventListener('click', () => levantarModalInscripcionRapida(item.id, tablaFisica));
+        divNode.querySelector('.btn-asignar-horas').addEventListener('click', () => asignarHorasManual(item.id, codigoCorto, inscritos, mapaNombres));
+        divNode.querySelector('.btn-cerrar-evento')?.addEventListener('click', () => cerrarEventoAdmin(item.id, tablaFisica));
 
         if (codigoCorto === 'EMR') cEmergencias.appendChild(divNode);
         else cServicios.appendChild(divNode);
@@ -257,20 +262,77 @@ function renderizarEventosAdmin(cEmergencias, cServicios, lista, suscripciones, 
     if (!cEmergencias.children.length) cEmergencias.innerHTML = vacio;
     if (!cServicios.children.length) cServicios.innerHTML = vacio;
 }
+// =========================================================================
+// ARCHIVO: admin.js (PARTE 3B: ACCIONES DE CIERRE, HORAS Y HELPERS)
+// =========================================================================
+async function cerrarEventoAdmin(id, tablaFisica) {
+    if (!confirm("¿Dar por finalizado este servicio? Se registrará la hora de cierre actual.")) return;
+    const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
-async function levantarModalInscripcionRapida(elementoId, tipoAbrev) {
+    try {
+        const res = await fetch(`${supabase.functionsUrl}/admin-close-element-ts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, tipo: tablaFisica, admin_id: adminId, fecha_fin: new Date().toISOString() })
+        });
+        const rJson = await res.json();
+        if (!res.ok) throw new Error(rJson.error || "Error al cerrar el evento.");
+        alert("Servicio cerrado correctamente.");
+        await cargarTodosLosEventosEdge();
+    } catch (err) {
+        alert(`Fallo al cerrar: ${err.message}`);
+    }
+}
+
+async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres) {
+    const listadoTexto = inscritos.length
+        ? inscritos.map((s, i) => `${i + 1}. ${mapaNombres[s.usuario_id] || s.usuario_id}`).join('\n')
+        : 'No hay inscritos en este evento.';
+
+    const seleccion = prompt(`Voluntarios inscritos:\n${listadoTexto}\n\nEscribe "TODOS" para asignar a todos los inscritos, o pega el UUID del voluntario:`);
+    if (!seleccion) return;
+
+    const horasStr = prompt("Introduce el número de horas a registrar (ej: 3.5):");
+    const horasNum = parseFloat(horasStr);
+    if (isNaN(horasNum) || horasNum <= 0) return alert("Cantidad de horas no válida.");
+
+    const destinos = seleccion.trim().toUpperCase() === 'TODOS'
+        ? inscritos.map(s => s.usuario_id)
+        : [seleccion.trim()];
+
+    if (!destinos.length) return alert("No hay voluntarios destino.");
+
+    try {
+        const anioActual = new Date().getFullYear();
+        const peticiones = destinos.map(uId =>
+            fetch(`${supabase.functionsUrl}/admin-create-horas-ts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario_id: uId, evento_id: String(eventoId), tipo: codigoCorto, horas: horasNum, año: anioActual })
+            })
+        );
+        const respuestas = await Promise.all(peticiones);
+        const fallida = respuestas.find(r => !r.ok);
+        if (fallida) {
+            const errJson = await fallida.json().catch(() => ({}));
+            throw new Error(errJson.error || "Error al guardar horas (posible registro duplicado).");
+        }
+        alert(`Se han registrado ${horasNum}h correctamente.`);
+    } catch (err) {
+        alert(`Fallo al asignar horas: ${err.message}`);
+    }
+}
+
+async function levantarModalInscripcionRapida(elementoId, tipoCompleto) {
     const vId = prompt("Ingrese el UUID del 'usuario_id' del voluntario a inscribir:");
     if (!vId) return;
-
-    const mapaTabla = { 'preventivos': 'preventivos', 'NRP': 'preventivos', 'emergencias': 'emergencias', 'EMR': 'emergencias' };
-    const tipoCompleto = mapaTabla[tipoAbrev] || 'operativos';
     const adminId = window.usuario_id || new URLSearchParams(window.location.search).get('admin_id');
 
     try {
         const res = await fetch(`${supabase.functionsUrl}/admin-create-suscripcion-ts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario_id: vId, evento_id: elementoId, tipo: tipoCompleto, admin_id: adminId })
+            body: JSON.stringify({ usuario_id: vId, evento_id: String(elementoId), tipo: tipoCompleto, admin_id: adminId })
         });
         const rJson = await res.json();
         if (!res.ok) throw new Error(rJson.error || "Excepción de red.");
