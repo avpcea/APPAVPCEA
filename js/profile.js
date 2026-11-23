@@ -1,5 +1,5 @@
 // =========================================================================
-// ARCHIVO: profile.js (PARTE 1: COMPATIBLE CON CUALQUIER VOLUNTARIO)
+// ARCHIVO: profile.js (BLOQUE 1: FICHA PERSONAL Y HORAS ANUALES)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
@@ -13,13 +13,15 @@ export async function initProfileScreen(usuarioId) {
     const profileContainer = document.getElementById('profile-subscriptions-container');
     if (!profileContainer) return;
 
-    profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos y eventos suscritos...</p>`;
+    profileContainer.innerHTML = `<p class="loading-text" style="font-family:sans-serif; color:#4b5563;">Cargando tus datos, horas y eventos suscritos...</p>`;
 
     try {
-        // 🚀 SOLUCIÓN: Consultamos directo a las tablas para evitar el bloqueo 403 de admin-list-elements-ts
-        const [usuarioRes, suscripcionesRes, oprRes, nrpRes, emrRes] = await Promise.all([
+        const anioActual = new Date().getFullYear();
+
+        const [usuarioRes, suscripcionesRes, horasRes, oprRes, nrpRes, emrRes] = await Promise.all([
             supabase.from('usuarios').select('nombre, telefono, cumple_dia, cumple_mes, codigo_voluntario').eq('id', usuarioId).single(),
             supabase.from('suscripciones').select('evento_id, tipo').eq('usuario_id', usuarioId),
+            supabase.from('horas').select('*').eq('usuario_id', usuarioId),
             supabase.from('operativos').select('*'),
             supabase.from('preventivos').select('*'),
             supabase.from('emergencias').select('*')
@@ -30,15 +32,25 @@ export async function initProfileScreen(usuarioId) {
 
         const usuario = usuarioRes.data;
         const listaSuscripciones = suscripcionesRes.data || [];
+        const registrosHoras = horasRes.data || [];
 
-        // Unificamos el catálogo de las tres tablas inyectando su identificador de tipo
+        // Sumamos las horas correspondientes al año actual (usando columna "año" o fallback por "fecha")
+        const totalHorasAnuales = registrosHoras
+            .filter(r => {
+                const anioReg = r['año'] || (r.fecha ? new Date(r.fecha).getFullYear() : null);
+                return Number(anioReg) === anioActual;
+            })
+            .reduce((acc, r) => acc + (parseFloat(r.horas) || 0), 0);
+
+        const horasFormateadas = Number.isInteger(totalHorasAnuales) ? totalHorasAnuales : totalHorasAnuales.toFixed(2);
+
         const listaEventos = [
             ...(oprRes.data || []).map(item => ({ ...item, tipo: 'OPR' })),
             ...(nrpRes.data || []).map(item => ({ ...item, tipo: 'NRP' })),
             ...(emrRes.data || []).map(item => ({ ...item, tipo: 'EMR' }))
         ];
 
-        const headerHTML = `
+        profileContainer.innerHTML = `
             <div class="profile-card-header" style="background:#f3f4f6; padding:20px; border-radius:8px; margin-bottom:25px; font-family:sans-serif; border:1px solid #e5e7eb; position:relative;">
                 <button id="btn-logout-voluntario" style="position:absolute; top:15px; right:15px; padding:6px 12px; background:#ef4444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;">
                     🚪 Salir
@@ -48,6 +60,12 @@ export async function initProfileScreen(usuarioId) {
                 <p style="margin:4px 0; color:#4b5563;"><strong>Nombre:</strong> ${escapeHTML(usuario.nombre)}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Teléfono:</strong> ${escapeHTML(usuario.telefono || 'No registrado')}</p>
                 <p style="margin:4px 0; color:#4b5563;"><strong>Cumpleaños:</strong> ${usuario.cumple_dia && usuario.cumple_mes ? `${usuario.cumple_dia}/${usuario.cumple_mes}` : 'No definido'}</p>
+                <p style="margin:8px 0 4px 0; color:#1f2937;">
+                    <strong>⏱️ Horas Acumuladas (${anioActual}):</strong> 
+                    <span style="background:#dcfce7; color:#166534; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:14px;">
+                        ${horasFormateadas} h
+                    </span>
+                </p>
                 
                 <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #d1d5db; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <p style="margin:0; color:#4b5563;">
@@ -64,73 +82,65 @@ export async function initProfileScreen(usuarioId) {
             <h3 style="font-family:sans-serif; color:#1f2937; margin-bottom:15px;">📅 Mis Dispositivos y Eventos Suscritos</h3>
             <div id="profile-events-inner-list"></div>
         `;
-        profileContainer.innerHTML = headerHTML;
 
-        document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
-                cerrarSesionVoluntario();
-            }
-        });
+        configurarBotonesPerfil(usuarioId, usuario);
 
-        document.getElementById('btn-cambiar-token-individual')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        const eventosSuscritos = listaEventos.filter(evento =>
+            listaSuscripciones.some(s => String(s.evento_id) === String(evento.id) && String(s.tipo).trim().toUpperCase() === evento.tipo)
+        );
 
-            const actualToken = usuario.codigo_voluntario || "";
-            const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso:", actualToken);
-            if (nuevoToken === null) return; 
-            
-            const tokenLimpio = nuevoToken.trim().toUpperCase();
-            if (!tokenLimpio || tokenLimpio === actualToken) return; 
-
-            try {
-                const { error: updateError } = await supabase
-                    .from('usuarios')
-                    .update({ codigo_voluntario: tokenLimpio })
-                    .eq('id', usuarioId);
-
-                if (updateError) {
-                    if (updateError.code === '23505') throw new Error("Este token ya está en uso por otro compañero.");
-                    throw updateError;
-                }
-
-                document.getElementById('lbl-token-individual').innerText = tokenLimpio;
-                usuario.codigo_voluntario = tokenLimpio;
-                alert("Token individual actualizado correctamente.");
-            } catch (err) {
-                alert(`Fallo al actualizar credencial: ${err.message}`);
-            }
-        });
-
-        // Filtrado compuesto estricto (ID + Tipo)
-        const eventosSuscritos = listaEventos.filter(evento => {
-            return listaSuscripciones.some(suscripcion => 
-                String(suscripcion.evento_id) === String(evento.id) &&
-                String(suscripcion.tipo).trim().toUpperCase() === evento.tipo
-            );
-        });
-
-        const listInnerContainer = document.getElementById('profile-events-inner-list');
-        renderListaTarjetas(listInnerContainer, eventosSuscritos);
-
+        renderListaTarjetas(document.getElementById('profile-events-inner-list'), eventosSuscritos);
     } catch (error) {
         console.error('Excepción en ProfileModule:', error);
         profileContainer.innerHTML = `<p style="color:#dc2626; padding:20px; font-family:sans-serif;">Error al cargar tu ficha personal: ${error.message}</p>`;
     }
 }
+// =========================================================================
+// ARCHIVO: profile.js (BLOQUE 2: EVENTOS DE BOTONES Y TARJETAS SUSCRITAS)
+// =========================================================================
+function configurarBotonesPerfil(usuarioId, usuario) {
+    document.getElementById('btn-logout-voluntario')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+            cerrarSesionVoluntario();
+        }
+    });
 
+    document.getElementById('btn-cambiar-token-individual')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
+        const actualToken = usuario.codigo_voluntario || "";
+        const nuevoToken = prompt("Introduce tu nuevo Token Individual de acceso:", actualToken);
+        if (nuevoToken === null) return; 
+        
+        const tokenLimpio = nuevoToken.trim().toUpperCase();
+        if (!tokenLimpio || tokenLimpio === actualToken) return; 
 
-/**
- * Renderiza la colección de tarjetas de eventos suscritos en el contenedor del DOM
- * @param {HTMLElement} container - Contenedor interno exclusivo de la lista
- * @param {Array} eventos - Listado filtrado de eventos a los que se encuentra suscrito
- */
+        try {
+            const { error: updateError } = await supabase
+                .from('usuarios')
+                .update({ codigo_voluntario: tokenLimpio })
+                .eq('id', usuarioId);
+
+            if (updateError) {
+                if (updateError.code === '23505') throw new Error("Este token ya está en uso por otro compañero.");
+                throw updateError;
+            }
+
+            document.getElementById('lbl-token-individual').innerText = tokenLimpio;
+            usuario.codigo_voluntario = tokenLimpio;
+            alert("Token individual actualizado correctamente.");
+        } catch (err) {
+            alert(`Fallo al actualizar credencial: ${err.message}`);
+        }
+    });
+}
+
 function renderListaTarjetas(container, eventos) {
     if (!container) return;
-    container.innerHTML = ''; // Limpiar loaders previos
+    container.innerHTML = '';
 
     if (eventos.length === 0) {
         container.innerHTML = `
@@ -143,30 +153,18 @@ function renderListaTarjetas(container, eventos) {
     }
 
     const gridLayout = document.createElement('div');
-    gridLayout.style.display = 'flex';
-    gridLayout.style.flexDirection = 'column';
-    gridLayout.style.gap = '15px';
-    gridLayout.style.fontFamily = 'sans-serif';
+    gridLayout.style.cssText = 'display: flex; flex-direction: column; gap: 15px; font-family: sans-serif;';
 
     eventos.forEach(evento => {
         const tarjeta = document.createElement('div');
-        
-        // Mapeo dinámico de estilos de borde por tipo de evento físico relacional
-        let borderStyle = '4px solid #9ca3af'; // Por defecto
-        if (evento.tipo === 'emergencias' || evento.tipo === 'EMR') borderStyle = '4px solid #dc2626'; // Emergencias
-        if (evento.tipo === 'operativos' || evento.tipo === 'OPR') borderStyle = '4px solid #0284c7'; // Operativos
-        if (evento.tipo === 'preventivos' || evento.tipo === 'NRP') borderStyle = '4px solid #b45309'; // Preventivos
+        let borderStyle = '4px solid #9ca3af';
+        if (evento.tipo === 'emergencias' || evento.tipo === 'EMR') borderStyle = '4px solid #dc2626';
+        if (evento.tipo === 'operativos' || evento.tipo === 'OPR') borderStyle = '4px solid #0284c7';
+        if (evento.tipo === 'preventivos' || evento.tipo === 'NRP') borderStyle = '4px solid #b45309';
 
-        tarjeta.style.background = '#fff';
-        tarjeta.style.padding = '15px';
-        tarjeta.style.borderRadius = '6px';
-        tarjeta.style.border = '1px solid #e5e7eb';
-        tarjeta.style.borderLeft = borderStyle;
-        tarjeta.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+        tarjeta.style.cssText = `background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; border-left: ${borderStyle}; box-shadow: 0 1px 2px rgba(0,0,0,0.05);`;
 
         const tipoTexto = TIPO_MAP_TEXTO[evento.tipo] || evento.tipo;
-        
-        // 🛠️ REPARACIÓN DEFENSIVA: Si la columna física es 'titulo' en vez de 'nombre', se mapea correctamente
         const tituloSuscripcion = evento.nombre || evento.titulo || 'Elemento sin título';
         const fechaSuscripcion = evento.fecha || 'Sin fecha asignada';
 
@@ -187,14 +185,7 @@ function renderListaTarjetas(container, eventos) {
     container.appendChild(gridLayout);
 }
 
-/**
- * Helper utilitario para evitar inyecciones XSS al renderizar texto dinámico introducido por usuarios
- * @param {string} str - Cadena de texto a sanitizar
- * @returns {string} Cadena de texto segura para insertar en HTML
- */
 function escapeHTML(str) {
     if (!str) return '';
-    return str.replace(/[&<>'"]/g, 
-        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
+    return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
 }
