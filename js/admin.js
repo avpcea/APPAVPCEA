@@ -305,19 +305,14 @@ async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres)
         destinos = [adminId];
         horasNum = 0;
     } else {
-        const listadoTexto = inscritos.map((s, i) => `${i + 1}. ${mapaNombres[s.usuario_id] || s.usuario_id}`).join('\n');
-        const seleccion = prompt(`Voluntarios inscritos:\n${listadoTexto}\n\nEscribe "TODOS" para asignar a todos, o pega el UUID del voluntario:`);
-        if (!seleccion) return;
-
-        const horasStr = prompt("Introduce el número de horas a registrar (ej: 3.5, o 0 si no hubo asistencia):");
+        const nombres = inscritos.map(s => mapaNombres[s.usuario_id] || 'Voluntario').join(', ');
+        const horasStr = prompt(`Voluntarios inscritos (${inscritos.length}): ${nombres}\n\nIntroduce las horas a asignar a todos (ej: 3.5, o 0 si no hubo asistencia):`);
         if (horasStr === null || horasStr.trim() === '') return;
 
         horasNum = parseFloat(horasStr.replace(',', '.'));
         if (isNaN(horasNum) || horasNum < 0) return alert("Cantidad de horas no válida.");
 
-        destinos = seleccion.trim().toUpperCase() === 'TODOS'
-            ? inscritos.map(s => s.usuario_id)
-            : [seleccion.trim()];
+        destinos = inscritos.map(s => s.usuario_id);
     }
 
     try {
@@ -335,7 +330,7 @@ async function asignarHorasManual(eventoId, codigoCorto, inscritos, mapaNombres)
             const errJson = await fallida.json().catch(() => ({}));
             throw new Error(errJson.error || "Error al guardar horas.");
         }
-        alert(`Se han registrado ${horasNum}h correctamente.`);
+        alert(`Se han registrado ${horasNum}h a ${inscritos.length} voluntario(s).`);
         await cargarTodosLosEventosEdge();
     } catch (err) {
         alert(`Fallo al asignar horas: ${err.message}`);
