@@ -1,10 +1,11 @@
 {
-  "name": "AVPCEA",
+  "name": "AVPCEA - Protección Civil El Arenal",
   "short_name": "AVPCEA",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0077ff",
+  "theme_color": "#f59e0b",
   "icons": [
     {
       "src": "icons/icon-192.png",
