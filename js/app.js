@@ -2,9 +2,10 @@
 // ARCHIVO: app.js (PARTE 1 MODIFICADA: FLUJO DE ACCESO SIN DESTRUCCIÓN DEL DOM)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
+import { iniciarMonitorEmergencias } from './emergencias.js';
 import { initNavigation, showScreen } from './navigation.js';
 
-const APP_VERSION_ACTUAL = "2.1.0"; 
+const APP_VERSION_ACTUAL = "2.3.0"; 
 
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. CONTROL DE VERSIÓN AUTOMATIZADO (Preserva el DOM si es correcta)
