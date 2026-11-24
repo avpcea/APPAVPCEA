@@ -82,10 +82,20 @@ export function initAdminFormListeners() {
         formEmergencias.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fd = new FormData(formEmergencias);
+            const titulo = fd.get('titulo');
+            const nivel = fd.get('nivel');
+
             await crearElementoEdge({
                 tipo: 'emergencias',
-                values: { titulo: fd.get('titulo'), nivel: fd.get('nivel') }
+                values: { titulo, nivel }
             }, formEmergencias);
+
+            // Disparamos notificación Push a todos los móviles registrados
+            fetch(`${supabase.functionsUrl}/send-push-emergencia-ts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo, nivel, admin_id: adminId })
+            }).catch(err => console.warn("Aviso Push no enviado:", err));
         });
     }
 
