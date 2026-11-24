@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         // Inicializamos los botones e interfaces nativas que ya existen en el HTML
         await initNavigation();
+        iniciarMonitorEmergencias();
         // Forzamos el aterrizaje reactivo en tu pantalla de perfil pactada
         showScreen('emergencias'); 
     } else {
