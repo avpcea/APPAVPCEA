@@ -58,7 +58,7 @@ self.addEventListener("push", event => {
       body: payload.body,
       icon: "./icons/icon-192.png",
       badge: "./icons/icon-192.png",
-      vibrate:,
+      vibrate: [500, 200, 500, 200, 800],
       tag: "avpcea-emergencia-activa",
       renotify: true,
       requireInteraction: true,
