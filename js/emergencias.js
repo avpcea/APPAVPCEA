@@ -4,7 +4,6 @@
 import { db as supabase } from './supabase-config.js';
 import { activarPitidoEmergencia, detenerPitidoEmergencia, showScreen } from './navigation.js';
 
-const VAPID_PUBLIC_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICA_VAPID";
 let emergenciasSilenciadas = new Set();
 
 export function iniciarMonitorEmergencias() {
