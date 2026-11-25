@@ -1,34 +1,19 @@
 // =========================================================================
-// ARCHIVO: js/emergencias.js (MONITOR REALTIME Y ALARMA DE EMERGENCIA)
+// ARCHIVO: js/emergencias.js (MONITOR REALTIME, PUSH Y ALARMA SEGURA)
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { activarPitidoEmergencia, detenerPitidoEmergencia, showScreen } from './navigation.js';
 
+const VAPID_PUBLIC_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICA_VAPID";
 let emergenciasSilenciadas = new Set();
 
 export function iniciarMonitorEmergencias() {
-    if (window.usuario_id) registrarPushMovil(window.usuario_id);
-    // 1. Desbloqueo de audio en móviles tras la primera interacción del usuario
-    const desbloquearAudio = () => {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-        ctx.close();
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        document.removeEventListener('click', desbloquearAudio);
-        document.removeEventListener('touchstart', desbloquearAudio);
-    };
-    document.addEventListener('click', desbloquearAudio, { once: true });
-    document.addEventListener('touchstart', desbloquearAudio, { once: true });
-
-    // 2. Comprobación inicial y al volver de segundo plano en el móvil
     comprobarEmergenciasActivas();
+
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') comprobarEmergenciasActivas();
     });
 
-    // 3. Escucha en tiempo real (WebSocket) de nuevas emergencias
     supabase
         .channel('canal-emergencias-avpcea')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'emergencias' }, () => {
@@ -54,21 +39,12 @@ async function comprobarEmergenciasActivas() {
 
     const emg = data[0];
     if (emergenciasSilenciadas.has(emg.id)) return;
-
     dispararAlarmaVisualYSonora(emg);
 }
 
 function dispararAlarmaVisualYSonora(emg) {
     activarPitidoEmergencia();
-    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`🚨 EMERGENCIA AVPCEA (${(emg.nivel || 'ALTA').toUpperCase()})`, {
-            body: emg.titulo,
-            icon: 'icons/icon-192.png',
-            tag: `emg-${emg.id}`
-        });
-    }
+    try { if (navigator.vibrate) navigator.vibrate([500, 200, 500]); } catch (e) {}
 
     if (document.getElementById('modal-alerta-emergencia')) return;
 
@@ -87,10 +63,13 @@ function dispararAlarmaVisualYSonora(emg) {
     `;
     document.body.appendChild(modal);
 
+    // Si Chrome bloqueó el audio automático, arranca al primer toque en el modal
+    modal.addEventListener('touchstart', () => activarPitidoEmergencia(), { once: true });
+
     const cerrarYCallar = () => {
         emergenciasSilenciadas.add(emg.id);
         detenerPitidoEmergencia();
-        if (navigator.vibrate) navigator.vibrate(0);
+        try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
         modal.remove();
     };
 
@@ -100,6 +79,7 @@ function dispararAlarmaVisualYSonora(emg) {
         showScreen('emergencias');
     });
 }
+
 const VAPID_PUBLIC_KEY = "BCKzQUV8iXt7KoK9DhLYjSQxysQxSjB7r_R-he5IkiVeDcXQ1wjMOpHbhWLFUPAVr0DRbOiGtU_Fy-ND6B6O24c";
 
 export async function registrarPushMovil(usuarioId) {
