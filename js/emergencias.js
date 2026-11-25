@@ -100,7 +100,7 @@ function dispararAlarmaVisualYSonora(emg) {
         showScreen('emergencias');
     });
 }
-const VAPID_PUBLIC_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICA_VAPID";
+const VAPID_PUBLIC_KEY = "BCKzQUV8iXt7KoK9DhLYjSQxysQxSjB7r_R-he5IkiVeDcXQ1wjMOpHbhWLFUPAVr0DRbOiGtU_Fy-ND6B6O24c";
 
 export async function registrarPushMovil(usuarioId) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
