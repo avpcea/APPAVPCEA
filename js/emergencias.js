@@ -99,3 +99,44 @@ function dispararAlarmaVisualYSonora(emg) {
         showScreen('emergencias');
     });
 }
+const VAPID_PUBLIC_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICA_VAPID";
+
+export async function registrarPushMovil(usuarioId) {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith("PEGA_")) return;
+
+    try {
+        const reg = await navigator.serviceWorker.register('./service-worker.js');
+        await navigator.serviceWorker.ready;
+
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') return;
+
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+            sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+        }
+
+        const subJson = sub.toJSON();
+        await supabase.from('push_subscriptions').upsert({
+            usuario_id: usuarioId,
+            endpoint: subJson.endpoint,
+            p256dh: subJson.keys.p256dh,
+            auth: subJson.keys.auth,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'endpoint' });
+
+    } catch (err) {
+        console.warn("No se pudo activar Push en este dispositivo:", err.message);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
