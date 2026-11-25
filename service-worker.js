@@ -46,6 +46,8 @@ self.addEventListener("fetch", event => {
 // RECEPCIÓN DE ALERTA PUSH EN SEGUNDO PLANO / MÓVIL BLOQUEADO
 // ===============================================================
 self.addEventListener("push", event => {
+  if (Notification.permission !== "granted") return;
+
   let payload = { title: "🚨 EMERGENCIA AVPCEA", body: "Activación urgente de servicio.", url: "./index.html" };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
@@ -58,7 +60,7 @@ self.addEventListener("push", event => {
       body: payload.body,
       icon: "./icons/icon-192.png",
       badge: "./icons/icon-192.png",
-      vibrate: [500, 200, 500, 200, 800],
+      vibrate:,
       tag: "avpcea-emergencia-activa",
       renotify: true,
       requireInteraction: true,
