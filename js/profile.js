@@ -79,6 +79,10 @@ export async function initProfileScreen(usuarioId) {
                     <button id="btn-cambiar-token-individual" style="padding:4px 10px; background:#1f2937; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">
                         ✏️ Cambiar Token
                     </button>
+                    <button id="btn-activar-push" style="padding:4px 10px; background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">
+                        🔔 Activar Alertas Móvil
+                    </button>
+
                 </div>
             </div>
             <h3 style="font-family:sans-serif; color:#1f2937; margin-bottom:15px;">📅 Mis Dispositivos y Eventos Suscritos</h3>
@@ -137,6 +141,15 @@ function configurarBotonesPerfil(usuarioId, usuario) {
         } catch (err) {
             alert(`Fallo al actualizar credencial: ${err.message}`);
         }
+    });
+    document.getElementById('btn-activar-push')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const btn = e.target;
+        btn.disabled = true;
+        btn.innerText = "Activando...";
+        await registrarPushMovil(usuarioId);
+        btn.innerText = "✅ Alertas Activas";
+        alert("Dispositivo vinculado para alertas de emergencia Push.");
     });
 }
 
