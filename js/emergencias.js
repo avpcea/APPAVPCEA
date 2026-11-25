@@ -7,6 +7,7 @@ import { activarPitidoEmergencia, detenerPitidoEmergencia, showScreen } from './
 let emergenciasSilenciadas = new Set();
 
 export function iniciarMonitorEmergencias() {
+    if (window.usuario_id) registrarPushMovil(window.usuario_id);
     // 1. Desbloqueo de audio en móviles tras la primera interacción del usuario
     const desbloquearAudio = () => {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
