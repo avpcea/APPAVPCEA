@@ -3,6 +3,8 @@
 // =========================================================================
 import { db as supabase } from './supabase-config.js';
 import { cerrarSesionVoluntario } from './app.js';
+import { registrarPushMovil } from './emergencias.js';
+
 
 const TIPO_MAP_TEXTO = {
     'operativos': 'Operativo', 'preventivos': 'Preventivo', 'emergencias': 'Emergencia',
