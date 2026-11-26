@@ -82,15 +82,18 @@ function dispararAlarmaVisualYSonora(emg) {
 const VAPID_PUBLIC_KEY = "BCKzQUV8iXt7KoK9DhLYjSQxysQxSjB7r_R-he5IkiVeDcXQ1wjMOpHbhWLFUPAVr0DRbOiGtU_Fy-ND6B6O24c";
 
 export async function registrarPushMovil(usuarioId) {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith("PEGA_")) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return { ok: false, error: "Este navegador no soporta Push. En iPhone debes pulsar 'Añadir a pantalla de inicio' y abrirla desde el icono." };
+    }
 
     try {
         const reg = await navigator.serviceWorker.register('./service-worker.js');
         await navigator.serviceWorker.ready;
 
         const permiso = await Notification.requestPermission();
-        if (permiso !== 'granted') return;
+        if (permiso !== 'granted') {
+            return { ok: false, error: "Permiso bloqueado por el navegador. Pulsa el icono de ajustes/candado junto a la URL -> Permisos -> Notificaciones -> Permitir." };
+        }
 
         let sub = await reg.pushManager.getSubscription();
         if (!sub) {
@@ -101,7 +104,7 @@ export async function registrarPushMovil(usuarioId) {
         }
 
         const subJson = sub.toJSON();
-        await supabase.from('push_subscriptions').upsert({
+        const { error: dbError } = await supabase.from('push_subscriptions').upsert({
             usuario_id: usuarioId,
             endpoint: subJson.endpoint,
             p256dh: subJson.keys.p256dh,
@@ -109,8 +112,10 @@ export async function registrarPushMovil(usuarioId) {
             updated_at: new Date().toISOString()
         }, { onConflict: 'endpoint' });
 
+        if (dbError) throw dbError;
+        return { ok: true };
     } catch (err) {
-        console.warn("No se pudo activar Push en este dispositivo:", err.message);
+        return { ok: false, error: err.message };
     }
 }
 
