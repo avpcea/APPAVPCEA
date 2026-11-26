@@ -142,14 +142,22 @@ function configurarBotonesPerfil(usuarioId, usuario) {
             alert(`Fallo al actualizar credencial: ${err.message}`);
         }
     });
+
     document.getElementById('btn-activar-push')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const btn = e.target;
         btn.disabled = true;
         btn.innerText = "Activando...";
-        await registrarPushMovil(usuarioId);
-        btn.innerText = "✅ Alertas Activas";
-        alert("Dispositivo vinculado para alertas de emergencia Push.");
+
+        const res = await registrarPushMovil(usuarioId);
+        if (res?.ok) {
+            btn.innerText = "✅ Alertas Activas";
+            alert("Dispositivo vinculado correctamente en Supabase.");
+        } else {
+            btn.disabled = false;
+            btn.innerText = "🔔 Activar Alertas Móvil";
+            alert(`No se pudo activar: ${res?.error || 'Error desconocido'}`);
+        }
     });
 }
 
